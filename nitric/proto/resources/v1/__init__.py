@@ -42,6 +42,8 @@ class ResourceType(betterproto.Enum):
     """Batches represent a collection of jobs"""
 
     Job = 16
+    Website = 17
+    Spark = 18
 
 
 class Action(betterproto.Enum):
@@ -106,6 +108,7 @@ class ResourceDeclareRequest(betterproto.Message):
     queue: "QueueResource" = betterproto.message_field(17, group="config")
     sql_database: "SqlDatabaseResource" = betterproto.message_field(18, group="config")
     job: "JobResource" = betterproto.message_field(19, group="config")
+    spark: "SparkResource" = betterproto.message_field(20, group="config")
 
 
 @dataclass(eq=False, repr=False)
@@ -135,6 +138,11 @@ class SecretResource(betterproto.Message):
 
 @dataclass(eq=False, repr=False)
 class JobResource(betterproto.Message):
+    pass
+
+
+@dataclass(eq=False, repr=False)
+class SparkResource(betterproto.Message):
     pass
 
 

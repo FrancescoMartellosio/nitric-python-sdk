@@ -265,6 +265,11 @@ class Secret(betterproto.Message):
 
 
 @dataclass(eq=False, repr=False)
+class Spark(betterproto.Message):
+    pass
+
+
+@dataclass(eq=False, repr=False)
 class SubscriptionTarget(betterproto.Message):
     service: str = betterproto.string_field(1, group="target")
     """The name of an service to target"""
@@ -315,6 +320,21 @@ class Websocket(betterproto.Message):
 class WebsocketTarget(betterproto.Message):
     service: str = betterproto.string_field(1, group="target")
     """The name of an service to target"""
+
+
+@dataclass(eq=False, repr=False)
+class Website(betterproto.Message):
+    index_document: str = betterproto.string_field(1)
+    """The index document for the website"""
+
+    error_document: str = betterproto.string_field(2)
+    """The error document for the website"""
+
+    base_path: str = betterproto.string_field(3)
+    """The base path for the website"""
+
+    local_directory: str = betterproto.string_field(4, group="asset_source")
+    """The production website output directory"""
 
 
 @dataclass(eq=False, repr=False)
@@ -370,6 +390,8 @@ class Resource(betterproto.Message):
     queue: "Queue" = betterproto.message_field(20, group="config")
     sql_database: "SqlDatabase" = betterproto.message_field(21, group="config")
     batch: "Batch" = betterproto.message_field(22, group="config")
+    website: "Website" = betterproto.message_field(23, group="config")
+    spark: "Spark" = betterproto.message_field(24, group="config")
 
 
 @dataclass(eq=False, repr=False)
