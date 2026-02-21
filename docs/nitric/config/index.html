@@ -46,9 +46,8 @@
 # limitations under the License.
 #
 &#34;&#34;&#34;Nitric SDK Configuration Settings.&#34;&#34;&#34;
-import os
 
-from nitric.config import default_settings
+import os
 
 
 class Settings:
@@ -56,23 +55,13 @@ class Settings:
 
     def __init__(self):
         &#34;&#34;&#34;Construct a new Nitric settings helper object.&#34;&#34;&#34;
-        for setting in dir(default_settings):
-            default_value = getattr(default_settings, setting)
-            env_variable = os.environ.get(setting)
-            setattr(self, setting, env_variable or default_value)
+        self.SERVICE_ADDRESS = os.environ.get(&#34;SERVICE_ADDRESS&#34;, &#34;127.0.0.1:50051&#34;)
 
 
 settings = Settings()</code></pre>
 </details>
 </section>
 <section>
-<h2 class="section-title" id="header-submodules">Sub-modules</h2>
-<dl>
-<dt><code class="name"><a title="nitric.config.default_settings" href="default_settings.html">nitric.config.default_settings</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
 </section>
 <section>
 </section>
@@ -96,10 +85,7 @@ settings = Settings()</code></pre>
 
     def __init__(self):
         &#34;&#34;&#34;Construct a new Nitric settings helper object.&#34;&#34;&#34;
-        for setting in dir(default_settings):
-            default_value = getattr(default_settings, setting)
-            env_variable = os.environ.get(setting)
-            setattr(self, setting, env_variable or default_value)</code></pre>
+        self.SERVICE_ADDRESS = os.environ.get(&#34;SERVICE_ADDRESS&#34;, &#34;127.0.0.1:50051&#34;)</code></pre>
 </details>
 </dd>
 </dl>
@@ -114,11 +100,6 @@ settings = Settings()</code></pre>
 <li><h3>Super-module</h3>
 <ul>
 <li><code><a title="nitric" href="../index.html">nitric</a></code></li>
-</ul>
-</li>
-<li><h3><a href="#header-submodules">Sub-modules</a></h3>
-<ul>
-<li><code><a title="nitric.config.default_settings" href="default_settings.html">nitric.config.default_settings</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>

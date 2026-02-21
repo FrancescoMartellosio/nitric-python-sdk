@@ -1,0 +1,966 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>nitric.proto.batch.v1 API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>nitric.proto.batch.v1</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">#
+# Copyright (c) 2021 Nitric Technologies Pty Ltd.
+#
+# This file is part of Nitric Python 3 SDK.
+# See https://github.com/nitrictech/python-sdk for further info.
+#
+# Licensed under the Apache License, Version 2.0 (the &#34;License&#34;);
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an &#34;AS IS&#34; BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Generated by the protocol buffer compiler.  DO NOT EDIT!
+# sources: nitric/proto/batch/v1/batch.proto
+# plugin: python-betterproto
+# This file has been @generated
+
+from dataclasses import dataclass
+from typing import (
+    TYPE_CHECKING,
+    AsyncIterable,
+    AsyncIterator,
+    Dict,
+    Iterable,
+    Optional,
+    Union,
+)
+
+import betterproto
+import betterproto.lib.google.protobuf as betterproto_lib_google_protobuf
+import grpclib
+from betterproto.grpc.grpclib_server import ServiceBase
+
+
+if TYPE_CHECKING:
+    import grpclib.server
+    from betterproto.grpc.grpclib_client import MetadataLike
+    from grpclib.metadata import Deadline
+
+
+@dataclass(eq=False, repr=False)
+class ClientMessage(betterproto.Message):
+    id: str = betterproto.string_field(1)
+    &#34;&#34;&#34;globally unique ID of the request/response pair&#34;&#34;&#34;
+
+    registration_request: &#34;RegistrationRequest&#34; = betterproto.message_field(
+        2, group=&#34;content&#34;
+    )
+    &#34;&#34;&#34;Register a handler for a job&#34;&#34;&#34;
+
+    job_response: &#34;JobResponse&#34; = betterproto.message_field(3, group=&#34;content&#34;)
+    &#34;&#34;&#34;Handle a job submission&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class JobRequest(betterproto.Message):
+    job_name: str = betterproto.string_field(1)
+    data: &#34;JobData&#34; = betterproto.message_field(2)
+
+
+@dataclass(eq=False, repr=False)
+class JobData(betterproto.Message):
+    struct: &#34;betterproto_lib_google_protobuf.Struct&#34; = betterproto.message_field(
+        1, group=&#34;data&#34;
+    )
+
+
+@dataclass(eq=False, repr=False)
+class JobResponse(betterproto.Message):
+    success: bool = betterproto.bool_field(1)
+    &#34;&#34;&#34;Mark if the job was successfully processed&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class RegistrationRequest(betterproto.Message):
+    job_name: str = betterproto.string_field(1)
+    requirements: &#34;JobResourceRequirements&#34; = betterproto.message_field(2)
+    &#34;&#34;&#34;Register with default requirements&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class RegistrationResponse(betterproto.Message):
+    pass
+
+
+@dataclass(eq=False, repr=False)
+class JobResourceRequirements(betterproto.Message):
+    cpus: float = betterproto.float_field(1)
+    &#34;&#34;&#34;The number of CPUs to allocate for the job&#34;&#34;&#34;
+
+    memory: int = betterproto.int64_field(2)
+    &#34;&#34;&#34;The amount of memory to allocate for the job&#34;&#34;&#34;
+
+    gpus: int = betterproto.int64_field(3)
+    &#34;&#34;&#34;The number of GPUs to allocate for the job&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class ServerMessage(betterproto.Message):
+    &#34;&#34;&#34;
+    ServerMessage is the message sent from the nitric server to the service
+    &#34;&#34;&#34;
+
+    id: str = betterproto.string_field(1)
+    &#34;&#34;&#34;globally unique ID of the request/response pair&#34;&#34;&#34;
+
+    registration_response: &#34;RegistrationResponse&#34; = betterproto.message_field(
+        2, group=&#34;content&#34;
+    )
+    &#34;&#34;&#34;
+    
+    &#34;&#34;&#34;
+
+    job_request: &#34;JobRequest&#34; = betterproto.message_field(3, group=&#34;content&#34;)
+    &#34;&#34;&#34;Request to a job handler&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class JobSubmitRequest(betterproto.Message):
+    job_name: str = betterproto.string_field(1)
+    &#34;&#34;&#34;The name of the job that should handle the data&#34;&#34;&#34;
+
+    data: &#34;JobData&#34; = betterproto.message_field(2)
+    &#34;&#34;&#34;The data to be processed by the job&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class JobSubmitResponse(betterproto.Message):
+    pass
+
+
+class JobStub(betterproto.ServiceStub):
+    async def handle_job(
+        self,
+        client_message_iterator: Union[
+            AsyncIterable[&#34;ClientMessage&#34;], Iterable[&#34;ClientMessage&#34;]
+        ],
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional[&#34;Deadline&#34;] = None,
+        metadata: Optional[&#34;MetadataLike&#34;] = None
+    ) -&gt; AsyncIterator[&#34;ServerMessage&#34;]:
+        async for response in self._stream_stream(
+            &#34;/nitric.proto.batch.v1.Job/HandleJob&#34;,
+            client_message_iterator,
+            ClientMessage,
+            ServerMessage,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        ):
+            yield response
+
+
+class BatchStub(betterproto.ServiceStub):
+    async def submit_job(
+        self,
+        job_submit_request: &#34;JobSubmitRequest&#34;,
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional[&#34;Deadline&#34;] = None,
+        metadata: Optional[&#34;MetadataLike&#34;] = None
+    ) -&gt; &#34;JobSubmitResponse&#34;:
+        return await self._unary_unary(
+            &#34;/nitric.proto.batch.v1.Batch/SubmitJob&#34;,
+            job_submit_request,
+            JobSubmitResponse,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
+
+class JobBase(ServiceBase):
+    async def handle_job(
+        self, client_message_iterator: AsyncIterator[&#34;ClientMessage&#34;]
+    ) -&gt; AsyncIterator[&#34;ServerMessage&#34;]:
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+        yield ServerMessage()
+
+    async def __rpc_handle_job(
+        self, stream: &#34;grpclib.server.Stream[ClientMessage, ServerMessage]&#34;
+    ) -&gt; None:
+        request = stream.__aiter__()
+        await self._call_rpc_handler_server_stream(
+            self.handle_job,
+            stream,
+            request,
+        )
+
+    def __mapping__(self) -&gt; Dict[str, grpclib.const.Handler]:
+        return {
+            &#34;/nitric.proto.batch.v1.Job/HandleJob&#34;: grpclib.const.Handler(
+                self.__rpc_handle_job,
+                grpclib.const.Cardinality.STREAM_STREAM,
+                ClientMessage,
+                ServerMessage,
+            ),
+        }
+
+
+class BatchBase(ServiceBase):
+    async def submit_job(
+        self, job_submit_request: &#34;JobSubmitRequest&#34;
+    ) -&gt; &#34;JobSubmitResponse&#34;:
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def __rpc_submit_job(
+        self, stream: &#34;grpclib.server.Stream[JobSubmitRequest, JobSubmitResponse]&#34;
+    ) -&gt; None:
+        request = await stream.recv_message()
+        response = await self.submit_job(request)
+        await stream.send_message(response)
+
+    def __mapping__(self) -&gt; Dict[str, grpclib.const.Handler]:
+        return {
+            &#34;/nitric.proto.batch.v1.Batch/SubmitJob&#34;: grpclib.const.Handler(
+                self.__rpc_submit_job,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                JobSubmitRequest,
+                JobSubmitResponse,
+            ),
+        }</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="nitric.proto.batch.v1.BatchBase"><code class="flex name class">
+<span>class <span class="ident">BatchBase</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Base class for async gRPC servers.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class BatchBase(ServiceBase):
+    async def submit_job(
+        self, job_submit_request: &#34;JobSubmitRequest&#34;
+    ) -&gt; &#34;JobSubmitResponse&#34;:
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def __rpc_submit_job(
+        self, stream: &#34;grpclib.server.Stream[JobSubmitRequest, JobSubmitResponse]&#34;
+    ) -&gt; None:
+        request = await stream.recv_message()
+        response = await self.submit_job(request)
+        await stream.send_message(response)
+
+    def __mapping__(self) -&gt; Dict[str, grpclib.const.Handler]:
+        return {
+            &#34;/nitric.proto.batch.v1.Batch/SubmitJob&#34;: grpclib.const.Handler(
+                self.__rpc_submit_job,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                JobSubmitRequest,
+                JobSubmitResponse,
+            ),
+        }</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.grpc.grpclib_server.ServiceBase</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.proto.batch.v1.BatchBase.submit_job"><code class="name flex">
+<span>async def <span class="ident">submit_job</span></span>(<span>self, job_submit_request: <a title="nitric.proto.batch.v1.JobSubmitRequest" href="#nitric.proto.batch.v1.JobSubmitRequest">JobSubmitRequest</a>) ‑> <a title="nitric.proto.batch.v1.JobSubmitResponse" href="#nitric.proto.batch.v1.JobSubmitResponse">JobSubmitResponse</a></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def submit_job(
+    self, job_submit_request: &#34;JobSubmitRequest&#34;
+) -&gt; &#34;JobSubmitResponse&#34;:
+    raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.batch.v1.BatchStub"><code class="flex name class">
+<span>class <span class="ident">BatchStub</span></span>
+<span>(</span><span>channel: Channel, *, timeout: Optional[float] = None, deadline: Optional[ForwardRef('Deadline')] = None, metadata: Union[Mapping[str, Union[str, bytes]], Collection[Tuple[str, Union[str, bytes]]], NoneType] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Base class for async gRPC clients.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class BatchStub(betterproto.ServiceStub):
+    async def submit_job(
+        self,
+        job_submit_request: &#34;JobSubmitRequest&#34;,
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional[&#34;Deadline&#34;] = None,
+        metadata: Optional[&#34;MetadataLike&#34;] = None
+    ) -&gt; &#34;JobSubmitResponse&#34;:
+        return await self._unary_unary(
+            &#34;/nitric.proto.batch.v1.Batch/SubmitJob&#34;,
+            job_submit_request,
+            JobSubmitResponse,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.grpc.grpclib_client.ServiceStub</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.proto.batch.v1.BatchStub.submit_job"><code class="name flex">
+<span>async def <span class="ident">submit_job</span></span>(<span>self, job_submit_request: <a title="nitric.proto.batch.v1.JobSubmitRequest" href="#nitric.proto.batch.v1.JobSubmitRequest">JobSubmitRequest</a>, *, timeout: Optional[float] = None, deadline: Optional[ForwardRef('Deadline')] = None, metadata: Optional[ForwardRef('MetadataLike')] = None) ‑> <a title="nitric.proto.batch.v1.JobSubmitResponse" href="#nitric.proto.batch.v1.JobSubmitResponse">JobSubmitResponse</a></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def submit_job(
+    self,
+    job_submit_request: &#34;JobSubmitRequest&#34;,
+    *,
+    timeout: Optional[float] = None,
+    deadline: Optional[&#34;Deadline&#34;] = None,
+    metadata: Optional[&#34;MetadataLike&#34;] = None
+) -&gt; &#34;JobSubmitResponse&#34;:
+    return await self._unary_unary(
+        &#34;/nitric.proto.batch.v1.Batch/SubmitJob&#34;,
+        job_submit_request,
+        JobSubmitResponse,
+        timeout=timeout,
+        deadline=deadline,
+        metadata=metadata,
+    )</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.batch.v1.ClientMessage"><code class="flex name class">
+<span>class <span class="ident">ClientMessage</span></span>
+<span>(</span><span>id: str = &lt;object object&gt;, registration_request: <a title="nitric.proto.batch.v1.RegistrationRequest" href="#nitric.proto.batch.v1.RegistrationRequest">RegistrationRequest</a> = &lt;object object&gt;, job_response: <a title="nitric.proto.batch.v1.JobResponse" href="#nitric.proto.batch.v1.JobResponse">JobResponse</a> = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>ClientMessage(id: str = <object object at 0x733dc69ac250>, registration_request: 'RegistrationRequest' = <object object at 0x733dc69ac250>, job_response: 'JobResponse' = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class ClientMessage(betterproto.Message):
+    id: str = betterproto.string_field(1)
+    &#34;&#34;&#34;globally unique ID of the request/response pair&#34;&#34;&#34;
+
+    registration_request: &#34;RegistrationRequest&#34; = betterproto.message_field(
+        2, group=&#34;content&#34;
+    )
+    &#34;&#34;&#34;Register a handler for a job&#34;&#34;&#34;
+
+    job_response: &#34;JobResponse&#34; = betterproto.message_field(3, group=&#34;content&#34;)
+    &#34;&#34;&#34;Handle a job submission&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.batch.v1.ClientMessage.id"><code class="name">var <span class="ident">id</span> : str</code></dt>
+<dd>
+<div class="desc"><p>globally unique ID of the request/response pair</p></div>
+</dd>
+<dt id="nitric.proto.batch.v1.ClientMessage.job_response"><code class="name">var <span class="ident">job_response</span> : <a title="nitric.proto.batch.v1.JobResponse" href="#nitric.proto.batch.v1.JobResponse">JobResponse</a></code></dt>
+<dd>
+<div class="desc"><p>Handle a job submission</p></div>
+</dd>
+<dt id="nitric.proto.batch.v1.ClientMessage.registration_request"><code class="name">var <span class="ident">registration_request</span> : <a title="nitric.proto.batch.v1.RegistrationRequest" href="#nitric.proto.batch.v1.RegistrationRequest">RegistrationRequest</a></code></dt>
+<dd>
+<div class="desc"><p>Register a handler for a job</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.batch.v1.JobBase"><code class="flex name class">
+<span>class <span class="ident">JobBase</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Base class for async gRPC servers.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class JobBase(ServiceBase):
+    async def handle_job(
+        self, client_message_iterator: AsyncIterator[&#34;ClientMessage&#34;]
+    ) -&gt; AsyncIterator[&#34;ServerMessage&#34;]:
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+        yield ServerMessage()
+
+    async def __rpc_handle_job(
+        self, stream: &#34;grpclib.server.Stream[ClientMessage, ServerMessage]&#34;
+    ) -&gt; None:
+        request = stream.__aiter__()
+        await self._call_rpc_handler_server_stream(
+            self.handle_job,
+            stream,
+            request,
+        )
+
+    def __mapping__(self) -&gt; Dict[str, grpclib.const.Handler]:
+        return {
+            &#34;/nitric.proto.batch.v1.Job/HandleJob&#34;: grpclib.const.Handler(
+                self.__rpc_handle_job,
+                grpclib.const.Cardinality.STREAM_STREAM,
+                ClientMessage,
+                ServerMessage,
+            ),
+        }</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.grpc.grpclib_server.ServiceBase</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.proto.batch.v1.JobBase.handle_job"><code class="name flex">
+<span>async def <span class="ident">handle_job</span></span>(<span>self, client_message_iterator: AsyncIterator[ForwardRef('<a title="nitric.proto.batch.v1.ClientMessage" href="#nitric.proto.batch.v1.ClientMessage">ClientMessage</a>')]) ‑> AsyncIterator[<a title="nitric.proto.apis.v1.ServerMessage" href="../../apis/v1/index.html#nitric.proto.apis.v1.ServerMessage">ServerMessage</a>]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def handle_job(
+    self, client_message_iterator: AsyncIterator[&#34;ClientMessage&#34;]
+) -&gt; AsyncIterator[&#34;ServerMessage&#34;]:
+    raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+    yield ServerMessage()</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.batch.v1.JobData"><code class="flex name class">
+<span>class <span class="ident">JobData</span></span>
+<span>(</span><span>struct: betterproto_lib_google_protobuf.Struct = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>JobData(struct: 'betterproto_lib_google_protobuf.Struct' = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class JobData(betterproto.Message):
+    struct: &#34;betterproto_lib_google_protobuf.Struct&#34; = betterproto.message_field(
+        1, group=&#34;data&#34;
+    )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.batch.v1.JobData.struct"><code class="name">var <span class="ident">struct</span> : betterproto.lib.google.protobuf.Struct</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.batch.v1.JobRequest"><code class="flex name class">
+<span>class <span class="ident">JobRequest</span></span>
+<span>(</span><span>job_name: str = &lt;object object&gt;, data: <a title="nitric.proto.batch.v1.JobData" href="#nitric.proto.batch.v1.JobData">JobData</a> = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>JobRequest(job_name: str = <object object at 0x733dc69ac250>, data: 'JobData' = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class JobRequest(betterproto.Message):
+    job_name: str = betterproto.string_field(1)
+    data: &#34;JobData&#34; = betterproto.message_field(2)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.batch.v1.JobRequest.data"><code class="name">var <span class="ident">data</span> : <a title="nitric.proto.batch.v1.JobData" href="#nitric.proto.batch.v1.JobData">JobData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.batch.v1.JobRequest.job_name"><code class="name">var <span class="ident">job_name</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.batch.v1.JobResourceRequirements"><code class="flex name class">
+<span>class <span class="ident">JobResourceRequirements</span></span>
+<span>(</span><span>cpus: float = &lt;object object&gt;, memory: int = &lt;object object&gt;, gpus: int = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>JobResourceRequirements(cpus: float = <object object at 0x733dc69ac250>, memory: int = <object object at 0x733dc69ac250>, gpus: int = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class JobResourceRequirements(betterproto.Message):
+    cpus: float = betterproto.float_field(1)
+    &#34;&#34;&#34;The number of CPUs to allocate for the job&#34;&#34;&#34;
+
+    memory: int = betterproto.int64_field(2)
+    &#34;&#34;&#34;The amount of memory to allocate for the job&#34;&#34;&#34;
+
+    gpus: int = betterproto.int64_field(3)
+    &#34;&#34;&#34;The number of GPUs to allocate for the job&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.batch.v1.JobResourceRequirements.cpus"><code class="name">var <span class="ident">cpus</span> : float</code></dt>
+<dd>
+<div class="desc"><p>The number of CPUs to allocate for the job</p></div>
+</dd>
+<dt id="nitric.proto.batch.v1.JobResourceRequirements.gpus"><code class="name">var <span class="ident">gpus</span> : int</code></dt>
+<dd>
+<div class="desc"><p>The number of GPUs to allocate for the job</p></div>
+</dd>
+<dt id="nitric.proto.batch.v1.JobResourceRequirements.memory"><code class="name">var <span class="ident">memory</span> : int</code></dt>
+<dd>
+<div class="desc"><p>The amount of memory to allocate for the job</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.batch.v1.JobResponse"><code class="flex name class">
+<span>class <span class="ident">JobResponse</span></span>
+<span>(</span><span>success: bool = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>JobResponse(success: bool = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class JobResponse(betterproto.Message):
+    success: bool = betterproto.bool_field(1)
+    &#34;&#34;&#34;Mark if the job was successfully processed&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.batch.v1.JobResponse.success"><code class="name">var <span class="ident">success</span> : bool</code></dt>
+<dd>
+<div class="desc"><p>Mark if the job was successfully processed</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.batch.v1.JobStub"><code class="flex name class">
+<span>class <span class="ident">JobStub</span></span>
+<span>(</span><span>channel: Channel, *, timeout: Optional[float] = None, deadline: Optional[ForwardRef('Deadline')] = None, metadata: Union[Mapping[str, Union[str, bytes]], Collection[Tuple[str, Union[str, bytes]]], NoneType] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Base class for async gRPC clients.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class JobStub(betterproto.ServiceStub):
+    async def handle_job(
+        self,
+        client_message_iterator: Union[
+            AsyncIterable[&#34;ClientMessage&#34;], Iterable[&#34;ClientMessage&#34;]
+        ],
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional[&#34;Deadline&#34;] = None,
+        metadata: Optional[&#34;MetadataLike&#34;] = None
+    ) -&gt; AsyncIterator[&#34;ServerMessage&#34;]:
+        async for response in self._stream_stream(
+            &#34;/nitric.proto.batch.v1.Job/HandleJob&#34;,
+            client_message_iterator,
+            ClientMessage,
+            ServerMessage,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        ):
+            yield response</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.grpc.grpclib_client.ServiceStub</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.proto.batch.v1.JobStub.handle_job"><code class="name flex">
+<span>async def <span class="ident">handle_job</span></span>(<span>self, client_message_iterator: Union[AsyncIterable[ForwardRef('<a title="nitric.proto.batch.v1.ClientMessage" href="#nitric.proto.batch.v1.ClientMessage">ClientMessage</a>')], Iterable[ForwardRef('<a title="nitric.proto.batch.v1.ClientMessage" href="#nitric.proto.batch.v1.ClientMessage">ClientMessage</a>')]], *, timeout: Optional[float] = None, deadline: Optional[ForwardRef('Deadline')] = None, metadata: Optional[ForwardRef('MetadataLike')] = None) ‑> AsyncIterator[<a title="nitric.proto.batch.v1.ServerMessage" href="#nitric.proto.batch.v1.ServerMessage">ServerMessage</a>]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def handle_job(
+    self,
+    client_message_iterator: Union[
+        AsyncIterable[&#34;ClientMessage&#34;], Iterable[&#34;ClientMessage&#34;]
+    ],
+    *,
+    timeout: Optional[float] = None,
+    deadline: Optional[&#34;Deadline&#34;] = None,
+    metadata: Optional[&#34;MetadataLike&#34;] = None
+) -&gt; AsyncIterator[&#34;ServerMessage&#34;]:
+    async for response in self._stream_stream(
+        &#34;/nitric.proto.batch.v1.Job/HandleJob&#34;,
+        client_message_iterator,
+        ClientMessage,
+        ServerMessage,
+        timeout=timeout,
+        deadline=deadline,
+        metadata=metadata,
+    ):
+        yield response</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.batch.v1.JobSubmitRequest"><code class="flex name class">
+<span>class <span class="ident">JobSubmitRequest</span></span>
+<span>(</span><span>job_name: str = &lt;object object&gt;, data: <a title="nitric.proto.batch.v1.JobData" href="#nitric.proto.batch.v1.JobData">JobData</a> = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>JobSubmitRequest(job_name: str = <object object at 0x733dc69ac250>, data: 'JobData' = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class JobSubmitRequest(betterproto.Message):
+    job_name: str = betterproto.string_field(1)
+    &#34;&#34;&#34;The name of the job that should handle the data&#34;&#34;&#34;
+
+    data: &#34;JobData&#34; = betterproto.message_field(2)
+    &#34;&#34;&#34;The data to be processed by the job&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.batch.v1.JobSubmitRequest.data"><code class="name">var <span class="ident">data</span> : <a title="nitric.proto.batch.v1.JobData" href="#nitric.proto.batch.v1.JobData">JobData</a></code></dt>
+<dd>
+<div class="desc"><p>The data to be processed by the job</p></div>
+</dd>
+<dt id="nitric.proto.batch.v1.JobSubmitRequest.job_name"><code class="name">var <span class="ident">job_name</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The name of the job that should handle the data</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.batch.v1.JobSubmitResponse"><code class="flex name class">
+<span>class <span class="ident">JobSubmitResponse</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>JobSubmitResponse()</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class JobSubmitResponse(betterproto.Message):
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+</dd>
+<dt id="nitric.proto.batch.v1.RegistrationRequest"><code class="flex name class">
+<span>class <span class="ident">RegistrationRequest</span></span>
+<span>(</span><span>job_name: str = &lt;object object&gt;, requirements: <a title="nitric.proto.batch.v1.JobResourceRequirements" href="#nitric.proto.batch.v1.JobResourceRequirements">JobResourceRequirements</a> = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>RegistrationRequest(job_name: str = <object object at 0x733dc69ac250>, requirements: 'JobResourceRequirements' = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class RegistrationRequest(betterproto.Message):
+    job_name: str = betterproto.string_field(1)
+    requirements: &#34;JobResourceRequirements&#34; = betterproto.message_field(2)
+    &#34;&#34;&#34;Register with default requirements&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.batch.v1.RegistrationRequest.job_name"><code class="name">var <span class="ident">job_name</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.batch.v1.RegistrationRequest.requirements"><code class="name">var <span class="ident">requirements</span> : <a title="nitric.proto.batch.v1.JobResourceRequirements" href="#nitric.proto.batch.v1.JobResourceRequirements">JobResourceRequirements</a></code></dt>
+<dd>
+<div class="desc"><p>Register with default requirements</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.batch.v1.RegistrationResponse"><code class="flex name class">
+<span>class <span class="ident">RegistrationResponse</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>RegistrationResponse()</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class RegistrationResponse(betterproto.Message):
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+</dd>
+<dt id="nitric.proto.batch.v1.ServerMessage"><code class="flex name class">
+<span>class <span class="ident">ServerMessage</span></span>
+<span>(</span><span>id: str = &lt;object object&gt;, registration_response: <a title="nitric.proto.batch.v1.RegistrationResponse" href="#nitric.proto.batch.v1.RegistrationResponse">RegistrationResponse</a> = &lt;object object&gt;, job_request: <a title="nitric.proto.batch.v1.JobRequest" href="#nitric.proto.batch.v1.JobRequest">JobRequest</a> = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>ServerMessage is the message sent from the nitric server to the service</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class ServerMessage(betterproto.Message):
+    &#34;&#34;&#34;
+    ServerMessage is the message sent from the nitric server to the service
+    &#34;&#34;&#34;
+
+    id: str = betterproto.string_field(1)
+    &#34;&#34;&#34;globally unique ID of the request/response pair&#34;&#34;&#34;
+
+    registration_response: &#34;RegistrationResponse&#34; = betterproto.message_field(
+        2, group=&#34;content&#34;
+    )
+    &#34;&#34;&#34;
+    
+    &#34;&#34;&#34;
+
+    job_request: &#34;JobRequest&#34; = betterproto.message_field(3, group=&#34;content&#34;)
+    &#34;&#34;&#34;Request to a job handler&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.batch.v1.ServerMessage.id"><code class="name">var <span class="ident">id</span> : str</code></dt>
+<dd>
+<div class="desc"><p>globally unique ID of the request/response pair</p></div>
+</dd>
+<dt id="nitric.proto.batch.v1.ServerMessage.job_request"><code class="name">var <span class="ident">job_request</span> : <a title="nitric.proto.batch.v1.JobRequest" href="#nitric.proto.batch.v1.JobRequest">JobRequest</a></code></dt>
+<dd>
+<div class="desc"><p>Request to a job handler</p></div>
+</dd>
+<dt id="nitric.proto.batch.v1.ServerMessage.registration_response"><code class="name">var <span class="ident">registration_response</span> : <a title="nitric.proto.batch.v1.RegistrationResponse" href="#nitric.proto.batch.v1.RegistrationResponse">RegistrationResponse</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="nitric.proto.batch" href="../index.html">nitric.proto.batch</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="nitric.proto.batch.v1.BatchBase" href="#nitric.proto.batch.v1.BatchBase">BatchBase</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.batch.v1.BatchBase.submit_job" href="#nitric.proto.batch.v1.BatchBase.submit_job">submit_job</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.batch.v1.BatchStub" href="#nitric.proto.batch.v1.BatchStub">BatchStub</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.batch.v1.BatchStub.submit_job" href="#nitric.proto.batch.v1.BatchStub.submit_job">submit_job</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.batch.v1.ClientMessage" href="#nitric.proto.batch.v1.ClientMessage">ClientMessage</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.batch.v1.ClientMessage.id" href="#nitric.proto.batch.v1.ClientMessage.id">id</a></code></li>
+<li><code><a title="nitric.proto.batch.v1.ClientMessage.job_response" href="#nitric.proto.batch.v1.ClientMessage.job_response">job_response</a></code></li>
+<li><code><a title="nitric.proto.batch.v1.ClientMessage.registration_request" href="#nitric.proto.batch.v1.ClientMessage.registration_request">registration_request</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.batch.v1.JobBase" href="#nitric.proto.batch.v1.JobBase">JobBase</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.batch.v1.JobBase.handle_job" href="#nitric.proto.batch.v1.JobBase.handle_job">handle_job</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.batch.v1.JobData" href="#nitric.proto.batch.v1.JobData">JobData</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.batch.v1.JobData.struct" href="#nitric.proto.batch.v1.JobData.struct">struct</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.batch.v1.JobRequest" href="#nitric.proto.batch.v1.JobRequest">JobRequest</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.batch.v1.JobRequest.data" href="#nitric.proto.batch.v1.JobRequest.data">data</a></code></li>
+<li><code><a title="nitric.proto.batch.v1.JobRequest.job_name" href="#nitric.proto.batch.v1.JobRequest.job_name">job_name</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.batch.v1.JobResourceRequirements" href="#nitric.proto.batch.v1.JobResourceRequirements">JobResourceRequirements</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.batch.v1.JobResourceRequirements.cpus" href="#nitric.proto.batch.v1.JobResourceRequirements.cpus">cpus</a></code></li>
+<li><code><a title="nitric.proto.batch.v1.JobResourceRequirements.gpus" href="#nitric.proto.batch.v1.JobResourceRequirements.gpus">gpus</a></code></li>
+<li><code><a title="nitric.proto.batch.v1.JobResourceRequirements.memory" href="#nitric.proto.batch.v1.JobResourceRequirements.memory">memory</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.batch.v1.JobResponse" href="#nitric.proto.batch.v1.JobResponse">JobResponse</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.batch.v1.JobResponse.success" href="#nitric.proto.batch.v1.JobResponse.success">success</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.batch.v1.JobStub" href="#nitric.proto.batch.v1.JobStub">JobStub</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.batch.v1.JobStub.handle_job" href="#nitric.proto.batch.v1.JobStub.handle_job">handle_job</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.batch.v1.JobSubmitRequest" href="#nitric.proto.batch.v1.JobSubmitRequest">JobSubmitRequest</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.batch.v1.JobSubmitRequest.data" href="#nitric.proto.batch.v1.JobSubmitRequest.data">data</a></code></li>
+<li><code><a title="nitric.proto.batch.v1.JobSubmitRequest.job_name" href="#nitric.proto.batch.v1.JobSubmitRequest.job_name">job_name</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.batch.v1.JobSubmitResponse" href="#nitric.proto.batch.v1.JobSubmitResponse">JobSubmitResponse</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.proto.batch.v1.RegistrationRequest" href="#nitric.proto.batch.v1.RegistrationRequest">RegistrationRequest</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.batch.v1.RegistrationRequest.job_name" href="#nitric.proto.batch.v1.RegistrationRequest.job_name">job_name</a></code></li>
+<li><code><a title="nitric.proto.batch.v1.RegistrationRequest.requirements" href="#nitric.proto.batch.v1.RegistrationRequest.requirements">requirements</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.batch.v1.RegistrationResponse" href="#nitric.proto.batch.v1.RegistrationResponse">RegistrationResponse</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.proto.batch.v1.ServerMessage" href="#nitric.proto.batch.v1.ServerMessage">ServerMessage</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.batch.v1.ServerMessage.id" href="#nitric.proto.batch.v1.ServerMessage.id">id</a></code></li>
+<li><code><a title="nitric.proto.batch.v1.ServerMessage.job_request" href="#nitric.proto.batch.v1.ServerMessage.job_request">job_request</a></code></li>
+<li><code><a title="nitric.proto.batch.v1.ServerMessage.registration_response" href="#nitric.proto.batch.v1.ServerMessage.registration_response">registration_response</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

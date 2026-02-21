@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>nitric.lifecycle API documentation</title>
+<meta name="description" content="Lifecycle utilities for Nitric applications …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>nitric.lifecycle</code></h1>
+</header>
+<section id="section-intro">
+<p>Lifecycle utilities for Nitric applications.</p>
+<p>This module provides utilities for detecting the current lifecycle stage and
+conditionally executing code based on the current stage.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">#
+# Copyright (c) 2021 Nitric Technologies Pty Ltd.
+#
+# This file is part of Nitric Python 3 SDK.
+# See https://github.com/nitrictech/python-sdk for further info.
+#
+# Licensed under the Apache License, Version 2.0 (the &#34;License&#34;);
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an &#34;AS IS&#34; BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+&#34;&#34;&#34;
+Lifecycle utilities for Nitric applications.
+
+This module provides utilities for detecting the current lifecycle stage and
+conditionally executing code based on the current stage.
+&#34;&#34;&#34;
+
+from nitric.lifecycle.lifecycle import (
+    Lifecycle,
+    LifecycleStage,
+    get_current_lifecycle,
+    is_collecting,
+    is_in_lifecycle,
+    is_running,
+    when_collecting,
+    when_in_lifecycles,
+    when_running,
+)
+
+__all__ = [
+    &#34;Lifecycle&#34;,
+    &#34;LifecycleStage&#34;,
+    &#34;get_current_lifecycle&#34;,
+    &#34;is_collecting&#34;,
+    &#34;is_in_lifecycle&#34;,
+    &#34;is_running&#34;,
+    &#34;when_collecting&#34;,
+    &#34;when_in_lifecycles&#34;,
+    &#34;when_running&#34;,
+]</code></pre>
+</details>
+</section>
+<section>
+<h2 class="section-title" id="header-submodules">Sub-modules</h2>
+<dl>
+<dt><code class="name"><a title="nitric.lifecycle.lifecycle" href="lifecycle.html">nitric.lifecycle.lifecycle</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="nitric.lifecycle.get_current_lifecycle"><code class="name flex">
+<span>def <span class="ident">get_current_lifecycle</span></span>(<span>) ‑> <a title="nitric.lifecycle.lifecycle.LifecycleStage" href="lifecycle.html#nitric.lifecycle.lifecycle.LifecycleStage">LifecycleStage</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the current lifecycle stage from the environment variable.</p>
+<h2 id="returns">Returns</h2>
+<p>The current lifecycle stage.</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>ValueError</code></dt>
+<dd>If the NITRIC_ENVIRONMENT environment variable is not set or is invalid.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_current_lifecycle() -&gt; LifecycleStage:
+    &#34;&#34;&#34;
+    Get the current lifecycle stage from the environment variable.
+
+    Returns:
+        The current lifecycle stage.
+
+    Raises:
+        ValueError: If the NITRIC_ENVIRONMENT environment variable is not set or is invalid.
+    &#34;&#34;&#34;
+    lifecycle = os.environ.get(NITRIC_ENVIRONMENT)
+
+    if not lifecycle or lifecycle not in [stage.value for stage in LifecycleStage]:
+        raise ValueError(
+            f&#34;Unable to determine the current Nitric lifecycle, please ensure the {NITRIC_ENVIRONMENT} &#34;
+            &#34;environment variable is set&#34;
+        )
+
+    return LifecycleStage(lifecycle)</code></pre>
+</details>
+</dd>
+<dt id="nitric.lifecycle.is_collecting"><code class="name flex">
+<span>def <span class="ident">is_collecting</span></span>(<span>) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if the current lifecycle is collecting application requirements.</p>
+<h2 id="returns">Returns</h2>
+<p>True if the current stage is collecting, False otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_collecting() -&gt; bool:
+    &#34;&#34;&#34;
+    Check if the current lifecycle is collecting application requirements.
+
+    Returns:
+        True if the current stage is collecting, False otherwise.
+    &#34;&#34;&#34;
+    return is_in_lifecycle([LifecycleStage.BUILD])</code></pre>
+</details>
+</dd>
+<dt id="nitric.lifecycle.is_in_lifecycle"><code class="name flex">
+<span>def <span class="ident">is_in_lifecycle</span></span>(<span>stages: List[<a title="nitric.lifecycle.lifecycle.LifecycleStage" href="lifecycle.html#nitric.lifecycle.lifecycle.LifecycleStage">LifecycleStage</a>]) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if the current environment is one of the provided stages.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>stages</code></strong></dt>
+<dd>The stages to check against.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>True if the current stage is in the provided stages, False otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_in_lifecycle(stages: List[LifecycleStage]) -&gt; bool:
+    &#34;&#34;&#34;
+    Check if the current environment is one of the provided stages.
+
+    Args:
+        stages: The stages to check against.
+
+    Returns:
+        True if the current stage is in the provided stages, False otherwise.
+    &#34;&#34;&#34;
+    current_stage = get_current_lifecycle()
+    return current_stage in stages</code></pre>
+</details>
+</dd>
+<dt id="nitric.lifecycle.is_running"><code class="name flex">
+<span>def <span class="ident">is_running</span></span>(<span>) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if the current lifecycle is running the app.</p>
+<h2 id="returns">Returns</h2>
+<p>True if the current stage is running, False otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_running() -&gt; bool:
+    &#34;&#34;&#34;
+    Check if the current lifecycle is running the app.
+
+    Returns:
+        True if the current stage is running, False otherwise.
+    &#34;&#34;&#34;
+    return is_in_lifecycle([LifecycleStage.LOCAL_RUN, LifecycleStage.CLOUD])</code></pre>
+</details>
+</dd>
+<dt id="nitric.lifecycle.when_collecting"><code class="name flex">
+<span>def <span class="ident">when_collecting</span></span>(<span>callback: Callable[[], ~T]) ‑> Optional[~T]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>If the current environment is collecting requirements, execute the provided callback.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>callback</code></strong></dt>
+<dd>The callback to execute if the current stage is collecting.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>The result of the callback if executed, None otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def when_collecting(callback: Callable[[], T]) -&gt; Optional[T]:
+    &#34;&#34;&#34;
+    If the current environment is collecting requirements, execute the provided callback.
+
+    Args:
+        callback: The callback to execute if the current stage is collecting.
+
+    Returns:
+        The result of the callback if executed, None otherwise.
+    &#34;&#34;&#34;
+    return when_in_lifecycles([LifecycleStage.BUILD], callback)</code></pre>
+</details>
+</dd>
+<dt id="nitric.lifecycle.when_in_lifecycles"><code class="name flex">
+<span>def <span class="ident">when_in_lifecycles</span></span>(<span>stages: List[<a title="nitric.lifecycle.lifecycle.LifecycleStage" href="lifecycle.html#nitric.lifecycle.lifecycle.LifecycleStage">LifecycleStage</a>], callback: Callable[[], ~T]) ‑> Optional[~T]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>If the current environment is one of the provided stages, execute the provided callback.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>stages</code></strong></dt>
+<dd>The stages to check against.</dd>
+<dt><strong><code>callback</code></strong></dt>
+<dd>The callback to execute if the current stage is in the provided stages.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>The result of the callback if executed, None otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def when_in_lifecycles(stages: List[LifecycleStage], callback: Callable[[], T]) -&gt; Optional[T]:
+    &#34;&#34;&#34;
+    If the current environment is one of the provided stages, execute the provided callback.
+
+    Args:
+        stages: The stages to check against.
+        callback: The callback to execute if the current stage is in the provided stages.
+
+    Returns:
+        The result of the callback if executed, None otherwise.
+    &#34;&#34;&#34;
+    if is_in_lifecycle(stages):
+        return callback()
+    return None</code></pre>
+</details>
+</dd>
+<dt id="nitric.lifecycle.when_running"><code class="name flex">
+<span>def <span class="ident">when_running</span></span>(<span>callback: Callable[[], ~T]) ‑> Optional[~T]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>If the current environment is running (local or cloud), execute the provided callback.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>callback</code></strong></dt>
+<dd>The callback to execute if the current stage is running.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>The result of the callback if executed, None otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def when_running(callback: Callable[[], T]) -&gt; Optional[T]:
+    &#34;&#34;&#34;
+    If the current environment is running (local or cloud), execute the provided callback.
+
+    Args:
+        callback: The callback to execute if the current stage is running.
+
+    Returns:
+        The result of the callback if executed, None otherwise.
+    &#34;&#34;&#34;
+    return when_in_lifecycles([LifecycleStage.LOCAL_RUN, LifecycleStage.CLOUD], callback)</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="nitric.lifecycle.Lifecycle"><code class="flex name class">
+<span>class <span class="ident">Lifecycle</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Lifecycle utilities for Nitric applications.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Lifecycle:
+    &#34;&#34;&#34;Lifecycle utilities for Nitric applications.&#34;&#34;&#34;
+
+    @staticmethod
+    def lifecycle_is(stages: List[LifecycleStage]) -&gt; bool:
+        &#34;&#34;&#34;
+        Check if the current environment is one of the provided stages.
+
+        Args:
+            stages: The stages to check against.
+
+        Returns:
+            True if the current stage is in the provided stages, False otherwise.
+        &#34;&#34;&#34;
+        return is_in_lifecycle(stages)
+
+    @staticmethod
+    def is_collecting() -&gt; bool:
+        &#34;&#34;&#34;
+        Check if the current lifecycle is collecting application requirements.
+
+        Returns:
+            True if the current stage is collecting, False otherwise.
+        &#34;&#34;&#34;
+        return is_collecting()
+
+    @staticmethod
+    def is_running() -&gt; bool:
+        &#34;&#34;&#34;
+        Check if the current lifecycle is running the app.
+
+        Returns:
+            True if the current stage is running, False otherwise.
+        &#34;&#34;&#34;
+        return is_running()
+
+    @staticmethod
+    def when(stages: List[LifecycleStage], callback: Callable[[], T]) -&gt; Optional[T]:
+        &#34;&#34;&#34;
+        If the current environment is one of the provided stages, execute the provided callback.
+
+        Args:
+            stages: The stages to check against.
+            callback: The callback to execute if the current stage is in the provided stages.
+
+        Returns:
+            The result of the callback if executed, None otherwise.
+        &#34;&#34;&#34;
+        return when_in_lifecycles(stages, callback)
+
+    @staticmethod
+    def when_collecting(callback: Callable[[], T]) -&gt; Optional[T]:
+        &#34;&#34;&#34;
+        If the current environment is collecting requirements, execute the provided callback.
+
+        Args:
+            callback: The callback to execute if the current stage is collecting.
+
+        Returns:
+            The result of the callback if executed, None otherwise.
+        &#34;&#34;&#34;
+        return when_collecting(callback)
+
+    @staticmethod
+    def when_running(callback: Callable[[], T]) -&gt; Optional[T]:
+        &#34;&#34;&#34;
+        If the current environment is running (local or cloud), execute the provided callback.
+
+        Args:
+            callback: The callback to execute if the current stage is running.
+
+        Returns:
+            The result of the callback if executed, None otherwise.
+        &#34;&#34;&#34;
+        return when_running(callback)</code></pre>
+</details>
+<h3>Static methods</h3>
+<dl>
+<dt id="nitric.lifecycle.Lifecycle.is_collecting"><code class="name flex">
+<span>def <span class="ident">is_collecting</span></span>(<span>) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if the current lifecycle is collecting application requirements.</p>
+<h2 id="returns">Returns</h2>
+<p>True if the current stage is collecting, False otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def is_collecting() -&gt; bool:
+    &#34;&#34;&#34;
+    Check if the current lifecycle is collecting application requirements.
+
+    Returns:
+        True if the current stage is collecting, False otherwise.
+    &#34;&#34;&#34;
+    return is_collecting()</code></pre>
+</details>
+</dd>
+<dt id="nitric.lifecycle.Lifecycle.is_running"><code class="name flex">
+<span>def <span class="ident">is_running</span></span>(<span>) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if the current lifecycle is running the app.</p>
+<h2 id="returns">Returns</h2>
+<p>True if the current stage is running, False otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def is_running() -&gt; bool:
+    &#34;&#34;&#34;
+    Check if the current lifecycle is running the app.
+
+    Returns:
+        True if the current stage is running, False otherwise.
+    &#34;&#34;&#34;
+    return is_running()</code></pre>
+</details>
+</dd>
+<dt id="nitric.lifecycle.Lifecycle.lifecycle_is"><code class="name flex">
+<span>def <span class="ident">lifecycle_is</span></span>(<span>stages: List[<a title="nitric.lifecycle.lifecycle.LifecycleStage" href="lifecycle.html#nitric.lifecycle.lifecycle.LifecycleStage">LifecycleStage</a>]) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if the current environment is one of the provided stages.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>stages</code></strong></dt>
+<dd>The stages to check against.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>True if the current stage is in the provided stages, False otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def lifecycle_is(stages: List[LifecycleStage]) -&gt; bool:
+    &#34;&#34;&#34;
+    Check if the current environment is one of the provided stages.
+
+    Args:
+        stages: The stages to check against.
+
+    Returns:
+        True if the current stage is in the provided stages, False otherwise.
+    &#34;&#34;&#34;
+    return is_in_lifecycle(stages)</code></pre>
+</details>
+</dd>
+<dt id="nitric.lifecycle.Lifecycle.when"><code class="name flex">
+<span>def <span class="ident">when</span></span>(<span>stages: List[<a title="nitric.lifecycle.lifecycle.LifecycleStage" href="lifecycle.html#nitric.lifecycle.lifecycle.LifecycleStage">LifecycleStage</a>], callback: Callable[[], ~T]) ‑> Optional[~T]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>If the current environment is one of the provided stages, execute the provided callback.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>stages</code></strong></dt>
+<dd>The stages to check against.</dd>
+<dt><strong><code>callback</code></strong></dt>
+<dd>The callback to execute if the current stage is in the provided stages.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>The result of the callback if executed, None otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def when(stages: List[LifecycleStage], callback: Callable[[], T]) -&gt; Optional[T]:
+    &#34;&#34;&#34;
+    If the current environment is one of the provided stages, execute the provided callback.
+
+    Args:
+        stages: The stages to check against.
+        callback: The callback to execute if the current stage is in the provided stages.
+
+    Returns:
+        The result of the callback if executed, None otherwise.
+    &#34;&#34;&#34;
+    return when_in_lifecycles(stages, callback)</code></pre>
+</details>
+</dd>
+<dt id="nitric.lifecycle.Lifecycle.when_collecting"><code class="name flex">
+<span>def <span class="ident">when_collecting</span></span>(<span>callback: Callable[[], ~T]) ‑> Optional[~T]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>If the current environment is collecting requirements, execute the provided callback.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>callback</code></strong></dt>
+<dd>The callback to execute if the current stage is collecting.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>The result of the callback if executed, None otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def when_collecting(callback: Callable[[], T]) -&gt; Optional[T]:
+    &#34;&#34;&#34;
+    If the current environment is collecting requirements, execute the provided callback.
+
+    Args:
+        callback: The callback to execute if the current stage is collecting.
+
+    Returns:
+        The result of the callback if executed, None otherwise.
+    &#34;&#34;&#34;
+    return when_collecting(callback)</code></pre>
+</details>
+</dd>
+<dt id="nitric.lifecycle.Lifecycle.when_running"><code class="name flex">
+<span>def <span class="ident">when_running</span></span>(<span>callback: Callable[[], ~T]) ‑> Optional[~T]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>If the current environment is running (local or cloud), execute the provided callback.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>callback</code></strong></dt>
+<dd>The callback to execute if the current stage is running.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>The result of the callback if executed, None otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def when_running(callback: Callable[[], T]) -&gt; Optional[T]:
+    &#34;&#34;&#34;
+    If the current environment is running (local or cloud), execute the provided callback.
+
+    Args:
+        callback: The callback to execute if the current stage is running.
+
+    Returns:
+        The result of the callback if executed, None otherwise.
+    &#34;&#34;&#34;
+    return when_running(callback)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.lifecycle.LifecycleStage"><code class="flex name class">
+<span>class <span class="ident">LifecycleStage</span></span>
+<span>(</span><span>*args, **kwds)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents the different stages of the Nitric application lifecycle.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LifecycleStage(Enum):
+    &#34;&#34;&#34;Represents the different stages of the Nitric application lifecycle.&#34;&#34;&#34;
+
+    # Local development run (using nitric run/start)
+    LOCAL_RUN = &#39;run&#39;
+
+    # Local development requirements building/collection (using nitric up)
+    BUILD = &#39;build&#39;
+
+    # When the code is running in a deployed environment
+    CLOUD = &#39;cloud&#39;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.lifecycle.LifecycleStage.BUILD"><code class="name">var <span class="ident">BUILD</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.lifecycle.LifecycleStage.CLOUD"><code class="name">var <span class="ident">CLOUD</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.lifecycle.LifecycleStage.LOCAL_RUN"><code class="name">var <span class="ident">LOCAL_RUN</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="nitric" href="../index.html">nitric</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-submodules">Sub-modules</a></h3>
+<ul>
+<li><code><a title="nitric.lifecycle.lifecycle" href="lifecycle.html">nitric.lifecycle.lifecycle</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="nitric.lifecycle.get_current_lifecycle" href="#nitric.lifecycle.get_current_lifecycle">get_current_lifecycle</a></code></li>
+<li><code><a title="nitric.lifecycle.is_collecting" href="#nitric.lifecycle.is_collecting">is_collecting</a></code></li>
+<li><code><a title="nitric.lifecycle.is_in_lifecycle" href="#nitric.lifecycle.is_in_lifecycle">is_in_lifecycle</a></code></li>
+<li><code><a title="nitric.lifecycle.is_running" href="#nitric.lifecycle.is_running">is_running</a></code></li>
+<li><code><a title="nitric.lifecycle.when_collecting" href="#nitric.lifecycle.when_collecting">when_collecting</a></code></li>
+<li><code><a title="nitric.lifecycle.when_in_lifecycles" href="#nitric.lifecycle.when_in_lifecycles">when_in_lifecycles</a></code></li>
+<li><code><a title="nitric.lifecycle.when_running" href="#nitric.lifecycle.when_running">when_running</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="nitric.lifecycle.Lifecycle" href="#nitric.lifecycle.Lifecycle">Lifecycle</a></code></h4>
+<ul class="two-column">
+<li><code><a title="nitric.lifecycle.Lifecycle.is_collecting" href="#nitric.lifecycle.Lifecycle.is_collecting">is_collecting</a></code></li>
+<li><code><a title="nitric.lifecycle.Lifecycle.is_running" href="#nitric.lifecycle.Lifecycle.is_running">is_running</a></code></li>
+<li><code><a title="nitric.lifecycle.Lifecycle.lifecycle_is" href="#nitric.lifecycle.Lifecycle.lifecycle_is">lifecycle_is</a></code></li>
+<li><code><a title="nitric.lifecycle.Lifecycle.when" href="#nitric.lifecycle.Lifecycle.when">when</a></code></li>
+<li><code><a title="nitric.lifecycle.Lifecycle.when_collecting" href="#nitric.lifecycle.Lifecycle.when_collecting">when_collecting</a></code></li>
+<li><code><a title="nitric.lifecycle.Lifecycle.when_running" href="#nitric.lifecycle.Lifecycle.when_running">when_running</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.lifecycle.LifecycleStage" href="#nitric.lifecycle.LifecycleStage">LifecycleStage</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.lifecycle.LifecycleStage.BUILD" href="#nitric.lifecycle.LifecycleStage.BUILD">BUILD</a></code></li>
+<li><code><a title="nitric.lifecycle.LifecycleStage.CLOUD" href="#nitric.lifecycle.LifecycleStage.CLOUD">CLOUD</a></code></li>
+<li><code><a title="nitric.lifecycle.LifecycleStage.LOCAL_RUN" href="#nitric.lifecycle.LifecycleStage.LOCAL_RUN">LOCAL_RUN</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

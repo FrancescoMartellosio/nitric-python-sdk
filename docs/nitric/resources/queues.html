@@ -46,27 +46,153 @@
 #
 from __future__ import annotations
 
-from nitric.exception import exception_from_grpc_error
-from typing import List, Union
-from enum import Enum
+from dataclasses import dataclass, field
+from typing import Any, List, Literal, Optional, Union
+
 from grpclib import GRPCError
-from nitric.api.queues import QueueRef, Queues
+from grpclib.client import Channel
+
 from nitric.application import Nitric
-from nitric.proto.nitric.resource.v1 import (
-    Resource,
-    ResourceType,
-    Action,
-    ResourceDeclareRequest,
-)
+from nitric.exception import exception_from_grpc_error
+from nitric.proto.queues.v1 import DequeuedMessage as ProtoDequeuedMessage
+from nitric.proto.queues.v1 import QueueCompleteRequest, QueueDequeueRequest, QueueEnqueueRequest, QueueMessage
+from nitric.proto.queues.v1 import QueuesStub as QueueServiceStub
+from nitric.proto.resources.v1 import Action, ResourceDeclareRequest, ResourceIdentifier, ResourceType
+from nitric.resources.resource import SecureResource
+from nitric.utils import dict_from_struct, struct_from_dict
+from nitric.channel import ChannelManager
 
-from nitric.resources.base import SecureResource
+
+@dataclass(frozen=True, order=True)
+class DequeuedMessage(object):
+    &#34;&#34;&#34;A reference to a message received from a Queue, with a lease.&#34;&#34;&#34;
+
+    lease_id: str = field()
+    _queue: QueueRef = field()
+    payload: dict[str, Any] = field(default_factory=dict)
+
+    async def complete(self):
+        &#34;&#34;&#34;
+        Mark this message as complete and remove it from the queue.
+
+        Only callable for messages that have been dequeued.
+        &#34;&#34;&#34;
+        try:
+            await self._queue._queue_stub.complete(
+                queue_complete_request=QueueCompleteRequest(queue_name=self._queue.name, lease_id=self.lease_id)
+            )
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
 
 
-class QueuePermission(Enum):
-    &#34;&#34;&#34;Valid query expression operators.&#34;&#34;&#34;
+class EnqueueFailedException(Exception):
+    &#34;&#34;&#34;An exception raised when a message fails to be enqueued.&#34;&#34;&#34;
 
-    sending = &#34;sending&#34;
-    receiving = &#34;receiving&#34;
+
+@dataclass(frozen=True, order=True)
+class FailedMessage:
+    &#34;&#34;&#34;Represents a failed queue publish.&#34;&#34;&#34;
+
+    message: dict[str, Any] = field(default_factory=dict)
+    details: str = field(default=&#34;&#34;)
+
+
+def _proto_to_dequeued(message: ProtoDequeuedMessage, queue: QueueRef) -&gt; DequeuedMessage:
+    &#34;&#34;&#34;
+    Convert a DequeuedMessage (protocol buffers) to a DequeuedMessage (python SDK).
+
+    :param message: to convert
+    :return: converted message
+    &#34;&#34;&#34;
+    return DequeuedMessage(
+        payload=dict_from_struct(message.message.struct_payload),
+        lease_id=message.lease_id,
+        _queue=queue,
+    )
+
+
+class QueueRef(object):
+    &#34;&#34;&#34;A reference to a queue from a queue service, used to perform operations on that queue.&#34;&#34;&#34;
+
+    _channel: Channel
+    _queue_stub: QueueServiceStub
+    name: str
+
+    def __init__(self, name: str) -&gt; None:
+        &#34;&#34;&#34;Construct a Nitric Queue Client.&#34;&#34;&#34;
+        self._channel: Channel = ChannelManager.get_channel()
+        self._queue_stub = QueueServiceStub(channel=self._channel)
+        self.name = name
+
+    def __del__(self) -&gt; None:
+        # close the channel when this client is destroyed
+        if self._channel is not None:
+            self._channel.close()
+
+    async def enqueue(self, messages: Union[dict[str, Any], List[dict[str, Any]]]) -&gt; Union[None, List[FailedMessage]]:
+        &#34;&#34;&#34;
+        Send one or more messages to this queue.
+
+        If a list of messages is provided this function will return a list containing any messages that failed
+        to be sent to the queue.
+
+        :param messages: A message or list of messages to send to the queue.
+        &#34;&#34;&#34;
+        if not isinstance(messages, list):
+            messages = [messages]
+
+        try:
+            resp = await self._queue_stub.enqueue(
+                queue_enqueue_request=QueueEnqueueRequest(
+                    queue_name=self.name,
+                    messages=[QueueMessage(struct_payload=struct_from_dict(message)) for message in messages],
+                )
+            )
+
+            if len(resp.failed_messages) &gt; 0:
+                if len(messages) == 1:
+                    raise EnqueueFailedException(resp.failed_messages[0].details)
+
+                return [
+                    FailedMessage(
+                        message=dict_from_struct(failed_message.message.struct_payload), details=failed_message.details
+                    )
+                    for failed_message in resp.failed_messages
+                ]
+
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+        return None
+
+    async def dequeue(self, limit: Optional[int] = None) -&gt; List[DequeuedMessage]:
+        &#34;&#34;&#34;
+        Pop 1 or more message from the queue, up to the depth limit.
+
+        DequeuedMessages are messages that are leased for a limited period of time, where they may be worked on.
+        Once complete or failed they must be acknowledged using the request specific leaseId.
+
+        If the lease on a queue item expires before it is acknowledged the task will be
+        returned to the queue for reprocessing.
+
+        :param limit: The maximum number of messages to dequeue. Default: 1, Min: 1.
+        :return: Messages popped from the queue.
+        &#34;&#34;&#34;
+        # Set the default and minimum depth to 1.
+        if limit is None or limit &lt; 1:
+            limit = 1
+
+        try:
+            response = await self._queue_stub.dequeue(
+                queue_dequeue_request=QueueDequeueRequest(queue_name=self.name, depth=limit)
+            )
+            # Map the response protobuf response items to Python SDK objects
+            return [_proto_to_dequeued(message=message, queue=self) for message in response.messages]
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+
+QueuePermission = Literal[&#34;enqueue&#34;, &#34;dequeue&#34;]
 
 
 class Queue(SecureResource):
@@ -77,39 +203,34 @@ class Queue(SecureResource):
 
     def __init__(self, name: str):
         &#34;&#34;&#34;Construct a new queue resource.&#34;&#34;&#34;
-        super().__init__()
-        self.name = name
+        super().__init__(name)
 
-    def _to_resource(self) -&gt; Resource:
-        return Resource(name=self.name, type=ResourceType.Queue)
+    def _to_resource_id(self) -&gt; ResourceIdentifier:
+        return ResourceIdentifier(name=self.name, type=ResourceType.Queue)
 
-    def _perms_to_actions(self, *args: Union[QueuePermission, str]) -&gt; List[Action]:
-        permission_actions_map = {
-            QueuePermission.sending: [Action.QueueSend, Action.QueueList, Action.QueueDetail],
-            QueuePermission.receiving: [Action.QueueReceive, Action.QueueList, Action.QueueDetail],
+    def _perms_to_actions(self, *args: QueuePermission) -&gt; List[Action]:
+        permission_actions_map: dict[QueuePermission, List[Action]] = {
+            &#34;enqueue&#34;: [Action.QueueEnqueue],
+            &#34;dequeue&#34;: [Action.QueueDequeue],
         }
-        # convert strings to the enum value where needed
-        perms = [
-            permission if isinstance(permission, QueuePermission) else QueuePermission[permission.lower()]
-            for permission in args
-        ]
 
-        return [action for perm in perms for action in permission_actions_map[perm]]
+        return [action for perm in args for action in permission_actions_map[perm]]
 
-    async def _register(self):
+    async def _register(self) -&gt; None:
         try:
             await self._resources_stub.declare(
-                resource_declare_request=ResourceDeclareRequest(resource=self._to_resource())
+                resource_declare_request=ResourceDeclareRequest(id=self._to_resource_id())
             )
         except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err)
+            raise exception_from_grpc_error(grpc_err) from grpc_err
 
-    def allow(self, *args: Union[QueuePermission, str]) -&gt; QueueRef:
+    def allow(self, perm: QueuePermission, *args: QueuePermission) -&gt; QueueRef:
         &#34;&#34;&#34;Request the required permissions for this queue.&#34;&#34;&#34;
         # Ensure registration of the resource is complete before requesting permissions.
-        self._register_policy(*args)
+        str_args = [str(perm)] + [str(permission) for permission in args]
+        self._register_policy(*str_args)
 
-        return Queues().queue(self.name)
+        return QueueRef(self.name)
 
 
 def queue(name: str) -&gt; Queue:
@@ -118,7 +239,7 @@ def queue(name: str) -&gt; Queue:
 
     If a queue has already been registered with the same name, the original reference will be reused.
     &#34;&#34;&#34;
-    return Nitric._create_resource(Queue, name)</code></pre>
+    return Nitric._create_resource(Queue, name)  # type: ignore pylint: disable=protected-access</code></pre>
 </details>
 </section>
 <section>
@@ -144,7 +265,7 @@ def queue(name: str) -&gt; Queue:
 
     If a queue has already been registered with the same name, the original reference will be reused.
     &#34;&#34;&#34;
-    return Nitric._create_resource(Queue, name)</code></pre>
+    return Nitric._create_resource(Queue, name)  # type: ignore pylint: disable=protected-access</code></pre>
 </details>
 </dd>
 </dl>
@@ -152,6 +273,124 @@ def queue(name: str) -&gt; Queue:
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
+<dt id="nitric.resources.queues.DequeuedMessage"><code class="flex name class">
+<span>class <span class="ident">DequeuedMessage</span></span>
+<span>(</span><span>lease_id: str, _queue: <a title="nitric.resources.queues.QueueRef" href="#nitric.resources.queues.QueueRef">QueueRef</a>, payload: dict[str, Any] = &lt;factory&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A reference to a message received from a Queue, with a lease.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(frozen=True, order=True)
+class DequeuedMessage(object):
+    &#34;&#34;&#34;A reference to a message received from a Queue, with a lease.&#34;&#34;&#34;
+
+    lease_id: str = field()
+    _queue: QueueRef = field()
+    payload: dict[str, Any] = field(default_factory=dict)
+
+    async def complete(self):
+        &#34;&#34;&#34;
+        Mark this message as complete and remove it from the queue.
+
+        Only callable for messages that have been dequeued.
+        &#34;&#34;&#34;
+        try:
+            await self._queue._queue_stub.complete(
+                queue_complete_request=QueueCompleteRequest(queue_name=self._queue.name, lease_id=self.lease_id)
+            )
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.resources.queues.DequeuedMessage.lease_id"><code class="name">var <span class="ident">lease_id</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.resources.queues.DequeuedMessage.payload"><code class="name">var <span class="ident">payload</span> : dict[str, typing.Any]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.resources.queues.DequeuedMessage.complete"><code class="name flex">
+<span>async def <span class="ident">complete</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Mark this message as complete and remove it from the queue.</p>
+<p>Only callable for messages that have been dequeued.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def complete(self):
+    &#34;&#34;&#34;
+    Mark this message as complete and remove it from the queue.
+
+    Only callable for messages that have been dequeued.
+    &#34;&#34;&#34;
+    try:
+        await self._queue._queue_stub.complete(
+            queue_complete_request=QueueCompleteRequest(queue_name=self._queue.name, lease_id=self.lease_id)
+        )
+    except GRPCError as grpc_err:
+        raise exception_from_grpc_error(grpc_err) from grpc_err</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.resources.queues.EnqueueFailedException"><code class="flex name class">
+<span>class <span class="ident">EnqueueFailedException</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An exception raised when a message fails to be enqueued.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class EnqueueFailedException(Exception):
+    &#34;&#34;&#34;An exception raised when a message fails to be enqueued.&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
+<dt id="nitric.resources.queues.FailedMessage"><code class="flex name class">
+<span>class <span class="ident">FailedMessage</span></span>
+<span>(</span><span>message: dict[str, Any] = &lt;factory&gt;, details: str = '')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents a failed queue publish.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(frozen=True, order=True)
+class FailedMessage:
+    &#34;&#34;&#34;Represents a failed queue publish.&#34;&#34;&#34;
+
+    message: dict[str, Any] = field(default_factory=dict)
+    details: str = field(default=&#34;&#34;)</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.resources.queues.FailedMessage.details"><code class="name">var <span class="ident">details</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.resources.queues.FailedMessage.message"><code class="name">var <span class="ident">message</span> : dict[str, typing.Any]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
 <dt id="nitric.resources.queues.Queue"><code class="flex name class">
 <span>class <span class="ident">Queue</span></span>
 <span>(</span><span>name: str)</span>
@@ -171,49 +410,44 @@ def queue(name: str) -&gt; Queue:
 
     def __init__(self, name: str):
         &#34;&#34;&#34;Construct a new queue resource.&#34;&#34;&#34;
-        super().__init__()
-        self.name = name
+        super().__init__(name)
 
-    def _to_resource(self) -&gt; Resource:
-        return Resource(name=self.name, type=ResourceType.Queue)
+    def _to_resource_id(self) -&gt; ResourceIdentifier:
+        return ResourceIdentifier(name=self.name, type=ResourceType.Queue)
 
-    def _perms_to_actions(self, *args: Union[QueuePermission, str]) -&gt; List[Action]:
-        permission_actions_map = {
-            QueuePermission.sending: [Action.QueueSend, Action.QueueList, Action.QueueDetail],
-            QueuePermission.receiving: [Action.QueueReceive, Action.QueueList, Action.QueueDetail],
+    def _perms_to_actions(self, *args: QueuePermission) -&gt; List[Action]:
+        permission_actions_map: dict[QueuePermission, List[Action]] = {
+            &#34;enqueue&#34;: [Action.QueueEnqueue],
+            &#34;dequeue&#34;: [Action.QueueDequeue],
         }
-        # convert strings to the enum value where needed
-        perms = [
-            permission if isinstance(permission, QueuePermission) else QueuePermission[permission.lower()]
-            for permission in args
-        ]
 
-        return [action for perm in perms for action in permission_actions_map[perm]]
+        return [action for perm in args for action in permission_actions_map[perm]]
 
-    async def _register(self):
+    async def _register(self) -&gt; None:
         try:
             await self._resources_stub.declare(
-                resource_declare_request=ResourceDeclareRequest(resource=self._to_resource())
+                resource_declare_request=ResourceDeclareRequest(id=self._to_resource_id())
             )
         except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err)
+            raise exception_from_grpc_error(grpc_err) from grpc_err
 
-    def allow(self, *args: Union[QueuePermission, str]) -&gt; QueueRef:
+    def allow(self, perm: QueuePermission, *args: QueuePermission) -&gt; QueueRef:
         &#34;&#34;&#34;Request the required permissions for this queue.&#34;&#34;&#34;
         # Ensure registration of the resource is complete before requesting permissions.
-        self._register_policy(*args)
+        str_args = [str(perm)] + [str(permission) for permission in args]
+        self._register_policy(*str_args)
 
-        return Queues().queue(self.name)</code></pre>
+        return QueueRef(self.name)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="nitric.resources.base.SecureResource" href="base.html#nitric.resources.base.SecureResource">SecureResource</a></li>
-<li><a title="nitric.resources.base.BaseResource" href="base.html#nitric.resources.base.BaseResource">BaseResource</a></li>
+<li><a title="nitric.resources.resource.SecureResource" href="resource.html#nitric.resources.resource.SecureResource">SecureResource</a></li>
+<li><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></li>
 <li>abc.ABC</li>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="nitric.resources.queues.Queue.actions"><code class="name">var <span class="ident">actions</span> : List[<a title="nitric.proto.nitric.resource.v1.Action" href="../proto/nitric/resource/v1/index.html#nitric.proto.nitric.resource.v1.Action">Action</a>]</code></dt>
+<dt id="nitric.resources.queues.Queue.actions"><code class="name">var <span class="ident">actions</span> : List[<a title="nitric.proto.resources.v1.Action" href="../proto/resources/v1/index.html#nitric.proto.resources.v1.Action">Action</a>]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -225,7 +459,7 @@ def queue(name: str) -&gt; Queue:
 <h3>Methods</h3>
 <dl>
 <dt id="nitric.resources.queues.Queue.allow"><code class="name flex">
-<span>def <span class="ident">allow</span></span>(<span>self, *args: Union[<a title="nitric.resources.queues.QueuePermission" href="#nitric.resources.queues.QueuePermission">QueuePermission</a>, str]) ‑> <a title="nitric.api.queues.QueueRef" href="../api/queues.html#nitric.api.queues.QueueRef">QueueRef</a></span>
+<span>def <span class="ident">allow</span></span>(<span>self, perm: QueuePermission, *args: QueuePermission) ‑> <a title="nitric.resources.queues.QueueRef" href="#nitric.resources.queues.QueueRef">QueueRef</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Request the required permissions for this queue.</p></div>
@@ -233,53 +467,215 @@ def queue(name: str) -&gt; Queue:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def allow(self, *args: Union[QueuePermission, str]) -&gt; QueueRef:
+<pre><code class="python">def allow(self, perm: QueuePermission, *args: QueuePermission) -&gt; QueueRef:
     &#34;&#34;&#34;Request the required permissions for this queue.&#34;&#34;&#34;
     # Ensure registration of the resource is complete before requesting permissions.
-    self._register_policy(*args)
+    str_args = [str(perm)] + [str(permission) for permission in args]
+    self._register_policy(*str_args)
 
-    return Queues().queue(self.name)</code></pre>
+    return QueueRef(self.name)</code></pre>
 </details>
 </dd>
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="nitric.resources.base.SecureResource" href="base.html#nitric.resources.base.SecureResource">SecureResource</a></b></code>:
+<li><code><b><a title="nitric.resources.resource.SecureResource" href="resource.html#nitric.resources.resource.SecureResource">SecureResource</a></b></code>:
 <ul class="hlist">
-<li><code><a title="nitric.resources.base.SecureResource.make" href="base.html#nitric.resources.base.BaseResource.make">make</a></code></li>
+<li><code><a title="nitric.resources.resource.SecureResource.make" href="resource.html#nitric.resources.resource.Resource.make">make</a></code></li>
 </ul>
 </li>
 </ul>
 </dd>
-<dt id="nitric.resources.queues.QueuePermission"><code class="flex name class">
-<span>class <span class="ident">QueuePermission</span></span>
-<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+<dt id="nitric.resources.queues.QueueRef"><code class="flex name class">
+<span>class <span class="ident">QueueRef</span></span>
+<span>(</span><span>name: str)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Valid query expression operators.</p></div>
+<div class="desc"><p>A reference to a queue from a queue service, used to perform operations on that queue.</p>
+<p>Construct a Nitric Queue Client.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class QueuePermission(Enum):
-    &#34;&#34;&#34;Valid query expression operators.&#34;&#34;&#34;
+<pre><code class="python">class QueueRef(object):
+    &#34;&#34;&#34;A reference to a queue from a queue service, used to perform operations on that queue.&#34;&#34;&#34;
 
-    sending = &#34;sending&#34;
-    receiving = &#34;receiving&#34;</code></pre>
+    _channel: Channel
+    _queue_stub: QueueServiceStub
+    name: str
+
+    def __init__(self, name: str) -&gt; None:
+        &#34;&#34;&#34;Construct a Nitric Queue Client.&#34;&#34;&#34;
+        self._channel: Channel = ChannelManager.get_channel()
+        self._queue_stub = QueueServiceStub(channel=self._channel)
+        self.name = name
+
+    def __del__(self) -&gt; None:
+        # close the channel when this client is destroyed
+        if self._channel is not None:
+            self._channel.close()
+
+    async def enqueue(self, messages: Union[dict[str, Any], List[dict[str, Any]]]) -&gt; Union[None, List[FailedMessage]]:
+        &#34;&#34;&#34;
+        Send one or more messages to this queue.
+
+        If a list of messages is provided this function will return a list containing any messages that failed
+        to be sent to the queue.
+
+        :param messages: A message or list of messages to send to the queue.
+        &#34;&#34;&#34;
+        if not isinstance(messages, list):
+            messages = [messages]
+
+        try:
+            resp = await self._queue_stub.enqueue(
+                queue_enqueue_request=QueueEnqueueRequest(
+                    queue_name=self.name,
+                    messages=[QueueMessage(struct_payload=struct_from_dict(message)) for message in messages],
+                )
+            )
+
+            if len(resp.failed_messages) &gt; 0:
+                if len(messages) == 1:
+                    raise EnqueueFailedException(resp.failed_messages[0].details)
+
+                return [
+                    FailedMessage(
+                        message=dict_from_struct(failed_message.message.struct_payload), details=failed_message.details
+                    )
+                    for failed_message in resp.failed_messages
+                ]
+
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+        return None
+
+    async def dequeue(self, limit: Optional[int] = None) -&gt; List[DequeuedMessage]:
+        &#34;&#34;&#34;
+        Pop 1 or more message from the queue, up to the depth limit.
+
+        DequeuedMessages are messages that are leased for a limited period of time, where they may be worked on.
+        Once complete or failed they must be acknowledged using the request specific leaseId.
+
+        If the lease on a queue item expires before it is acknowledged the task will be
+        returned to the queue for reprocessing.
+
+        :param limit: The maximum number of messages to dequeue. Default: 1, Min: 1.
+        :return: Messages popped from the queue.
+        &#34;&#34;&#34;
+        # Set the default and minimum depth to 1.
+        if limit is None or limit &lt; 1:
+            limit = 1
+
+        try:
+            response = await self._queue_stub.dequeue(
+                queue_dequeue_request=QueueDequeueRequest(queue_name=self.name, depth=limit)
+            )
+            # Map the response protobuf response items to Python SDK objects
+            return [_proto_to_dequeued(message=message, queue=self) for message in response.messages]
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err</code></pre>
 </details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>enum.Enum</li>
-</ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="nitric.resources.queues.QueuePermission.receiving"><code class="name">var <span class="ident">receiving</span></code></dt>
+<dt id="nitric.resources.queues.QueueRef.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="nitric.resources.queues.QueuePermission.sending"><code class="name">var <span class="ident">sending</span></code></dt>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.resources.queues.QueueRef.dequeue"><code class="name flex">
+<span>async def <span class="ident">dequeue</span></span>(<span>self, limit: Optional[int] = None) ‑> List[<a title="nitric.resources.queues.DequeuedMessage" href="#nitric.resources.queues.DequeuedMessage">DequeuedMessage</a>]</span>
+</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Pop 1 or more message from the queue, up to the depth limit.</p>
+<p>DequeuedMessages are messages that are leased for a limited period of time, where they may be worked on.
+Once complete or failed they must be acknowledged using the request specific leaseId.</p>
+<p>If the lease on a queue item expires before it is acknowledged the task will be
+returned to the queue for reprocessing.</p>
+<p>:param limit: The maximum number of messages to dequeue. Default: 1, Min: 1.
+:return: Messages popped from the queue.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def dequeue(self, limit: Optional[int] = None) -&gt; List[DequeuedMessage]:
+    &#34;&#34;&#34;
+    Pop 1 or more message from the queue, up to the depth limit.
+
+    DequeuedMessages are messages that are leased for a limited period of time, where they may be worked on.
+    Once complete or failed they must be acknowledged using the request specific leaseId.
+
+    If the lease on a queue item expires before it is acknowledged the task will be
+    returned to the queue for reprocessing.
+
+    :param limit: The maximum number of messages to dequeue. Default: 1, Min: 1.
+    :return: Messages popped from the queue.
+    &#34;&#34;&#34;
+    # Set the default and minimum depth to 1.
+    if limit is None or limit &lt; 1:
+        limit = 1
+
+    try:
+        response = await self._queue_stub.dequeue(
+            queue_dequeue_request=QueueDequeueRequest(queue_name=self.name, depth=limit)
+        )
+        # Map the response protobuf response items to Python SDK objects
+        return [_proto_to_dequeued(message=message, queue=self) for message in response.messages]
+    except GRPCError as grpc_err:
+        raise exception_from_grpc_error(grpc_err) from grpc_err</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.queues.QueueRef.enqueue"><code class="name flex">
+<span>async def <span class="ident">enqueue</span></span>(<span>self, messages: Union[dict[str, Any], List[dict[str, Any]]]) ‑> Optional[List[<a title="nitric.resources.queues.FailedMessage" href="#nitric.resources.queues.FailedMessage">FailedMessage</a>]]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Send one or more messages to this queue.</p>
+<p>If a list of messages is provided this function will return a list containing any messages that failed
+to be sent to the queue.</p>
+<p>:param messages: A message or list of messages to send to the queue.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def enqueue(self, messages: Union[dict[str, Any], List[dict[str, Any]]]) -&gt; Union[None, List[FailedMessage]]:
+    &#34;&#34;&#34;
+    Send one or more messages to this queue.
+
+    If a list of messages is provided this function will return a list containing any messages that failed
+    to be sent to the queue.
+
+    :param messages: A message or list of messages to send to the queue.
+    &#34;&#34;&#34;
+    if not isinstance(messages, list):
+        messages = [messages]
+
+    try:
+        resp = await self._queue_stub.enqueue(
+            queue_enqueue_request=QueueEnqueueRequest(
+                queue_name=self.name,
+                messages=[QueueMessage(struct_payload=struct_from_dict(message)) for message in messages],
+            )
+        )
+
+        if len(resp.failed_messages) &gt; 0:
+            if len(messages) == 1:
+                raise EnqueueFailedException(resp.failed_messages[0].details)
+
+            return [
+                FailedMessage(
+                    message=dict_from_struct(failed_message.message.struct_payload), details=failed_message.details
+                )
+                for failed_message in resp.failed_messages
+            ]
+
+    except GRPCError as grpc_err:
+        raise exception_from_grpc_error(grpc_err) from grpc_err
+
+    return None</code></pre>
+</details>
 </dd>
 </dl>
 </dd>
@@ -305,6 +701,24 @@ def queue(name: str) -&gt; Queue:
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
+<h4><code><a title="nitric.resources.queues.DequeuedMessage" href="#nitric.resources.queues.DequeuedMessage">DequeuedMessage</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.resources.queues.DequeuedMessage.complete" href="#nitric.resources.queues.DequeuedMessage.complete">complete</a></code></li>
+<li><code><a title="nitric.resources.queues.DequeuedMessage.lease_id" href="#nitric.resources.queues.DequeuedMessage.lease_id">lease_id</a></code></li>
+<li><code><a title="nitric.resources.queues.DequeuedMessage.payload" href="#nitric.resources.queues.DequeuedMessage.payload">payload</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.resources.queues.EnqueueFailedException" href="#nitric.resources.queues.EnqueueFailedException">EnqueueFailedException</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.resources.queues.FailedMessage" href="#nitric.resources.queues.FailedMessage">FailedMessage</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.resources.queues.FailedMessage.details" href="#nitric.resources.queues.FailedMessage.details">details</a></code></li>
+<li><code><a title="nitric.resources.queues.FailedMessage.message" href="#nitric.resources.queues.FailedMessage.message">message</a></code></li>
+</ul>
+</li>
+<li>
 <h4><code><a title="nitric.resources.queues.Queue" href="#nitric.resources.queues.Queue">Queue</a></code></h4>
 <ul class="">
 <li><code><a title="nitric.resources.queues.Queue.actions" href="#nitric.resources.queues.Queue.actions">actions</a></code></li>
@@ -313,10 +727,11 @@ def queue(name: str) -&gt; Queue:
 </ul>
 </li>
 <li>
-<h4><code><a title="nitric.resources.queues.QueuePermission" href="#nitric.resources.queues.QueuePermission">QueuePermission</a></code></h4>
+<h4><code><a title="nitric.resources.queues.QueueRef" href="#nitric.resources.queues.QueueRef">QueueRef</a></code></h4>
 <ul class="">
-<li><code><a title="nitric.resources.queues.QueuePermission.receiving" href="#nitric.resources.queues.QueuePermission.receiving">receiving</a></code></li>
-<li><code><a title="nitric.resources.queues.QueuePermission.sending" href="#nitric.resources.queues.QueuePermission.sending">sending</a></code></li>
+<li><code><a title="nitric.resources.queues.QueueRef.dequeue" href="#nitric.resources.queues.QueueRef.dequeue">dequeue</a></code></li>
+<li><code><a title="nitric.resources.queues.QueueRef.enqueue" href="#nitric.resources.queues.QueueRef.enqueue">enqueue</a></code></li>
+<li><code><a title="nitric.resources.queues.QueueRef.name" href="#nitric.resources.queues.QueueRef.name">name</a></code></li>
 </ul>
 </li>
 </ul>

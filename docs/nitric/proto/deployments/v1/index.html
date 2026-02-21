@@ -1,0 +1,2442 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>nitric.proto.deployments.v1 API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>nitric.proto.deployments.v1</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">#
+# Copyright (c) 2021 Nitric Technologies Pty Ltd.
+#
+# This file is part of Nitric Python 3 SDK.
+# See https://github.com/nitrictech/python-sdk for further info.
+#
+# Licensed under the Apache License, Version 2.0 (the &#34;License&#34;);
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an &#34;AS IS&#34; BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Generated by the protocol buffer compiler.  DO NOT EDIT!
+# sources: nitric/proto/deployments/v1/deployments.proto
+# plugin: python-betterproto
+# This file has been @generated
+import warnings
+from dataclasses import dataclass
+from typing import (
+    TYPE_CHECKING,
+    AsyncIterator,
+    Dict,
+    List,
+    Optional,
+)
+
+import betterproto
+import betterproto.lib.google.protobuf as betterproto_lib_google_protobuf
+import grpclib
+from betterproto.grpc.grpclib_server import ServiceBase
+
+from ...batch import v1 as __batch_v1__
+from ...resources import v1 as __resources_v1__
+from ...storage import v1 as __storage_v1__
+
+
+if TYPE_CHECKING:
+    import grpclib.server
+    from betterproto.grpc.grpclib_client import MetadataLike
+    from grpclib.metadata import Deadline
+
+
+class ResourceDeploymentAction(betterproto.Enum):
+    CREATE = 0
+    &#34;&#34;&#34;A new resource is being created&#34;&#34;&#34;
+
+    UPDATE = 1
+    &#34;&#34;&#34;An existing resource is being updated&#34;&#34;&#34;
+
+    REPLACE = 2
+    &#34;&#34;&#34;An existing resource is being replaced&#34;&#34;&#34;
+
+    SAME = 3
+    &#34;&#34;&#34;No-op on the resource (it already exists and requires no changes)&#34;&#34;&#34;
+
+    DELETE = 4
+    &#34;&#34;&#34;An existing resource is being deleted&#34;&#34;&#34;
+
+
+class ResourceDeploymentStatus(betterproto.Enum):
+    PENDING = 0
+    &#34;&#34;&#34;The action hasn&#39;t started, usually due to a dependency&#34;&#34;&#34;
+
+    IN_PROGRESS = 1
+    &#34;&#34;&#34;
+    The action in currently in-flight, e.g. waiting for cloud provider to
+    provision a resource
+    &#34;&#34;&#34;
+
+    SUCCESS = 2
+    &#34;&#34;&#34;The action has been applied successfully&#34;&#34;&#34;
+
+    FAILED = 3
+    &#34;&#34;&#34;The action has failed to be (completely) applied&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class DeploymentUpRequest(betterproto.Message):
+    spec: &#34;Spec&#34; = betterproto.message_field(1)
+    &#34;&#34;&#34;The spec to deploy&#34;&#34;&#34;
+
+    attributes: &#34;betterproto_lib_google_protobuf.Struct&#34; = betterproto.message_field(2)
+    &#34;&#34;&#34;
+    A map of attributes related to the deploy request this allows for adding
+    project identifiers etc.
+    &#34;&#34;&#34;
+
+    interactive: bool = betterproto.bool_field(3)
+    &#34;&#34;&#34;
+    A hint to the provider of the kind of output that the client can accept
+    This will allow provider developers to provider richer output back to
+    clients.
+    &#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class DeploymentUpEvent(betterproto.Message):
+    message: str = betterproto.string_field(1, group=&#34;content&#34;)
+    update: &#34;ResourceUpdate&#34; = betterproto.message_field(2, group=&#34;content&#34;)
+    result: &#34;UpResult&#34; = betterproto.message_field(3, group=&#34;content&#34;)
+
+
+@dataclass(eq=False, repr=False)
+class ResourceUpdate(betterproto.Message):
+    id: &#34;__resources_v1__.ResourceIdentifier&#34; = betterproto.message_field(1)
+    &#34;&#34;&#34;
+    The resource being updated, if this is nil the update applies to the stack
+    &#34;&#34;&#34;
+
+    action: &#34;ResourceDeploymentAction&#34; = betterproto.enum_field(3)
+    &#34;&#34;&#34;The type of update being applied&#34;&#34;&#34;
+
+    status: &#34;ResourceDeploymentStatus&#34; = betterproto.enum_field(4)
+    &#34;&#34;&#34;The current status of the action being applied&#34;&#34;&#34;
+
+    sub_resource: str = betterproto.string_field(5)
+    &#34;&#34;&#34;
+    (optional) A globally unique identifier (scoped to the id above), used when
+    Nitric Resources map 1:many in a cloud provider. e.g. the container image
+    repository for a service deployment. This can also be set when id is nil
+    above and it will imply a non-nitric resource that is necessary to deploy
+    for a stack to operate  e.g. an Azure StorageAccount
+    &#34;&#34;&#34;
+
+    message: str = betterproto.string_field(6)
+    &#34;&#34;&#34;Additional information about the update&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class UpResult(betterproto.Message):
+    &#34;&#34;&#34;Terminal message indicating deployment success&#34;&#34;&#34;
+
+    success: bool = betterproto.bool_field(1)
+    &#34;&#34;&#34;Indicate the success status&#34;&#34;&#34;
+
+    text: str = betterproto.string_field(2, group=&#34;content&#34;)
+    &#34;&#34;&#34;Simple text output as result&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class DeploymentDownRequest(betterproto.Message):
+    attributes: &#34;betterproto_lib_google_protobuf.Struct&#34; = betterproto.message_field(1)
+    &#34;&#34;&#34;
+    A map of attributes related to the deploy request this allows for adding
+    project identifiers etc.
+    &#34;&#34;&#34;
+
+    interactive: bool = betterproto.bool_field(2)
+    &#34;&#34;&#34;
+    A hint to the provider of the kind of output that the client can accept
+    This will allow provider developers to provider richer output back to
+    clients.
+    &#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class DeploymentDownEvent(betterproto.Message):
+    message: str = betterproto.string_field(1, group=&#34;content&#34;)
+    result: &#34;DownResult&#34; = betterproto.message_field(2, group=&#34;content&#34;)
+    update: &#34;ResourceUpdate&#34; = betterproto.message_field(3, group=&#34;content&#34;)
+
+
+@dataclass(eq=False, repr=False)
+class DownResult(betterproto.Message):
+    &#34;&#34;&#34;Terminal message indicating deployment success&#34;&#34;&#34;
+
+    pass
+
+
+@dataclass(eq=False, repr=False)
+class ImageSource(betterproto.Message):
+    &#34;&#34;&#34;An image source to be used for service deployment&#34;&#34;&#34;
+
+    uri: str = betterproto.string_field(1)
+    &#34;&#34;&#34;
+    URI of the docker image To support remote images this may also need to
+    provide auth information
+    &#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class Service(betterproto.Message):
+    &#34;&#34;&#34;A unit of compute (i.e. function/container)&#34;&#34;&#34;
+
+    image: &#34;ImageSource&#34; = betterproto.message_field(1, group=&#34;source&#34;)
+    &#34;&#34;&#34;Container image as a service&#34;&#34;&#34;
+
+    workers: int = betterproto.int32_field(10)
+    &#34;&#34;&#34;Expected worker count for this service&#34;&#34;&#34;
+
+    timeout: int = betterproto.int32_field(11)
+    &#34;&#34;&#34;Configurable timeout for request handling&#34;&#34;&#34;
+
+    memory: int = betterproto.int32_field(12)
+    &#34;&#34;&#34;Configurable memory size for this instance&#34;&#34;&#34;
+
+    type: str = betterproto.string_field(13)
+    &#34;&#34;&#34;
+    A simple type property describes the requested type of service that this
+    should be for this project, a provider can implement how this request is
+    satisfied in any way
+    &#34;&#34;&#34;
+
+    env: Dict[str, str] = betterproto.map_field(
+        14, betterproto.TYPE_STRING, betterproto.TYPE_STRING
+    )
+    &#34;&#34;&#34;Environment variables for this service&#34;&#34;&#34;
+
+    def __post_init__(self) -&gt; None:
+        super().__post_init__()
+        if self.is_set(&#34;timeout&#34;):
+            warnings.warn(&#34;Service.timeout is deprecated&#34;, DeprecationWarning)
+        if self.is_set(&#34;memory&#34;):
+            warnings.warn(&#34;Service.memory is deprecated&#34;, DeprecationWarning)
+
+
+@dataclass(eq=False, repr=False)
+class Job(betterproto.Message):
+    name: str = betterproto.string_field(1)
+    &#34;&#34;&#34;The name of the job to create&#34;&#34;&#34;
+
+    requirements: &#34;__batch_v1__.JobResourceRequirements&#34; = betterproto.message_field(2)
+    &#34;&#34;&#34;The default resource requirements of the job&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class Batch(betterproto.Message):
+    image: &#34;ImageSource&#34; = betterproto.message_field(1, group=&#34;source&#34;)
+    &#34;&#34;&#34;Image URI for this batch service&#34;&#34;&#34;
+
+    type: str = betterproto.string_field(10)
+    &#34;&#34;&#34;
+    A simple type property describes the requested type of batch that this
+    should be for this project, a provider can implement how this request is
+    satisfied in any way
+    &#34;&#34;&#34;
+
+    env: Dict[str, str] = betterproto.map_field(
+        11, betterproto.TYPE_STRING, betterproto.TYPE_STRING
+    )
+    &#34;&#34;&#34;Environment variables for this Batch&#34;&#34;&#34;
+
+    jobs: List[&#34;Job&#34;] = betterproto.message_field(12)
+    &#34;&#34;&#34;Jobs that are defined in this Batch&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class Bucket(betterproto.Message):
+    listeners: List[&#34;BucketListener&#34;] = betterproto.message_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class BucketListener(betterproto.Message):
+    config: &#34;__storage_v1__.RegistrationRequest&#34; = betterproto.message_field(1)
+    service: str = betterproto.string_field(2, group=&#34;target&#34;)
+    &#34;&#34;&#34;The name of an service to target&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class Topic(betterproto.Message):
+    subscriptions: List[&#34;SubscriptionTarget&#34;] = betterproto.message_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class Queue(betterproto.Message):
+    pass
+
+
+@dataclass(eq=False, repr=False)
+class KeyValueStore(betterproto.Message):
+    pass
+
+
+@dataclass(eq=False, repr=False)
+class Secret(betterproto.Message):
+    pass
+
+
+@dataclass(eq=False, repr=False)
+class Spark(betterproto.Message):
+    pass
+
+
+@dataclass(eq=False, repr=False)
+class SubscriptionTarget(betterproto.Message):
+    service: str = betterproto.string_field(1, group=&#34;target&#34;)
+    &#34;&#34;&#34;The name of an service to target&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class TopicSubscription(betterproto.Message):
+    target: &#34;SubscriptionTarget&#34; = betterproto.message_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class HttpTarget(betterproto.Message):
+    service: str = betterproto.string_field(1, group=&#34;target&#34;)
+    &#34;&#34;&#34;The name of an service to target&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class Http(betterproto.Message):
+    &#34;&#34;&#34;An http proxy resource&#34;&#34;&#34;
+
+    target: &#34;HttpTarget&#34; = betterproto.message_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class Api(betterproto.Message):
+    openapi: str = betterproto.string_field(1, group=&#34;document&#34;)
+    &#34;&#34;&#34;
+    An OpenAPI document for deployment This document will contain extensions
+    that hint of services that should be targeted as part of the deployment
+    &#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class Websocket(betterproto.Message):
+    &#34;&#34;&#34;Declare a new websocket&#34;&#34;&#34;
+
+    connect_target: &#34;WebsocketTarget&#34; = betterproto.message_field(1)
+    &#34;&#34;&#34;Target for handling new client connections&#34;&#34;&#34;
+
+    disconnect_target: &#34;WebsocketTarget&#34; = betterproto.message_field(2)
+    &#34;&#34;&#34;Target for handling client disconnections&#34;&#34;&#34;
+
+    message_target: &#34;WebsocketTarget&#34; = betterproto.message_field(3)
+    &#34;&#34;&#34;Target for handling all other message types&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class WebsocketTarget(betterproto.Message):
+    service: str = betterproto.string_field(1, group=&#34;target&#34;)
+    &#34;&#34;&#34;The name of an service to target&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class Website(betterproto.Message):
+    index_document: str = betterproto.string_field(1)
+    &#34;&#34;&#34;The index document for the website&#34;&#34;&#34;
+
+    error_document: str = betterproto.string_field(2)
+    &#34;&#34;&#34;The error document for the website&#34;&#34;&#34;
+
+    base_path: str = betterproto.string_field(3)
+    &#34;&#34;&#34;The base path for the website&#34;&#34;&#34;
+
+    local_directory: str = betterproto.string_field(4, group=&#34;asset_source&#34;)
+    &#34;&#34;&#34;The production website output directory&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class ScheduleTarget(betterproto.Message):
+    service: str = betterproto.string_field(1, group=&#34;target&#34;)
+    &#34;&#34;&#34;The name of an service to target&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class Schedule(betterproto.Message):
+    target: &#34;ScheduleTarget&#34; = betterproto.message_field(1)
+    every: &#34;ScheduleEvery&#34; = betterproto.message_field(10, group=&#34;cadence&#34;)
+    cron: &#34;ScheduleCron&#34; = betterproto.message_field(11, group=&#34;cadence&#34;)
+
+
+@dataclass(eq=False, repr=False)
+class SqlDatabase(betterproto.Message):
+    image_uri: str = betterproto.string_field(1, group=&#34;migrations&#34;)
+    &#34;&#34;&#34;
+    The URI of a docker image to use to execute the migrations for this
+    database
+    &#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class ScheduleEvery(betterproto.Message):
+    rate: str = betterproto.string_field(1)
+    &#34;&#34;&#34;
+    rate string e.g. &#39;5 minutes&#39;. Value frequencies are &#39;minutes&#39;, &#39;hours&#39;,
+    &#39;days&#39;.
+    &#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class ScheduleCron(betterproto.Message):
+    expression: str = betterproto.string_field(1)
+    &#34;&#34;&#34;standard unix cron expression&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class Resource(betterproto.Message):
+    id: &#34;__resources_v1__.ResourceIdentifier&#34; = betterproto.message_field(1)
+    service: &#34;Service&#34; = betterproto.message_field(10, group=&#34;config&#34;)
+    bucket: &#34;Bucket&#34; = betterproto.message_field(11, group=&#34;config&#34;)
+    topic: &#34;Topic&#34; = betterproto.message_field(12, group=&#34;config&#34;)
+    api: &#34;Api&#34; = betterproto.message_field(13, group=&#34;config&#34;)
+    policy: &#34;Policy&#34; = betterproto.message_field(14, group=&#34;config&#34;)
+    schedule: &#34;Schedule&#34; = betterproto.message_field(15, group=&#34;config&#34;)
+    key_value_store: &#34;KeyValueStore&#34; = betterproto.message_field(16, group=&#34;config&#34;)
+    secret: &#34;Secret&#34; = betterproto.message_field(17, group=&#34;config&#34;)
+    websocket: &#34;Websocket&#34; = betterproto.message_field(18, group=&#34;config&#34;)
+    http: &#34;Http&#34; = betterproto.message_field(19, group=&#34;config&#34;)
+    queue: &#34;Queue&#34; = betterproto.message_field(20, group=&#34;config&#34;)
+    sql_database: &#34;SqlDatabase&#34; = betterproto.message_field(21, group=&#34;config&#34;)
+    batch: &#34;Batch&#34; = betterproto.message_field(22, group=&#34;config&#34;)
+    website: &#34;Website&#34; = betterproto.message_field(23, group=&#34;config&#34;)
+    spark: &#34;Spark&#34; = betterproto.message_field(24, group=&#34;config&#34;)
+
+
+@dataclass(eq=False, repr=False)
+class Policy(betterproto.Message):
+    &#34;&#34;&#34;
+    This is already defined in the resource contracts, unfortunately there are
+    parts we don&#39;t want to duplicate, such as API config
+    &#34;&#34;&#34;
+
+    principals: List[&#34;Resource&#34;] = betterproto.message_field(1)
+    actions: List[&#34;__resources_v1__.Action&#34;] = betterproto.enum_field(2)
+    resources: List[&#34;Resource&#34;] = betterproto.message_field(3)
+
+
+@dataclass(eq=False, repr=False)
+class Spec(betterproto.Message):
+    resources: List[&#34;Resource&#34;] = betterproto.message_field(1)
+    &#34;&#34;&#34;list of resources to deploy&#34;&#34;&#34;
+
+
+class DeploymentStub(betterproto.ServiceStub):
+    async def up(
+        self,
+        deployment_up_request: &#34;DeploymentUpRequest&#34;,
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional[&#34;Deadline&#34;] = None,
+        metadata: Optional[&#34;MetadataLike&#34;] = None
+    ) -&gt; AsyncIterator[&#34;DeploymentUpEvent&#34;]:
+        async for response in self._unary_stream(
+            &#34;/nitric.proto.deployments.v1.Deployment/Up&#34;,
+            deployment_up_request,
+            DeploymentUpEvent,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        ):
+            yield response
+
+    async def down(
+        self,
+        deployment_down_request: &#34;DeploymentDownRequest&#34;,
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional[&#34;Deadline&#34;] = None,
+        metadata: Optional[&#34;MetadataLike&#34;] = None
+    ) -&gt; AsyncIterator[&#34;DeploymentDownEvent&#34;]:
+        async for response in self._unary_stream(
+            &#34;/nitric.proto.deployments.v1.Deployment/Down&#34;,
+            deployment_down_request,
+            DeploymentDownEvent,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        ):
+            yield response
+
+
+class DeploymentBase(ServiceBase):
+    async def up(
+        self, deployment_up_request: &#34;DeploymentUpRequest&#34;
+    ) -&gt; AsyncIterator[&#34;DeploymentUpEvent&#34;]:
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+        yield DeploymentUpEvent()
+
+    async def down(
+        self, deployment_down_request: &#34;DeploymentDownRequest&#34;
+    ) -&gt; AsyncIterator[&#34;DeploymentDownEvent&#34;]:
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+        yield DeploymentDownEvent()
+
+    async def __rpc_up(
+        self, stream: &#34;grpclib.server.Stream[DeploymentUpRequest, DeploymentUpEvent]&#34;
+    ) -&gt; None:
+        request = await stream.recv_message()
+        await self._call_rpc_handler_server_stream(
+            self.up,
+            stream,
+            request,
+        )
+
+    async def __rpc_down(
+        self,
+        stream: &#34;grpclib.server.Stream[DeploymentDownRequest, DeploymentDownEvent]&#34;,
+    ) -&gt; None:
+        request = await stream.recv_message()
+        await self._call_rpc_handler_server_stream(
+            self.down,
+            stream,
+            request,
+        )
+
+    def __mapping__(self) -&gt; Dict[str, grpclib.const.Handler]:
+        return {
+            &#34;/nitric.proto.deployments.v1.Deployment/Up&#34;: grpclib.const.Handler(
+                self.__rpc_up,
+                grpclib.const.Cardinality.UNARY_STREAM,
+                DeploymentUpRequest,
+                DeploymentUpEvent,
+            ),
+            &#34;/nitric.proto.deployments.v1.Deployment/Down&#34;: grpclib.const.Handler(
+                self.__rpc_down,
+                grpclib.const.Cardinality.UNARY_STREAM,
+                DeploymentDownRequest,
+                DeploymentDownEvent,
+            ),
+        }</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="nitric.proto.deployments.v1.Api"><code class="flex name class">
+<span>class <span class="ident">Api</span></span>
+<span>(</span><span>openapi: str = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Api(openapi: str = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class Api(betterproto.Message):
+    openapi: str = betterproto.string_field(1, group=&#34;document&#34;)
+    &#34;&#34;&#34;
+    An OpenAPI document for deployment This document will contain extensions
+    that hint of services that should be targeted as part of the deployment
+    &#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.Api.openapi"><code class="name">var <span class="ident">openapi</span> : str</code></dt>
+<dd>
+<div class="desc"><p>An OpenAPI document for deployment This document will contain extensions
+that hint of services that should be targeted as part of the deployment</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.Batch"><code class="flex name class">
+<span>class <span class="ident">Batch</span></span>
+<span>(</span><span>image: <a title="nitric.proto.deployments.v1.ImageSource" href="#nitric.proto.deployments.v1.ImageSource">ImageSource</a> = &lt;object object&gt;, type: str = &lt;object object&gt;, env: Dict[str, str] = &lt;object object&gt;, jobs: List[ForwardRef('<a title="nitric.proto.deployments.v1.Job" href="#nitric.proto.deployments.v1.Job">Job</a>')] = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Batch(image: 'ImageSource' = <object object at 0x733dc69ac250>, type: str = <object object at 0x733dc69ac250>, env: Dict[str, str] = <object object at 0x733dc69ac250>, jobs: List[ForwardRef('Job')] = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class Batch(betterproto.Message):
+    image: &#34;ImageSource&#34; = betterproto.message_field(1, group=&#34;source&#34;)
+    &#34;&#34;&#34;Image URI for this batch service&#34;&#34;&#34;
+
+    type: str = betterproto.string_field(10)
+    &#34;&#34;&#34;
+    A simple type property describes the requested type of batch that this
+    should be for this project, a provider can implement how this request is
+    satisfied in any way
+    &#34;&#34;&#34;
+
+    env: Dict[str, str] = betterproto.map_field(
+        11, betterproto.TYPE_STRING, betterproto.TYPE_STRING
+    )
+    &#34;&#34;&#34;Environment variables for this Batch&#34;&#34;&#34;
+
+    jobs: List[&#34;Job&#34;] = betterproto.message_field(12)
+    &#34;&#34;&#34;Jobs that are defined in this Batch&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.Batch.env"><code class="name">var <span class="ident">env</span> : Dict[str, str]</code></dt>
+<dd>
+<div class="desc"><p>Environment variables for this Batch</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Batch.image"><code class="name">var <span class="ident">image</span> : <a title="nitric.proto.deployments.v1.ImageSource" href="#nitric.proto.deployments.v1.ImageSource">ImageSource</a></code></dt>
+<dd>
+<div class="desc"><p>Image URI for this batch service</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Batch.jobs"><code class="name">var <span class="ident">jobs</span> : List[<a title="nitric.proto.deployments.v1.Job" href="#nitric.proto.deployments.v1.Job">Job</a>]</code></dt>
+<dd>
+<div class="desc"><p>Jobs that are defined in this Batch</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Batch.type"><code class="name">var <span class="ident">type</span> : str</code></dt>
+<dd>
+<div class="desc"><p>A simple type property describes the requested type of batch that this
+should be for this project, a provider can implement how this request is
+satisfied in any way</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.Bucket"><code class="flex name class">
+<span>class <span class="ident">Bucket</span></span>
+<span>(</span><span>listeners: List[ForwardRef('<a title="nitric.proto.deployments.v1.BucketListener" href="#nitric.proto.deployments.v1.BucketListener">BucketListener</a>')] = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Bucket(listeners: List[ForwardRef('BucketListener')] = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class Bucket(betterproto.Message):
+    listeners: List[&#34;BucketListener&#34;] = betterproto.message_field(1)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.Bucket.listeners"><code class="name">var <span class="ident">listeners</span> : List[<a title="nitric.proto.deployments.v1.BucketListener" href="#nitric.proto.deployments.v1.BucketListener">BucketListener</a>]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.BucketListener"><code class="flex name class">
+<span>class <span class="ident">BucketListener</span></span>
+<span>(</span><span>config: __storage_v1__.RegistrationRequest = &lt;object object&gt;, service: str = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>BucketListener(config: '<strong>storage_v1</strong>.RegistrationRequest' = <object object at 0x733dc69ac250>, service: str = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class BucketListener(betterproto.Message):
+    config: &#34;__storage_v1__.RegistrationRequest&#34; = betterproto.message_field(1)
+    service: str = betterproto.string_field(2, group=&#34;target&#34;)
+    &#34;&#34;&#34;The name of an service to target&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.BucketListener.config"><code class="name">var <span class="ident">config</span> : <a title="nitric.proto.storage.v1.RegistrationRequest" href="../../storage/v1/index.html#nitric.proto.storage.v1.RegistrationRequest">RegistrationRequest</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.BucketListener.service"><code class="name">var <span class="ident">service</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The name of an service to target</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.DeploymentBase"><code class="flex name class">
+<span>class <span class="ident">DeploymentBase</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Base class for async gRPC servers.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class DeploymentBase(ServiceBase):
+    async def up(
+        self, deployment_up_request: &#34;DeploymentUpRequest&#34;
+    ) -&gt; AsyncIterator[&#34;DeploymentUpEvent&#34;]:
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+        yield DeploymentUpEvent()
+
+    async def down(
+        self, deployment_down_request: &#34;DeploymentDownRequest&#34;
+    ) -&gt; AsyncIterator[&#34;DeploymentDownEvent&#34;]:
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+        yield DeploymentDownEvent()
+
+    async def __rpc_up(
+        self, stream: &#34;grpclib.server.Stream[DeploymentUpRequest, DeploymentUpEvent]&#34;
+    ) -&gt; None:
+        request = await stream.recv_message()
+        await self._call_rpc_handler_server_stream(
+            self.up,
+            stream,
+            request,
+        )
+
+    async def __rpc_down(
+        self,
+        stream: &#34;grpclib.server.Stream[DeploymentDownRequest, DeploymentDownEvent]&#34;,
+    ) -&gt; None:
+        request = await stream.recv_message()
+        await self._call_rpc_handler_server_stream(
+            self.down,
+            stream,
+            request,
+        )
+
+    def __mapping__(self) -&gt; Dict[str, grpclib.const.Handler]:
+        return {
+            &#34;/nitric.proto.deployments.v1.Deployment/Up&#34;: grpclib.const.Handler(
+                self.__rpc_up,
+                grpclib.const.Cardinality.UNARY_STREAM,
+                DeploymentUpRequest,
+                DeploymentUpEvent,
+            ),
+            &#34;/nitric.proto.deployments.v1.Deployment/Down&#34;: grpclib.const.Handler(
+                self.__rpc_down,
+                grpclib.const.Cardinality.UNARY_STREAM,
+                DeploymentDownRequest,
+                DeploymentDownEvent,
+            ),
+        }</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.grpc.grpclib_server.ServiceBase</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.DeploymentBase.down"><code class="name flex">
+<span>async def <span class="ident">down</span></span>(<span>self, deployment_down_request: <a title="nitric.proto.deployments.v1.DeploymentDownRequest" href="#nitric.proto.deployments.v1.DeploymentDownRequest">DeploymentDownRequest</a>) ‑> AsyncIterator[<a title="nitric.proto.deployments.v1.DeploymentDownEvent" href="#nitric.proto.deployments.v1.DeploymentDownEvent">DeploymentDownEvent</a>]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def down(
+    self, deployment_down_request: &#34;DeploymentDownRequest&#34;
+) -&gt; AsyncIterator[&#34;DeploymentDownEvent&#34;]:
+    raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+    yield DeploymentDownEvent()</code></pre>
+</details>
+</dd>
+<dt id="nitric.proto.deployments.v1.DeploymentBase.up"><code class="name flex">
+<span>async def <span class="ident">up</span></span>(<span>self, deployment_up_request: <a title="nitric.proto.deployments.v1.DeploymentUpRequest" href="#nitric.proto.deployments.v1.DeploymentUpRequest">DeploymentUpRequest</a>) ‑> AsyncIterator[<a title="nitric.proto.deployments.v1.DeploymentUpEvent" href="#nitric.proto.deployments.v1.DeploymentUpEvent">DeploymentUpEvent</a>]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def up(
+    self, deployment_up_request: &#34;DeploymentUpRequest&#34;
+) -&gt; AsyncIterator[&#34;DeploymentUpEvent&#34;]:
+    raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+    yield DeploymentUpEvent()</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.DeploymentDownEvent"><code class="flex name class">
+<span>class <span class="ident">DeploymentDownEvent</span></span>
+<span>(</span><span>message: str = &lt;object object&gt;, result: <a title="nitric.proto.deployments.v1.DownResult" href="#nitric.proto.deployments.v1.DownResult">DownResult</a> = &lt;object object&gt;, update: <a title="nitric.proto.deployments.v1.ResourceUpdate" href="#nitric.proto.deployments.v1.ResourceUpdate">ResourceUpdate</a> = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>DeploymentDownEvent(message: str = <object object at 0x733dc69ac250>, result: 'DownResult' = <object object at 0x733dc69ac250>, update: 'ResourceUpdate' = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class DeploymentDownEvent(betterproto.Message):
+    message: str = betterproto.string_field(1, group=&#34;content&#34;)
+    result: &#34;DownResult&#34; = betterproto.message_field(2, group=&#34;content&#34;)
+    update: &#34;ResourceUpdate&#34; = betterproto.message_field(3, group=&#34;content&#34;)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.DeploymentDownEvent.message"><code class="name">var <span class="ident">message</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.DeploymentDownEvent.result"><code class="name">var <span class="ident">result</span> : <a title="nitric.proto.deployments.v1.DownResult" href="#nitric.proto.deployments.v1.DownResult">DownResult</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.DeploymentDownEvent.update"><code class="name">var <span class="ident">update</span> : <a title="nitric.proto.deployments.v1.ResourceUpdate" href="#nitric.proto.deployments.v1.ResourceUpdate">ResourceUpdate</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.DeploymentDownRequest"><code class="flex name class">
+<span>class <span class="ident">DeploymentDownRequest</span></span>
+<span>(</span><span>attributes: betterproto_lib_google_protobuf.Struct = &lt;object object&gt;, interactive: bool = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>DeploymentDownRequest(attributes: 'betterproto_lib_google_protobuf.Struct' = <object object at 0x733dc69ac250>, interactive: bool = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class DeploymentDownRequest(betterproto.Message):
+    attributes: &#34;betterproto_lib_google_protobuf.Struct&#34; = betterproto.message_field(1)
+    &#34;&#34;&#34;
+    A map of attributes related to the deploy request this allows for adding
+    project identifiers etc.
+    &#34;&#34;&#34;
+
+    interactive: bool = betterproto.bool_field(2)
+    &#34;&#34;&#34;
+    A hint to the provider of the kind of output that the client can accept
+    This will allow provider developers to provider richer output back to
+    clients.
+    &#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.DeploymentDownRequest.attributes"><code class="name">var <span class="ident">attributes</span> : betterproto.lib.google.protobuf.Struct</code></dt>
+<dd>
+<div class="desc"><p>A map of attributes related to the deploy request this allows for adding
+project identifiers etc.</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.DeploymentDownRequest.interactive"><code class="name">var <span class="ident">interactive</span> : bool</code></dt>
+<dd>
+<div class="desc"><p>A hint to the provider of the kind of output that the client can accept
+This will allow provider developers to provider richer output back to
+clients.</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.DeploymentStub"><code class="flex name class">
+<span>class <span class="ident">DeploymentStub</span></span>
+<span>(</span><span>channel: Channel, *, timeout: Optional[float] = None, deadline: Optional[ForwardRef('Deadline')] = None, metadata: Union[Mapping[str, Union[str, bytes]], Collection[Tuple[str, Union[str, bytes]]], NoneType] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Base class for async gRPC clients.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class DeploymentStub(betterproto.ServiceStub):
+    async def up(
+        self,
+        deployment_up_request: &#34;DeploymentUpRequest&#34;,
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional[&#34;Deadline&#34;] = None,
+        metadata: Optional[&#34;MetadataLike&#34;] = None
+    ) -&gt; AsyncIterator[&#34;DeploymentUpEvent&#34;]:
+        async for response in self._unary_stream(
+            &#34;/nitric.proto.deployments.v1.Deployment/Up&#34;,
+            deployment_up_request,
+            DeploymentUpEvent,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        ):
+            yield response
+
+    async def down(
+        self,
+        deployment_down_request: &#34;DeploymentDownRequest&#34;,
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional[&#34;Deadline&#34;] = None,
+        metadata: Optional[&#34;MetadataLike&#34;] = None
+    ) -&gt; AsyncIterator[&#34;DeploymentDownEvent&#34;]:
+        async for response in self._unary_stream(
+            &#34;/nitric.proto.deployments.v1.Deployment/Down&#34;,
+            deployment_down_request,
+            DeploymentDownEvent,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        ):
+            yield response</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.grpc.grpclib_client.ServiceStub</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.DeploymentStub.down"><code class="name flex">
+<span>async def <span class="ident">down</span></span>(<span>self, deployment_down_request: <a title="nitric.proto.deployments.v1.DeploymentDownRequest" href="#nitric.proto.deployments.v1.DeploymentDownRequest">DeploymentDownRequest</a>, *, timeout: Optional[float] = None, deadline: Optional[ForwardRef('Deadline')] = None, metadata: Optional[ForwardRef('MetadataLike')] = None) ‑> AsyncIterator[<a title="nitric.proto.deployments.v1.DeploymentDownEvent" href="#nitric.proto.deployments.v1.DeploymentDownEvent">DeploymentDownEvent</a>]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def down(
+    self,
+    deployment_down_request: &#34;DeploymentDownRequest&#34;,
+    *,
+    timeout: Optional[float] = None,
+    deadline: Optional[&#34;Deadline&#34;] = None,
+    metadata: Optional[&#34;MetadataLike&#34;] = None
+) -&gt; AsyncIterator[&#34;DeploymentDownEvent&#34;]:
+    async for response in self._unary_stream(
+        &#34;/nitric.proto.deployments.v1.Deployment/Down&#34;,
+        deployment_down_request,
+        DeploymentDownEvent,
+        timeout=timeout,
+        deadline=deadline,
+        metadata=metadata,
+    ):
+        yield response</code></pre>
+</details>
+</dd>
+<dt id="nitric.proto.deployments.v1.DeploymentStub.up"><code class="name flex">
+<span>async def <span class="ident">up</span></span>(<span>self, deployment_up_request: <a title="nitric.proto.deployments.v1.DeploymentUpRequest" href="#nitric.proto.deployments.v1.DeploymentUpRequest">DeploymentUpRequest</a>, *, timeout: Optional[float] = None, deadline: Optional[ForwardRef('Deadline')] = None, metadata: Optional[ForwardRef('MetadataLike')] = None) ‑> AsyncIterator[<a title="nitric.proto.deployments.v1.DeploymentUpEvent" href="#nitric.proto.deployments.v1.DeploymentUpEvent">DeploymentUpEvent</a>]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def up(
+    self,
+    deployment_up_request: &#34;DeploymentUpRequest&#34;,
+    *,
+    timeout: Optional[float] = None,
+    deadline: Optional[&#34;Deadline&#34;] = None,
+    metadata: Optional[&#34;MetadataLike&#34;] = None
+) -&gt; AsyncIterator[&#34;DeploymentUpEvent&#34;]:
+    async for response in self._unary_stream(
+        &#34;/nitric.proto.deployments.v1.Deployment/Up&#34;,
+        deployment_up_request,
+        DeploymentUpEvent,
+        timeout=timeout,
+        deadline=deadline,
+        metadata=metadata,
+    ):
+        yield response</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.DeploymentUpEvent"><code class="flex name class">
+<span>class <span class="ident">DeploymentUpEvent</span></span>
+<span>(</span><span>message: str = &lt;object object&gt;, update: <a title="nitric.proto.deployments.v1.ResourceUpdate" href="#nitric.proto.deployments.v1.ResourceUpdate">ResourceUpdate</a> = &lt;object object&gt;, result: <a title="nitric.proto.deployments.v1.UpResult" href="#nitric.proto.deployments.v1.UpResult">UpResult</a> = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>DeploymentUpEvent(message: str = <object object at 0x733dc69ac250>, update: 'ResourceUpdate' = <object object at 0x733dc69ac250>, result: 'UpResult' = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class DeploymentUpEvent(betterproto.Message):
+    message: str = betterproto.string_field(1, group=&#34;content&#34;)
+    update: &#34;ResourceUpdate&#34; = betterproto.message_field(2, group=&#34;content&#34;)
+    result: &#34;UpResult&#34; = betterproto.message_field(3, group=&#34;content&#34;)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.DeploymentUpEvent.message"><code class="name">var <span class="ident">message</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.DeploymentUpEvent.result"><code class="name">var <span class="ident">result</span> : <a title="nitric.proto.deployments.v1.UpResult" href="#nitric.proto.deployments.v1.UpResult">UpResult</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.DeploymentUpEvent.update"><code class="name">var <span class="ident">update</span> : <a title="nitric.proto.deployments.v1.ResourceUpdate" href="#nitric.proto.deployments.v1.ResourceUpdate">ResourceUpdate</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.DeploymentUpRequest"><code class="flex name class">
+<span>class <span class="ident">DeploymentUpRequest</span></span>
+<span>(</span><span>spec: <a title="nitric.proto.deployments.v1.Spec" href="#nitric.proto.deployments.v1.Spec">Spec</a> = &lt;object object&gt;, attributes: betterproto_lib_google_protobuf.Struct = &lt;object object&gt;, interactive: bool = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>DeploymentUpRequest(spec: 'Spec' = <object object at 0x733dc69ac250>, attributes: 'betterproto_lib_google_protobuf.Struct' = <object object at 0x733dc69ac250>, interactive: bool = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class DeploymentUpRequest(betterproto.Message):
+    spec: &#34;Spec&#34; = betterproto.message_field(1)
+    &#34;&#34;&#34;The spec to deploy&#34;&#34;&#34;
+
+    attributes: &#34;betterproto_lib_google_protobuf.Struct&#34; = betterproto.message_field(2)
+    &#34;&#34;&#34;
+    A map of attributes related to the deploy request this allows for adding
+    project identifiers etc.
+    &#34;&#34;&#34;
+
+    interactive: bool = betterproto.bool_field(3)
+    &#34;&#34;&#34;
+    A hint to the provider of the kind of output that the client can accept
+    This will allow provider developers to provider richer output back to
+    clients.
+    &#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.DeploymentUpRequest.attributes"><code class="name">var <span class="ident">attributes</span> : betterproto.lib.google.protobuf.Struct</code></dt>
+<dd>
+<div class="desc"><p>A map of attributes related to the deploy request this allows for adding
+project identifiers etc.</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.DeploymentUpRequest.interactive"><code class="name">var <span class="ident">interactive</span> : bool</code></dt>
+<dd>
+<div class="desc"><p>A hint to the provider of the kind of output that the client can accept
+This will allow provider developers to provider richer output back to
+clients.</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.DeploymentUpRequest.spec"><code class="name">var <span class="ident">spec</span> : <a title="nitric.proto.deployments.v1.Spec" href="#nitric.proto.deployments.v1.Spec">Spec</a></code></dt>
+<dd>
+<div class="desc"><p>The spec to deploy</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.DownResult"><code class="flex name class">
+<span>class <span class="ident">DownResult</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Terminal message indicating deployment success</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class DownResult(betterproto.Message):
+    &#34;&#34;&#34;Terminal message indicating deployment success&#34;&#34;&#34;
+
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+</dd>
+<dt id="nitric.proto.deployments.v1.Http"><code class="flex name class">
+<span>class <span class="ident">Http</span></span>
+<span>(</span><span>target: <a title="nitric.proto.deployments.v1.HttpTarget" href="#nitric.proto.deployments.v1.HttpTarget">HttpTarget</a> = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An http proxy resource</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class Http(betterproto.Message):
+    &#34;&#34;&#34;An http proxy resource&#34;&#34;&#34;
+
+    target: &#34;HttpTarget&#34; = betterproto.message_field(1)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.Http.target"><code class="name">var <span class="ident">target</span> : <a title="nitric.proto.deployments.v1.HttpTarget" href="#nitric.proto.deployments.v1.HttpTarget">HttpTarget</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.HttpTarget"><code class="flex name class">
+<span>class <span class="ident">HttpTarget</span></span>
+<span>(</span><span>service: str = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>HttpTarget(service: str = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class HttpTarget(betterproto.Message):
+    service: str = betterproto.string_field(1, group=&#34;target&#34;)
+    &#34;&#34;&#34;The name of an service to target&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.HttpTarget.service"><code class="name">var <span class="ident">service</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The name of an service to target</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.ImageSource"><code class="flex name class">
+<span>class <span class="ident">ImageSource</span></span>
+<span>(</span><span>uri: str = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An image source to be used for service deployment</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class ImageSource(betterproto.Message):
+    &#34;&#34;&#34;An image source to be used for service deployment&#34;&#34;&#34;
+
+    uri: str = betterproto.string_field(1)
+    &#34;&#34;&#34;
+    URI of the docker image To support remote images this may also need to
+    provide auth information
+    &#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.ImageSource.uri"><code class="name">var <span class="ident">uri</span> : str</code></dt>
+<dd>
+<div class="desc"><p>URI of the docker image To support remote images this may also need to
+provide auth information</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.Job"><code class="flex name class">
+<span>class <span class="ident">Job</span></span>
+<span>(</span><span>name: str = &lt;object object&gt;, requirements: __batch_v1__.JobResourceRequirements = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Job(name: str = <object object at 0x733dc69ac250>, requirements: '<strong>batch_v1</strong>.JobResourceRequirements' = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class Job(betterproto.Message):
+    name: str = betterproto.string_field(1)
+    &#34;&#34;&#34;The name of the job to create&#34;&#34;&#34;
+
+    requirements: &#34;__batch_v1__.JobResourceRequirements&#34; = betterproto.message_field(2)
+    &#34;&#34;&#34;The default resource requirements of the job&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.Job.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The name of the job to create</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Job.requirements"><code class="name">var <span class="ident">requirements</span> : <a title="nitric.proto.batch.v1.JobResourceRequirements" href="../../batch/v1/index.html#nitric.proto.batch.v1.JobResourceRequirements">JobResourceRequirements</a></code></dt>
+<dd>
+<div class="desc"><p>The default resource requirements of the job</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.KeyValueStore"><code class="flex name class">
+<span>class <span class="ident">KeyValueStore</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>KeyValueStore()</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class KeyValueStore(betterproto.Message):
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+</dd>
+<dt id="nitric.proto.deployments.v1.Policy"><code class="flex name class">
+<span>class <span class="ident">Policy</span></span>
+<span>(</span><span>principals: List[ForwardRef('<a title="nitric.proto.deployments.v1.Resource" href="#nitric.proto.deployments.v1.Resource">Resource</a>')] = &lt;object object&gt;, actions: List[ForwardRef('__resources_v1__.Action')] = &lt;object object&gt;, resources: List[ForwardRef('<a title="nitric.proto.deployments.v1.Resource" href="#nitric.proto.deployments.v1.Resource">Resource</a>')] = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is already defined in the resource contracts, unfortunately there are
+parts we don't want to duplicate, such as API config</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class Policy(betterproto.Message):
+    &#34;&#34;&#34;
+    This is already defined in the resource contracts, unfortunately there are
+    parts we don&#39;t want to duplicate, such as API config
+    &#34;&#34;&#34;
+
+    principals: List[&#34;Resource&#34;] = betterproto.message_field(1)
+    actions: List[&#34;__resources_v1__.Action&#34;] = betterproto.enum_field(2)
+    resources: List[&#34;Resource&#34;] = betterproto.message_field(3)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.Policy.actions"><code class="name">var <span class="ident">actions</span> : List[<a title="nitric.proto.resources.v1.Action" href="../../resources/v1/index.html#nitric.proto.resources.v1.Action">Action</a>]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Policy.principals"><code class="name">var <span class="ident">principals</span> : List[<a title="nitric.proto.deployments.v1.Resource" href="#nitric.proto.deployments.v1.Resource">Resource</a>]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Policy.resources"><code class="name">var <span class="ident">resources</span> : List[<a title="nitric.proto.deployments.v1.Resource" href="#nitric.proto.deployments.v1.Resource">Resource</a>]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.Queue"><code class="flex name class">
+<span>class <span class="ident">Queue</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Queue()</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class Queue(betterproto.Message):
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+</dd>
+<dt id="nitric.proto.deployments.v1.Resource"><code class="flex name class">
+<span>class <span class="ident">Resource</span></span>
+<span>(</span><span>id: __resources_v1__.ResourceIdentifier = &lt;object object&gt;, service: <a title="nitric.proto.deployments.v1.Service" href="#nitric.proto.deployments.v1.Service">Service</a> = &lt;object object&gt;, bucket: <a title="nitric.proto.deployments.v1.Bucket" href="#nitric.proto.deployments.v1.Bucket">Bucket</a> = &lt;object object&gt;, topic: <a title="nitric.proto.deployments.v1.Topic" href="#nitric.proto.deployments.v1.Topic">Topic</a> = &lt;object object&gt;, api: <a title="nitric.proto.deployments.v1.Api" href="#nitric.proto.deployments.v1.Api">Api</a> = &lt;object object&gt;, policy: <a title="nitric.proto.deployments.v1.Policy" href="#nitric.proto.deployments.v1.Policy">Policy</a> = &lt;object object&gt;, schedule: <a title="nitric.proto.deployments.v1.Schedule" href="#nitric.proto.deployments.v1.Schedule">Schedule</a> = &lt;object object&gt;, key_value_store: <a title="nitric.proto.deployments.v1.KeyValueStore" href="#nitric.proto.deployments.v1.KeyValueStore">KeyValueStore</a> = &lt;object object&gt;, secret: <a title="nitric.proto.deployments.v1.Secret" href="#nitric.proto.deployments.v1.Secret">Secret</a> = &lt;object object&gt;, websocket: <a title="nitric.proto.deployments.v1.Websocket" href="#nitric.proto.deployments.v1.Websocket">Websocket</a> = &lt;object object&gt;, http: <a title="nitric.proto.deployments.v1.Http" href="#nitric.proto.deployments.v1.Http">Http</a> = &lt;object object&gt;, queue: <a title="nitric.proto.deployments.v1.Queue" href="#nitric.proto.deployments.v1.Queue">Queue</a> = &lt;object object&gt;, sql_database: <a title="nitric.proto.deployments.v1.SqlDatabase" href="#nitric.proto.deployments.v1.SqlDatabase">SqlDatabase</a> = &lt;object object&gt;, batch: <a title="nitric.proto.deployments.v1.Batch" href="#nitric.proto.deployments.v1.Batch">Batch</a> = &lt;object object&gt;, website: <a title="nitric.proto.deployments.v1.Website" href="#nitric.proto.deployments.v1.Website">Website</a> = &lt;object object&gt;, spark: <a title="nitric.proto.deployments.v1.Spark" href="#nitric.proto.deployments.v1.Spark">Spark</a> = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Resource(id: '<strong>resources_v1</strong>.ResourceIdentifier' = <object object at 0x733dc69ac250>, service: 'Service' = <object object at 0x733dc69ac250>, bucket: 'Bucket' = <object object at 0x733dc69ac250>, topic: 'Topic' = <object object at 0x733dc69ac250>, api: 'Api' = <object object at 0x733dc69ac250>, policy: 'Policy' = <object object at 0x733dc69ac250>, schedule: 'Schedule' = <object object at 0x733dc69ac250>, key_value_store: 'KeyValueStore' = <object object at 0x733dc69ac250>, secret: 'Secret' = <object object at 0x733dc69ac250>, websocket: 'Websocket' = <object object at 0x733dc69ac250>, http: 'Http' = <object object at 0x733dc69ac250>, queue: 'Queue' = <object object at 0x733dc69ac250>, sql_database: 'SqlDatabase' = <object object at 0x733dc69ac250>, batch: 'Batch' = <object object at 0x733dc69ac250>, website: 'Website' = <object object at 0x733dc69ac250>, spark: 'Spark' = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class Resource(betterproto.Message):
+    id: &#34;__resources_v1__.ResourceIdentifier&#34; = betterproto.message_field(1)
+    service: &#34;Service&#34; = betterproto.message_field(10, group=&#34;config&#34;)
+    bucket: &#34;Bucket&#34; = betterproto.message_field(11, group=&#34;config&#34;)
+    topic: &#34;Topic&#34; = betterproto.message_field(12, group=&#34;config&#34;)
+    api: &#34;Api&#34; = betterproto.message_field(13, group=&#34;config&#34;)
+    policy: &#34;Policy&#34; = betterproto.message_field(14, group=&#34;config&#34;)
+    schedule: &#34;Schedule&#34; = betterproto.message_field(15, group=&#34;config&#34;)
+    key_value_store: &#34;KeyValueStore&#34; = betterproto.message_field(16, group=&#34;config&#34;)
+    secret: &#34;Secret&#34; = betterproto.message_field(17, group=&#34;config&#34;)
+    websocket: &#34;Websocket&#34; = betterproto.message_field(18, group=&#34;config&#34;)
+    http: &#34;Http&#34; = betterproto.message_field(19, group=&#34;config&#34;)
+    queue: &#34;Queue&#34; = betterproto.message_field(20, group=&#34;config&#34;)
+    sql_database: &#34;SqlDatabase&#34; = betterproto.message_field(21, group=&#34;config&#34;)
+    batch: &#34;Batch&#34; = betterproto.message_field(22, group=&#34;config&#34;)
+    website: &#34;Website&#34; = betterproto.message_field(23, group=&#34;config&#34;)
+    spark: &#34;Spark&#34; = betterproto.message_field(24, group=&#34;config&#34;)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.Resource.api"><code class="name">var <span class="ident">api</span> : <a title="nitric.proto.deployments.v1.Api" href="#nitric.proto.deployments.v1.Api">Api</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Resource.batch"><code class="name">var <span class="ident">batch</span> : <a title="nitric.proto.deployments.v1.Batch" href="#nitric.proto.deployments.v1.Batch">Batch</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Resource.bucket"><code class="name">var <span class="ident">bucket</span> : <a title="nitric.proto.deployments.v1.Bucket" href="#nitric.proto.deployments.v1.Bucket">Bucket</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Resource.http"><code class="name">var <span class="ident">http</span> : <a title="nitric.proto.deployments.v1.Http" href="#nitric.proto.deployments.v1.Http">Http</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Resource.id"><code class="name">var <span class="ident">id</span> : <a title="nitric.proto.resources.v1.ResourceIdentifier" href="../../resources/v1/index.html#nitric.proto.resources.v1.ResourceIdentifier">ResourceIdentifier</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Resource.key_value_store"><code class="name">var <span class="ident">key_value_store</span> : <a title="nitric.proto.deployments.v1.KeyValueStore" href="#nitric.proto.deployments.v1.KeyValueStore">KeyValueStore</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Resource.policy"><code class="name">var <span class="ident">policy</span> : <a title="nitric.proto.deployments.v1.Policy" href="#nitric.proto.deployments.v1.Policy">Policy</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Resource.queue"><code class="name">var <span class="ident">queue</span> : <a title="nitric.proto.deployments.v1.Queue" href="#nitric.proto.deployments.v1.Queue">Queue</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Resource.schedule"><code class="name">var <span class="ident">schedule</span> : <a title="nitric.proto.deployments.v1.Schedule" href="#nitric.proto.deployments.v1.Schedule">Schedule</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Resource.secret"><code class="name">var <span class="ident">secret</span> : <a title="nitric.proto.deployments.v1.Secret" href="#nitric.proto.deployments.v1.Secret">Secret</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Resource.service"><code class="name">var <span class="ident">service</span> : <a title="nitric.proto.deployments.v1.Service" href="#nitric.proto.deployments.v1.Service">Service</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Resource.spark"><code class="name">var <span class="ident">spark</span> : <a title="nitric.proto.deployments.v1.Spark" href="#nitric.proto.deployments.v1.Spark">Spark</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Resource.sql_database"><code class="name">var <span class="ident">sql_database</span> : <a title="nitric.proto.deployments.v1.SqlDatabase" href="#nitric.proto.deployments.v1.SqlDatabase">SqlDatabase</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Resource.topic"><code class="name">var <span class="ident">topic</span> : <a title="nitric.proto.deployments.v1.Topic" href="#nitric.proto.deployments.v1.Topic">Topic</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Resource.website"><code class="name">var <span class="ident">website</span> : <a title="nitric.proto.deployments.v1.Website" href="#nitric.proto.deployments.v1.Website">Website</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Resource.websocket"><code class="name">var <span class="ident">websocket</span> : <a title="nitric.proto.deployments.v1.Websocket" href="#nitric.proto.deployments.v1.Websocket">Websocket</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.ResourceDeploymentAction"><code class="flex name class">
+<span>class <span class="ident">ResourceDeploymentAction</span></span>
+<span>(</span><span>*args, **kwds)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The base class for protobuf enumerations, all generated enumerations will inherit
+from this. Bases :class:<code>enum.IntEnum</code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ResourceDeploymentAction(betterproto.Enum):
+    CREATE = 0
+    &#34;&#34;&#34;A new resource is being created&#34;&#34;&#34;
+
+    UPDATE = 1
+    &#34;&#34;&#34;An existing resource is being updated&#34;&#34;&#34;
+
+    REPLACE = 2
+    &#34;&#34;&#34;An existing resource is being replaced&#34;&#34;&#34;
+
+    SAME = 3
+    &#34;&#34;&#34;No-op on the resource (it already exists and requires no changes)&#34;&#34;&#34;
+
+    DELETE = 4
+    &#34;&#34;&#34;An existing resource is being deleted&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Enum</li>
+<li>enum.IntEnum</li>
+<li>builtins.int</li>
+<li>enum.ReprEnum</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.ResourceDeploymentAction.CREATE"><code class="name">var <span class="ident">CREATE</span></code></dt>
+<dd>
+<div class="desc"><p>A new resource is being created</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.ResourceDeploymentAction.DELETE"><code class="name">var <span class="ident">DELETE</span></code></dt>
+<dd>
+<div class="desc"><p>An existing resource is being deleted</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.ResourceDeploymentAction.REPLACE"><code class="name">var <span class="ident">REPLACE</span></code></dt>
+<dd>
+<div class="desc"><p>An existing resource is being replaced</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.ResourceDeploymentAction.SAME"><code class="name">var <span class="ident">SAME</span></code></dt>
+<dd>
+<div class="desc"><p>No-op on the resource (it already exists and requires no changes)</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.ResourceDeploymentAction.UPDATE"><code class="name">var <span class="ident">UPDATE</span></code></dt>
+<dd>
+<div class="desc"><p>An existing resource is being updated</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.ResourceDeploymentStatus"><code class="flex name class">
+<span>class <span class="ident">ResourceDeploymentStatus</span></span>
+<span>(</span><span>*args, **kwds)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The base class for protobuf enumerations, all generated enumerations will inherit
+from this. Bases :class:<code>enum.IntEnum</code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ResourceDeploymentStatus(betterproto.Enum):
+    PENDING = 0
+    &#34;&#34;&#34;The action hasn&#39;t started, usually due to a dependency&#34;&#34;&#34;
+
+    IN_PROGRESS = 1
+    &#34;&#34;&#34;
+    The action in currently in-flight, e.g. waiting for cloud provider to
+    provision a resource
+    &#34;&#34;&#34;
+
+    SUCCESS = 2
+    &#34;&#34;&#34;The action has been applied successfully&#34;&#34;&#34;
+
+    FAILED = 3
+    &#34;&#34;&#34;The action has failed to be (completely) applied&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Enum</li>
+<li>enum.IntEnum</li>
+<li>builtins.int</li>
+<li>enum.ReprEnum</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.ResourceDeploymentStatus.FAILED"><code class="name">var <span class="ident">FAILED</span></code></dt>
+<dd>
+<div class="desc"><p>The action has failed to be (completely) applied</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.ResourceDeploymentStatus.IN_PROGRESS"><code class="name">var <span class="ident">IN_PROGRESS</span></code></dt>
+<dd>
+<div class="desc"><p>The action in currently in-flight, e.g. waiting for cloud provider to
+provision a resource</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.ResourceDeploymentStatus.PENDING"><code class="name">var <span class="ident">PENDING</span></code></dt>
+<dd>
+<div class="desc"><p>The action hasn't started, usually due to a dependency</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.ResourceDeploymentStatus.SUCCESS"><code class="name">var <span class="ident">SUCCESS</span></code></dt>
+<dd>
+<div class="desc"><p>The action has been applied successfully</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.ResourceUpdate"><code class="flex name class">
+<span>class <span class="ident">ResourceUpdate</span></span>
+<span>(</span><span>id: __resources_v1__.ResourceIdentifier = &lt;object object&gt;, action: <a title="nitric.proto.deployments.v1.ResourceDeploymentAction" href="#nitric.proto.deployments.v1.ResourceDeploymentAction">ResourceDeploymentAction</a> = &lt;object object&gt;, status: <a title="nitric.proto.deployments.v1.ResourceDeploymentStatus" href="#nitric.proto.deployments.v1.ResourceDeploymentStatus">ResourceDeploymentStatus</a> = &lt;object object&gt;, sub_resource: str = &lt;object object&gt;, message: str = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>ResourceUpdate(id: '<strong>resources_v1</strong>.ResourceIdentifier' = <object object at 0x733dc69ac250>, action: 'ResourceDeploymentAction' = <object object at 0x733dc69ac250>, status: 'ResourceDeploymentStatus' = <object object at 0x733dc69ac250>, sub_resource: str = <object object at 0x733dc69ac250>, message: str = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class ResourceUpdate(betterproto.Message):
+    id: &#34;__resources_v1__.ResourceIdentifier&#34; = betterproto.message_field(1)
+    &#34;&#34;&#34;
+    The resource being updated, if this is nil the update applies to the stack
+    &#34;&#34;&#34;
+
+    action: &#34;ResourceDeploymentAction&#34; = betterproto.enum_field(3)
+    &#34;&#34;&#34;The type of update being applied&#34;&#34;&#34;
+
+    status: &#34;ResourceDeploymentStatus&#34; = betterproto.enum_field(4)
+    &#34;&#34;&#34;The current status of the action being applied&#34;&#34;&#34;
+
+    sub_resource: str = betterproto.string_field(5)
+    &#34;&#34;&#34;
+    (optional) A globally unique identifier (scoped to the id above), used when
+    Nitric Resources map 1:many in a cloud provider. e.g. the container image
+    repository for a service deployment. This can also be set when id is nil
+    above and it will imply a non-nitric resource that is necessary to deploy
+    for a stack to operate  e.g. an Azure StorageAccount
+    &#34;&#34;&#34;
+
+    message: str = betterproto.string_field(6)
+    &#34;&#34;&#34;Additional information about the update&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.ResourceUpdate.action"><code class="name">var <span class="ident">action</span> : <a title="nitric.proto.deployments.v1.ResourceDeploymentAction" href="#nitric.proto.deployments.v1.ResourceDeploymentAction">ResourceDeploymentAction</a></code></dt>
+<dd>
+<div class="desc"><p>The type of update being applied</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.ResourceUpdate.id"><code class="name">var <span class="ident">id</span> : <a title="nitric.proto.resources.v1.ResourceIdentifier" href="../../resources/v1/index.html#nitric.proto.resources.v1.ResourceIdentifier">ResourceIdentifier</a></code></dt>
+<dd>
+<div class="desc"><p>The resource being updated, if this is nil the update applies to the stack</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.ResourceUpdate.message"><code class="name">var <span class="ident">message</span> : str</code></dt>
+<dd>
+<div class="desc"><p>Additional information about the update</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.ResourceUpdate.status"><code class="name">var <span class="ident">status</span> : <a title="nitric.proto.deployments.v1.ResourceDeploymentStatus" href="#nitric.proto.deployments.v1.ResourceDeploymentStatus">ResourceDeploymentStatus</a></code></dt>
+<dd>
+<div class="desc"><p>The current status of the action being applied</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.ResourceUpdate.sub_resource"><code class="name">var <span class="ident">sub_resource</span> : str</code></dt>
+<dd>
+<div class="desc"><p>(optional) A globally unique identifier (scoped to the id above), used when
+Nitric Resources map 1:many in a cloud provider. e.g. the container image
+repository for a service deployment. This can also be set when id is nil
+above and it will imply a non-nitric resource that is necessary to deploy
+for a stack to operate
+e.g. an Azure StorageAccount</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.Schedule"><code class="flex name class">
+<span>class <span class="ident">Schedule</span></span>
+<span>(</span><span>target: <a title="nitric.proto.deployments.v1.ScheduleTarget" href="#nitric.proto.deployments.v1.ScheduleTarget">ScheduleTarget</a> = &lt;object object&gt;, every: <a title="nitric.proto.deployments.v1.ScheduleEvery" href="#nitric.proto.deployments.v1.ScheduleEvery">ScheduleEvery</a> = &lt;object object&gt;, cron: <a title="nitric.proto.deployments.v1.ScheduleCron" href="#nitric.proto.deployments.v1.ScheduleCron">ScheduleCron</a> = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Schedule(target: 'ScheduleTarget' = <object object at 0x733dc69ac250>, every: 'ScheduleEvery' = <object object at 0x733dc69ac250>, cron: 'ScheduleCron' = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class Schedule(betterproto.Message):
+    target: &#34;ScheduleTarget&#34; = betterproto.message_field(1)
+    every: &#34;ScheduleEvery&#34; = betterproto.message_field(10, group=&#34;cadence&#34;)
+    cron: &#34;ScheduleCron&#34; = betterproto.message_field(11, group=&#34;cadence&#34;)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.Schedule.cron"><code class="name">var <span class="ident">cron</span> : <a title="nitric.proto.deployments.v1.ScheduleCron" href="#nitric.proto.deployments.v1.ScheduleCron">ScheduleCron</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Schedule.every"><code class="name">var <span class="ident">every</span> : <a title="nitric.proto.deployments.v1.ScheduleEvery" href="#nitric.proto.deployments.v1.ScheduleEvery">ScheduleEvery</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Schedule.target"><code class="name">var <span class="ident">target</span> : <a title="nitric.proto.deployments.v1.ScheduleTarget" href="#nitric.proto.deployments.v1.ScheduleTarget">ScheduleTarget</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.ScheduleCron"><code class="flex name class">
+<span>class <span class="ident">ScheduleCron</span></span>
+<span>(</span><span>expression: str = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>ScheduleCron(expression: str = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class ScheduleCron(betterproto.Message):
+    expression: str = betterproto.string_field(1)
+    &#34;&#34;&#34;standard unix cron expression&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.ScheduleCron.expression"><code class="name">var <span class="ident">expression</span> : str</code></dt>
+<dd>
+<div class="desc"><p>standard unix cron expression</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.ScheduleEvery"><code class="flex name class">
+<span>class <span class="ident">ScheduleEvery</span></span>
+<span>(</span><span>rate: str = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>ScheduleEvery(rate: str = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class ScheduleEvery(betterproto.Message):
+    rate: str = betterproto.string_field(1)
+    &#34;&#34;&#34;
+    rate string e.g. &#39;5 minutes&#39;. Value frequencies are &#39;minutes&#39;, &#39;hours&#39;,
+    &#39;days&#39;.
+    &#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.ScheduleEvery.rate"><code class="name">var <span class="ident">rate</span> : str</code></dt>
+<dd>
+<div class="desc"><p>rate string e.g. '5 minutes'. Value frequencies are 'minutes', 'hours',
+'days'.</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.ScheduleTarget"><code class="flex name class">
+<span>class <span class="ident">ScheduleTarget</span></span>
+<span>(</span><span>service: str = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>ScheduleTarget(service: str = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class ScheduleTarget(betterproto.Message):
+    service: str = betterproto.string_field(1, group=&#34;target&#34;)
+    &#34;&#34;&#34;The name of an service to target&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.ScheduleTarget.service"><code class="name">var <span class="ident">service</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The name of an service to target</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.Secret"><code class="flex name class">
+<span>class <span class="ident">Secret</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Secret()</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class Secret(betterproto.Message):
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+</dd>
+<dt id="nitric.proto.deployments.v1.Service"><code class="flex name class">
+<span>class <span class="ident">Service</span></span>
+<span>(</span><span>image: <a title="nitric.proto.deployments.v1.ImageSource" href="#nitric.proto.deployments.v1.ImageSource">ImageSource</a> = &lt;object object&gt;, workers: int = &lt;object object&gt;, timeout: int = &lt;object object&gt;, memory: int = &lt;object object&gt;, type: str = &lt;object object&gt;, env: Dict[str, str] = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A unit of compute (i.e. function/container)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class Service(betterproto.Message):
+    &#34;&#34;&#34;A unit of compute (i.e. function/container)&#34;&#34;&#34;
+
+    image: &#34;ImageSource&#34; = betterproto.message_field(1, group=&#34;source&#34;)
+    &#34;&#34;&#34;Container image as a service&#34;&#34;&#34;
+
+    workers: int = betterproto.int32_field(10)
+    &#34;&#34;&#34;Expected worker count for this service&#34;&#34;&#34;
+
+    timeout: int = betterproto.int32_field(11)
+    &#34;&#34;&#34;Configurable timeout for request handling&#34;&#34;&#34;
+
+    memory: int = betterproto.int32_field(12)
+    &#34;&#34;&#34;Configurable memory size for this instance&#34;&#34;&#34;
+
+    type: str = betterproto.string_field(13)
+    &#34;&#34;&#34;
+    A simple type property describes the requested type of service that this
+    should be for this project, a provider can implement how this request is
+    satisfied in any way
+    &#34;&#34;&#34;
+
+    env: Dict[str, str] = betterproto.map_field(
+        14, betterproto.TYPE_STRING, betterproto.TYPE_STRING
+    )
+    &#34;&#34;&#34;Environment variables for this service&#34;&#34;&#34;
+
+    def __post_init__(self) -&gt; None:
+        super().__post_init__()
+        if self.is_set(&#34;timeout&#34;):
+            warnings.warn(&#34;Service.timeout is deprecated&#34;, DeprecationWarning)
+        if self.is_set(&#34;memory&#34;):
+            warnings.warn(&#34;Service.memory is deprecated&#34;, DeprecationWarning)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.Service.env"><code class="name">var <span class="ident">env</span> : Dict[str, str]</code></dt>
+<dd>
+<div class="desc"><p>Environment variables for this service</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Service.image"><code class="name">var <span class="ident">image</span> : <a title="nitric.proto.deployments.v1.ImageSource" href="#nitric.proto.deployments.v1.ImageSource">ImageSource</a></code></dt>
+<dd>
+<div class="desc"><p>Container image as a service</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Service.memory"><code class="name">var <span class="ident">memory</span> : int</code></dt>
+<dd>
+<div class="desc"><p>Configurable memory size for this instance</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Service.timeout"><code class="name">var <span class="ident">timeout</span> : int</code></dt>
+<dd>
+<div class="desc"><p>Configurable timeout for request handling</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Service.type"><code class="name">var <span class="ident">type</span> : str</code></dt>
+<dd>
+<div class="desc"><p>A simple type property describes the requested type of service that this
+should be for this project, a provider can implement how this request is
+satisfied in any way</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Service.workers"><code class="name">var <span class="ident">workers</span> : int</code></dt>
+<dd>
+<div class="desc"><p>Expected worker count for this service</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.Spark"><code class="flex name class">
+<span>class <span class="ident">Spark</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Spark()</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class Spark(betterproto.Message):
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+</dd>
+<dt id="nitric.proto.deployments.v1.Spec"><code class="flex name class">
+<span>class <span class="ident">Spec</span></span>
+<span>(</span><span>resources: List[ForwardRef('<a title="nitric.proto.deployments.v1.Resource" href="#nitric.proto.deployments.v1.Resource">Resource</a>')] = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Spec(resources: List[ForwardRef('Resource')] = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class Spec(betterproto.Message):
+    resources: List[&#34;Resource&#34;] = betterproto.message_field(1)
+    &#34;&#34;&#34;list of resources to deploy&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.Spec.resources"><code class="name">var <span class="ident">resources</span> : List[<a title="nitric.proto.deployments.v1.Resource" href="#nitric.proto.deployments.v1.Resource">Resource</a>]</code></dt>
+<dd>
+<div class="desc"><p>list of resources to deploy</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.SqlDatabase"><code class="flex name class">
+<span>class <span class="ident">SqlDatabase</span></span>
+<span>(</span><span>image_uri: str = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>SqlDatabase(image_uri: str = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class SqlDatabase(betterproto.Message):
+    image_uri: str = betterproto.string_field(1, group=&#34;migrations&#34;)
+    &#34;&#34;&#34;
+    The URI of a docker image to use to execute the migrations for this
+    database
+    &#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.SqlDatabase.image_uri"><code class="name">var <span class="ident">image_uri</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The URI of a docker image to use to execute the migrations for this
+database</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.SubscriptionTarget"><code class="flex name class">
+<span>class <span class="ident">SubscriptionTarget</span></span>
+<span>(</span><span>service: str = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>SubscriptionTarget(service: str = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class SubscriptionTarget(betterproto.Message):
+    service: str = betterproto.string_field(1, group=&#34;target&#34;)
+    &#34;&#34;&#34;The name of an service to target&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.SubscriptionTarget.service"><code class="name">var <span class="ident">service</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The name of an service to target</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.Topic"><code class="flex name class">
+<span>class <span class="ident">Topic</span></span>
+<span>(</span><span>subscriptions: List[ForwardRef('<a title="nitric.proto.deployments.v1.SubscriptionTarget" href="#nitric.proto.deployments.v1.SubscriptionTarget">SubscriptionTarget</a>')] = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Topic(subscriptions: List[ForwardRef('SubscriptionTarget')] = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class Topic(betterproto.Message):
+    subscriptions: List[&#34;SubscriptionTarget&#34;] = betterproto.message_field(1)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.Topic.subscriptions"><code class="name">var <span class="ident">subscriptions</span> : List[<a title="nitric.proto.deployments.v1.SubscriptionTarget" href="#nitric.proto.deployments.v1.SubscriptionTarget">SubscriptionTarget</a>]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.TopicSubscription"><code class="flex name class">
+<span>class <span class="ident">TopicSubscription</span></span>
+<span>(</span><span>target: <a title="nitric.proto.deployments.v1.SubscriptionTarget" href="#nitric.proto.deployments.v1.SubscriptionTarget">SubscriptionTarget</a> = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>TopicSubscription(target: 'SubscriptionTarget' = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class TopicSubscription(betterproto.Message):
+    target: &#34;SubscriptionTarget&#34; = betterproto.message_field(1)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.TopicSubscription.target"><code class="name">var <span class="ident">target</span> : <a title="nitric.proto.deployments.v1.SubscriptionTarget" href="#nitric.proto.deployments.v1.SubscriptionTarget">SubscriptionTarget</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.UpResult"><code class="flex name class">
+<span>class <span class="ident">UpResult</span></span>
+<span>(</span><span>success: bool = &lt;object object&gt;, text: str = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Terminal message indicating deployment success</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class UpResult(betterproto.Message):
+    &#34;&#34;&#34;Terminal message indicating deployment success&#34;&#34;&#34;
+
+    success: bool = betterproto.bool_field(1)
+    &#34;&#34;&#34;Indicate the success status&#34;&#34;&#34;
+
+    text: str = betterproto.string_field(2, group=&#34;content&#34;)
+    &#34;&#34;&#34;Simple text output as result&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.UpResult.success"><code class="name">var <span class="ident">success</span> : bool</code></dt>
+<dd>
+<div class="desc"><p>Indicate the success status</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.UpResult.text"><code class="name">var <span class="ident">text</span> : str</code></dt>
+<dd>
+<div class="desc"><p>Simple text output as result</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.Website"><code class="flex name class">
+<span>class <span class="ident">Website</span></span>
+<span>(</span><span>index_document: str = &lt;object object&gt;, error_document: str = &lt;object object&gt;, base_path: str = &lt;object object&gt;, local_directory: str = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Website(index_document: str = <object object at 0x733dc69ac250>, error_document: str = <object object at 0x733dc69ac250>, base_path: str = <object object at 0x733dc69ac250>, local_directory: str = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class Website(betterproto.Message):
+    index_document: str = betterproto.string_field(1)
+    &#34;&#34;&#34;The index document for the website&#34;&#34;&#34;
+
+    error_document: str = betterproto.string_field(2)
+    &#34;&#34;&#34;The error document for the website&#34;&#34;&#34;
+
+    base_path: str = betterproto.string_field(3)
+    &#34;&#34;&#34;The base path for the website&#34;&#34;&#34;
+
+    local_directory: str = betterproto.string_field(4, group=&#34;asset_source&#34;)
+    &#34;&#34;&#34;The production website output directory&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.Website.base_path"><code class="name">var <span class="ident">base_path</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The base path for the website</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Website.error_document"><code class="name">var <span class="ident">error_document</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The error document for the website</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Website.index_document"><code class="name">var <span class="ident">index_document</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The index document for the website</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Website.local_directory"><code class="name">var <span class="ident">local_directory</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The production website output directory</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.Websocket"><code class="flex name class">
+<span>class <span class="ident">Websocket</span></span>
+<span>(</span><span>connect_target: <a title="nitric.proto.deployments.v1.WebsocketTarget" href="#nitric.proto.deployments.v1.WebsocketTarget">WebsocketTarget</a> = &lt;object object&gt;, disconnect_target: <a title="nitric.proto.deployments.v1.WebsocketTarget" href="#nitric.proto.deployments.v1.WebsocketTarget">WebsocketTarget</a> = &lt;object object&gt;, message_target: <a title="nitric.proto.deployments.v1.WebsocketTarget" href="#nitric.proto.deployments.v1.WebsocketTarget">WebsocketTarget</a> = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Declare a new websocket</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class Websocket(betterproto.Message):
+    &#34;&#34;&#34;Declare a new websocket&#34;&#34;&#34;
+
+    connect_target: &#34;WebsocketTarget&#34; = betterproto.message_field(1)
+    &#34;&#34;&#34;Target for handling new client connections&#34;&#34;&#34;
+
+    disconnect_target: &#34;WebsocketTarget&#34; = betterproto.message_field(2)
+    &#34;&#34;&#34;Target for handling client disconnections&#34;&#34;&#34;
+
+    message_target: &#34;WebsocketTarget&#34; = betterproto.message_field(3)
+    &#34;&#34;&#34;Target for handling all other message types&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.Websocket.connect_target"><code class="name">var <span class="ident">connect_target</span> : <a title="nitric.proto.deployments.v1.WebsocketTarget" href="#nitric.proto.deployments.v1.WebsocketTarget">WebsocketTarget</a></code></dt>
+<dd>
+<div class="desc"><p>Target for handling new client connections</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Websocket.disconnect_target"><code class="name">var <span class="ident">disconnect_target</span> : <a title="nitric.proto.deployments.v1.WebsocketTarget" href="#nitric.proto.deployments.v1.WebsocketTarget">WebsocketTarget</a></code></dt>
+<dd>
+<div class="desc"><p>Target for handling client disconnections</p></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Websocket.message_target"><code class="name">var <span class="ident">message_target</span> : <a title="nitric.proto.deployments.v1.WebsocketTarget" href="#nitric.proto.deployments.v1.WebsocketTarget">WebsocketTarget</a></code></dt>
+<dd>
+<div class="desc"><p>Target for handling all other message types</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.deployments.v1.WebsocketTarget"><code class="flex name class">
+<span>class <span class="ident">WebsocketTarget</span></span>
+<span>(</span><span>service: str = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>WebsocketTarget(service: str = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class WebsocketTarget(betterproto.Message):
+    service: str = betterproto.string_field(1, group=&#34;target&#34;)
+    &#34;&#34;&#34;The name of an service to target&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.WebsocketTarget.service"><code class="name">var <span class="ident">service</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The name of an service to target</p></div>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="nitric.proto.deployments" href="../index.html">nitric.proto.deployments</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.Api" href="#nitric.proto.deployments.v1.Api">Api</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.Api.openapi" href="#nitric.proto.deployments.v1.Api.openapi">openapi</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.Batch" href="#nitric.proto.deployments.v1.Batch">Batch</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.Batch.env" href="#nitric.proto.deployments.v1.Batch.env">env</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Batch.image" href="#nitric.proto.deployments.v1.Batch.image">image</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Batch.jobs" href="#nitric.proto.deployments.v1.Batch.jobs">jobs</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Batch.type" href="#nitric.proto.deployments.v1.Batch.type">type</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.Bucket" href="#nitric.proto.deployments.v1.Bucket">Bucket</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.Bucket.listeners" href="#nitric.proto.deployments.v1.Bucket.listeners">listeners</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.BucketListener" href="#nitric.proto.deployments.v1.BucketListener">BucketListener</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.BucketListener.config" href="#nitric.proto.deployments.v1.BucketListener.config">config</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.BucketListener.service" href="#nitric.proto.deployments.v1.BucketListener.service">service</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.DeploymentBase" href="#nitric.proto.deployments.v1.DeploymentBase">DeploymentBase</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.DeploymentBase.down" href="#nitric.proto.deployments.v1.DeploymentBase.down">down</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.DeploymentBase.up" href="#nitric.proto.deployments.v1.DeploymentBase.up">up</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.DeploymentDownEvent" href="#nitric.proto.deployments.v1.DeploymentDownEvent">DeploymentDownEvent</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.DeploymentDownEvent.message" href="#nitric.proto.deployments.v1.DeploymentDownEvent.message">message</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.DeploymentDownEvent.result" href="#nitric.proto.deployments.v1.DeploymentDownEvent.result">result</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.DeploymentDownEvent.update" href="#nitric.proto.deployments.v1.DeploymentDownEvent.update">update</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.DeploymentDownRequest" href="#nitric.proto.deployments.v1.DeploymentDownRequest">DeploymentDownRequest</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.DeploymentDownRequest.attributes" href="#nitric.proto.deployments.v1.DeploymentDownRequest.attributes">attributes</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.DeploymentDownRequest.interactive" href="#nitric.proto.deployments.v1.DeploymentDownRequest.interactive">interactive</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.DeploymentStub" href="#nitric.proto.deployments.v1.DeploymentStub">DeploymentStub</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.DeploymentStub.down" href="#nitric.proto.deployments.v1.DeploymentStub.down">down</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.DeploymentStub.up" href="#nitric.proto.deployments.v1.DeploymentStub.up">up</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.DeploymentUpEvent" href="#nitric.proto.deployments.v1.DeploymentUpEvent">DeploymentUpEvent</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.DeploymentUpEvent.message" href="#nitric.proto.deployments.v1.DeploymentUpEvent.message">message</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.DeploymentUpEvent.result" href="#nitric.proto.deployments.v1.DeploymentUpEvent.result">result</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.DeploymentUpEvent.update" href="#nitric.proto.deployments.v1.DeploymentUpEvent.update">update</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.DeploymentUpRequest" href="#nitric.proto.deployments.v1.DeploymentUpRequest">DeploymentUpRequest</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.DeploymentUpRequest.attributes" href="#nitric.proto.deployments.v1.DeploymentUpRequest.attributes">attributes</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.DeploymentUpRequest.interactive" href="#nitric.proto.deployments.v1.DeploymentUpRequest.interactive">interactive</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.DeploymentUpRequest.spec" href="#nitric.proto.deployments.v1.DeploymentUpRequest.spec">spec</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.DownResult" href="#nitric.proto.deployments.v1.DownResult">DownResult</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.Http" href="#nitric.proto.deployments.v1.Http">Http</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.Http.target" href="#nitric.proto.deployments.v1.Http.target">target</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.HttpTarget" href="#nitric.proto.deployments.v1.HttpTarget">HttpTarget</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.HttpTarget.service" href="#nitric.proto.deployments.v1.HttpTarget.service">service</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.ImageSource" href="#nitric.proto.deployments.v1.ImageSource">ImageSource</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.ImageSource.uri" href="#nitric.proto.deployments.v1.ImageSource.uri">uri</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.Job" href="#nitric.proto.deployments.v1.Job">Job</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.Job.name" href="#nitric.proto.deployments.v1.Job.name">name</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Job.requirements" href="#nitric.proto.deployments.v1.Job.requirements">requirements</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.KeyValueStore" href="#nitric.proto.deployments.v1.KeyValueStore">KeyValueStore</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.Policy" href="#nitric.proto.deployments.v1.Policy">Policy</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.Policy.actions" href="#nitric.proto.deployments.v1.Policy.actions">actions</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Policy.principals" href="#nitric.proto.deployments.v1.Policy.principals">principals</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Policy.resources" href="#nitric.proto.deployments.v1.Policy.resources">resources</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.Queue" href="#nitric.proto.deployments.v1.Queue">Queue</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.Resource" href="#nitric.proto.deployments.v1.Resource">Resource</a></code></h4>
+<ul class="two-column">
+<li><code><a title="nitric.proto.deployments.v1.Resource.api" href="#nitric.proto.deployments.v1.Resource.api">api</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Resource.batch" href="#nitric.proto.deployments.v1.Resource.batch">batch</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Resource.bucket" href="#nitric.proto.deployments.v1.Resource.bucket">bucket</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Resource.http" href="#nitric.proto.deployments.v1.Resource.http">http</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Resource.id" href="#nitric.proto.deployments.v1.Resource.id">id</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Resource.key_value_store" href="#nitric.proto.deployments.v1.Resource.key_value_store">key_value_store</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Resource.policy" href="#nitric.proto.deployments.v1.Resource.policy">policy</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Resource.queue" href="#nitric.proto.deployments.v1.Resource.queue">queue</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Resource.schedule" href="#nitric.proto.deployments.v1.Resource.schedule">schedule</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Resource.secret" href="#nitric.proto.deployments.v1.Resource.secret">secret</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Resource.service" href="#nitric.proto.deployments.v1.Resource.service">service</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Resource.spark" href="#nitric.proto.deployments.v1.Resource.spark">spark</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Resource.sql_database" href="#nitric.proto.deployments.v1.Resource.sql_database">sql_database</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Resource.topic" href="#nitric.proto.deployments.v1.Resource.topic">topic</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Resource.website" href="#nitric.proto.deployments.v1.Resource.website">website</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Resource.websocket" href="#nitric.proto.deployments.v1.Resource.websocket">websocket</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.ResourceDeploymentAction" href="#nitric.proto.deployments.v1.ResourceDeploymentAction">ResourceDeploymentAction</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.ResourceDeploymentAction.CREATE" href="#nitric.proto.deployments.v1.ResourceDeploymentAction.CREATE">CREATE</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.ResourceDeploymentAction.DELETE" href="#nitric.proto.deployments.v1.ResourceDeploymentAction.DELETE">DELETE</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.ResourceDeploymentAction.REPLACE" href="#nitric.proto.deployments.v1.ResourceDeploymentAction.REPLACE">REPLACE</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.ResourceDeploymentAction.SAME" href="#nitric.proto.deployments.v1.ResourceDeploymentAction.SAME">SAME</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.ResourceDeploymentAction.UPDATE" href="#nitric.proto.deployments.v1.ResourceDeploymentAction.UPDATE">UPDATE</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.ResourceDeploymentStatus" href="#nitric.proto.deployments.v1.ResourceDeploymentStatus">ResourceDeploymentStatus</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.ResourceDeploymentStatus.FAILED" href="#nitric.proto.deployments.v1.ResourceDeploymentStatus.FAILED">FAILED</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.ResourceDeploymentStatus.IN_PROGRESS" href="#nitric.proto.deployments.v1.ResourceDeploymentStatus.IN_PROGRESS">IN_PROGRESS</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.ResourceDeploymentStatus.PENDING" href="#nitric.proto.deployments.v1.ResourceDeploymentStatus.PENDING">PENDING</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.ResourceDeploymentStatus.SUCCESS" href="#nitric.proto.deployments.v1.ResourceDeploymentStatus.SUCCESS">SUCCESS</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.ResourceUpdate" href="#nitric.proto.deployments.v1.ResourceUpdate">ResourceUpdate</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.ResourceUpdate.action" href="#nitric.proto.deployments.v1.ResourceUpdate.action">action</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.ResourceUpdate.id" href="#nitric.proto.deployments.v1.ResourceUpdate.id">id</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.ResourceUpdate.message" href="#nitric.proto.deployments.v1.ResourceUpdate.message">message</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.ResourceUpdate.status" href="#nitric.proto.deployments.v1.ResourceUpdate.status">status</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.ResourceUpdate.sub_resource" href="#nitric.proto.deployments.v1.ResourceUpdate.sub_resource">sub_resource</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.Schedule" href="#nitric.proto.deployments.v1.Schedule">Schedule</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.Schedule.cron" href="#nitric.proto.deployments.v1.Schedule.cron">cron</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Schedule.every" href="#nitric.proto.deployments.v1.Schedule.every">every</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Schedule.target" href="#nitric.proto.deployments.v1.Schedule.target">target</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.ScheduleCron" href="#nitric.proto.deployments.v1.ScheduleCron">ScheduleCron</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.ScheduleCron.expression" href="#nitric.proto.deployments.v1.ScheduleCron.expression">expression</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.ScheduleEvery" href="#nitric.proto.deployments.v1.ScheduleEvery">ScheduleEvery</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.ScheduleEvery.rate" href="#nitric.proto.deployments.v1.ScheduleEvery.rate">rate</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.ScheduleTarget" href="#nitric.proto.deployments.v1.ScheduleTarget">ScheduleTarget</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.ScheduleTarget.service" href="#nitric.proto.deployments.v1.ScheduleTarget.service">service</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.Secret" href="#nitric.proto.deployments.v1.Secret">Secret</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.Service" href="#nitric.proto.deployments.v1.Service">Service</a></code></h4>
+<ul class="two-column">
+<li><code><a title="nitric.proto.deployments.v1.Service.env" href="#nitric.proto.deployments.v1.Service.env">env</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Service.image" href="#nitric.proto.deployments.v1.Service.image">image</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Service.memory" href="#nitric.proto.deployments.v1.Service.memory">memory</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Service.timeout" href="#nitric.proto.deployments.v1.Service.timeout">timeout</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Service.type" href="#nitric.proto.deployments.v1.Service.type">type</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Service.workers" href="#nitric.proto.deployments.v1.Service.workers">workers</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.Spark" href="#nitric.proto.deployments.v1.Spark">Spark</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.Spec" href="#nitric.proto.deployments.v1.Spec">Spec</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.Spec.resources" href="#nitric.proto.deployments.v1.Spec.resources">resources</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.SqlDatabase" href="#nitric.proto.deployments.v1.SqlDatabase">SqlDatabase</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.SqlDatabase.image_uri" href="#nitric.proto.deployments.v1.SqlDatabase.image_uri">image_uri</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.SubscriptionTarget" href="#nitric.proto.deployments.v1.SubscriptionTarget">SubscriptionTarget</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.SubscriptionTarget.service" href="#nitric.proto.deployments.v1.SubscriptionTarget.service">service</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.Topic" href="#nitric.proto.deployments.v1.Topic">Topic</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.Topic.subscriptions" href="#nitric.proto.deployments.v1.Topic.subscriptions">subscriptions</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.TopicSubscription" href="#nitric.proto.deployments.v1.TopicSubscription">TopicSubscription</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.TopicSubscription.target" href="#nitric.proto.deployments.v1.TopicSubscription.target">target</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.UpResult" href="#nitric.proto.deployments.v1.UpResult">UpResult</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.UpResult.success" href="#nitric.proto.deployments.v1.UpResult.success">success</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.UpResult.text" href="#nitric.proto.deployments.v1.UpResult.text">text</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.Website" href="#nitric.proto.deployments.v1.Website">Website</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.Website.base_path" href="#nitric.proto.deployments.v1.Website.base_path">base_path</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Website.error_document" href="#nitric.proto.deployments.v1.Website.error_document">error_document</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Website.index_document" href="#nitric.proto.deployments.v1.Website.index_document">index_document</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Website.local_directory" href="#nitric.proto.deployments.v1.Website.local_directory">local_directory</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.Websocket" href="#nitric.proto.deployments.v1.Websocket">Websocket</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.Websocket.connect_target" href="#nitric.proto.deployments.v1.Websocket.connect_target">connect_target</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Websocket.disconnect_target" href="#nitric.proto.deployments.v1.Websocket.disconnect_target">disconnect_target</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Websocket.message_target" href="#nitric.proto.deployments.v1.Websocket.message_target">message_target</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.deployments.v1.WebsocketTarget" href="#nitric.proto.deployments.v1.WebsocketTarget">WebsocketTarget</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.WebsocketTarget.service" href="#nitric.proto.deployments.v1.WebsocketTarget.service">service</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

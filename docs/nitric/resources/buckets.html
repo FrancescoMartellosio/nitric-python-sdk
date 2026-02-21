@@ -46,30 +46,318 @@
 #
 from __future__ import annotations
 
-from nitric.exception import exception_from_grpc_error
-from nitric.api.storage import BucketRef, Storage
-from typing import List, Union
+import logging
+from dataclasses import dataclass
+from datetime import timedelta
 from enum import Enum
+from typing import Callable, List, Literal, Optional, Union, cast
+from warnings import warn
+
+import betterproto
+import grpclib
 from grpclib import GRPCError
+from grpclib.client import Channel
 
 from nitric.application import Nitric
-from nitric.faas import FunctionServer, BucketNotificationWorkerOptions, BucketNotificationMiddleware
-from nitric.proto.nitric.resource.v1 import (
-    Resource,
-    ResourceType,
-    Action,
-    ResourceDeclareRequest,
+from nitric.bidi import AsyncNotifierList
+from nitric.context import FunctionServer, Handler, Middleware
+from nitric.exception import InvalidArgumentException, exception_from_grpc_error
+from nitric.proto.resources.v1 import Action, ResourceDeclareRequest, ResourceIdentifier, ResourceType
+from nitric.proto.storage.v1 import (
+    BlobEventRequest,
+    BlobEventResponse,
+    BlobEventType,
+    ClientMessage,
+    RegistrationRequest,
+    StorageDeleteRequest,
+    StorageExistsRequest,
+    StorageListBlobsRequest,
+    StorageListenerStub,
+    StoragePreSignUrlRequest,
+    StoragePreSignUrlRequestOperation,
+    StorageReadRequest,
+    StorageStub,
+    StorageWriteRequest,
 )
+from nitric.resources.resource import SecureResource
+from nitric.channel import ChannelManager
 
-from nitric.resources.base import SecureResource
+
+class BucketNotifyRequest:
+    &#34;&#34;&#34;Represents a translated Event, from a subscribed bucket notification, forwarded from the Nitric Membrane.&#34;&#34;&#34;
+
+    bucket_name: str
+    key: str
+    notification_type: BlobEventType
+    bucket: BucketRef
+    file: FileRef
+
+    def __init__(self, bucket_name: str, key: str, notification_type: BlobEventType):
+        &#34;&#34;&#34;Construct a new BucketNotifyRequest.&#34;&#34;&#34;
+        self.bucket_name = bucket_name
+        self.key = key
+        self.notification_type = notification_type
+        self.bucket = BucketRef(bucket_name)
+        self.file = self.bucket.file(key)
 
 
-class BucketPermission(Enum):
-    &#34;&#34;&#34;Valid query expression operators.&#34;&#34;&#34;
+class BucketNotifyResponse:
+    &#34;&#34;&#34;Represents the response to a trigger from a Bucket.&#34;&#34;&#34;
 
-    reading = &#34;reading&#34;
-    writing = &#34;writing&#34;
-    deleting = &#34;deleting&#34;
+    def __init__(self, success: bool = True):
+        &#34;&#34;&#34;Construct a new BucketNotificationResponse.&#34;&#34;&#34;
+        self.success = success
+
+
+class BucketNotificationContext:
+    &#34;&#34;&#34;Represents the full request/response context for a bucket notification trigger.&#34;&#34;&#34;
+
+    def __init__(self, request: BucketNotifyRequest, response: Optional[BucketNotifyResponse] = None):
+        &#34;&#34;&#34;Construct a new BucketNotificationContext.&#34;&#34;&#34;
+        self.req = request
+        self.res = response if response else BucketNotifyResponse()
+
+
+class FileNotifyRequest(BucketNotifyRequest):
+    &#34;&#34;&#34;Represents a translated Event, from a subscribed bucket notification, forwarded from the Nitric Membrane.&#34;&#34;&#34;
+
+    def __init__(
+        self,
+        bucket_name: str,
+        bucket_ref: BucketRef,
+        key: str,
+        notification_type: BlobEventType,
+    ):
+        &#34;&#34;&#34;Construct a new FileNotificationRequest.&#34;&#34;&#34;
+        super().__init__(bucket_name=bucket_name, key=key, notification_type=notification_type)
+        self.file = bucket_ref.file(key)
+
+
+class FileNotificationContext(BucketNotificationContext):
+    &#34;&#34;&#34;Represents the full request/response context for a bucket notification trigger.&#34;&#34;&#34;
+
+    def __init__(self, request: FileNotifyRequest, response: Optional[BucketNotifyResponse] = None):
+        &#34;&#34;&#34;Construct a new FileNotificationContext.&#34;&#34;&#34;
+        super().__init__(request=request, response=response)
+        self.req = request
+
+    @staticmethod
+    def _from_client_message_with_bucket(msg: BlobEventRequest, bucket_ref) -&gt; FileNotificationContext:
+        &#34;&#34;&#34;Construct a new FileNotificationTrigger from a Bucket Notification trigger from the Nitric Membrane.&#34;&#34;&#34;
+        return FileNotificationContext(
+            request=FileNotifyRequest(
+                bucket_name=msg.bucket_name,
+                key=msg.blob_event.key,
+                bucket_ref=bucket_ref,
+                notification_type=msg.blob_event.type,
+            )
+        )
+
+
+BucketNotificationMiddleware = Middleware[BucketNotificationContext]
+BucketNotificationHandler = Handler[BucketNotificationContext]
+
+FileNotificationMiddleware = Middleware[FileNotificationContext]
+FileNotificationHandler = Handler[FileNotificationContext]
+
+
+class BucketRef(object):
+    &#34;&#34;&#34;A reference to a deployed storage bucket, used to interact with the bucket at runtime.&#34;&#34;&#34;
+
+    _channel: Channel
+    _storage_stub: StorageStub
+    name: str
+
+    def __init__(self, name: str):
+        &#34;&#34;&#34;Construct a Nitric Storage Client.&#34;&#34;&#34;
+        self._channel: Union[Channel, None] = ChannelManager.get_channel()
+        self._storage_stub = StorageStub(channel=self._channel)
+        self.name = name
+
+    def __del__(self):
+        # close the channel when this client is destroyed
+        if self._channel is not None:
+            self._channel.close()
+
+    def file(self, key: str):
+        &#34;&#34;&#34;Return a reference to a file in this bucket.&#34;&#34;&#34;
+        return FileRef(_bucket=self, key=key)
+
+    async def files(self):
+        &#34;&#34;&#34;Return a list of files in this bucket.&#34;&#34;&#34;
+        resp = await self._storage_stub.list_blobs(
+            storage_list_blobs_request=StorageListBlobsRequest(bucket_name=self.name)
+        )
+        return [self.file(f.key) for f in resp.blobs]
+
+    async def exists(self, key: str) -&gt; bool:
+        &#34;&#34;&#34;Return true if a file in the bucket exists.&#34;&#34;&#34;
+        resp = await self._storage_stub.exists(
+            storage_exists_request=StorageExistsRequest(bucket_name=self.name, key=key)
+        )
+        return resp.exists
+
+    def on(
+        self, notification_type: str, notification_prefix_filter: str
+    ) -&gt; Callable[[BucketNotificationHandler], None]:
+        &#34;&#34;&#34;Create and return a bucket notification decorator for this bucket.&#34;&#34;&#34;
+
+        def decorator(func: BucketNotificationHandler) -&gt; None:
+            Listener(
+                bucket_name=self.name,
+                notification_type=notification_type,
+                notification_prefix_filter=notification_prefix_filter,
+                handler=func,
+            )
+
+        return decorator
+
+
+class FileMode(Enum):
+    &#34;&#34;&#34;Definition of available operation modes for file signed URLs.&#34;&#34;&#34;
+
+    READ = 0
+    WRITE = 1
+
+    def to_request_operation(self) -&gt; StoragePreSignUrlRequestOperation:
+        &#34;&#34;&#34;Convert FileMode to a StoragePreSignUrlRequestOperation.&#34;&#34;&#34;
+        if self == FileMode.READ:
+            return StoragePreSignUrlRequestOperation.READ
+        elif self == FileMode.WRITE:
+            return StoragePreSignUrlRequestOperation.WRITE
+        else:
+            raise InvalidArgumentException(&#34;Invalid FileMode&#34;)
+
+
+@dataclass(frozen=True, order=True)
+class FileRef(object):
+    &#34;&#34;&#34;A reference to a file in a bucket, used to perform operations on that file.&#34;&#34;&#34;
+
+    _bucket: BucketRef
+    key: str
+
+    async def write(self, body: bytes):
+        &#34;&#34;&#34;
+        Write the bytes as the content of this file.
+
+        Will create the file if it doesn&#39;t already exist.
+        &#34;&#34;&#34;
+        try:
+            await self._bucket._storage_stub.write(
+                storage_write_request=StorageWriteRequest(bucket_name=self._bucket.name, key=self.key, body=body)
+            )
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+    async def read(self) -&gt; bytes:
+        &#34;&#34;&#34;Read this files contents from the bucket.&#34;&#34;&#34;
+        try:
+            response = await self._bucket._storage_stub.read(
+                storage_read_request=StorageReadRequest(bucket_name=self._bucket.name, key=self.key)
+            )
+            return response.body
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+    async def delete(self):
+        &#34;&#34;&#34;Delete this file from the bucket.&#34;&#34;&#34;
+        try:
+            await self._bucket._storage_stub.delete(
+                storage_delete_request=StorageDeleteRequest(bucket_name=self._bucket.name, key=self.key)
+            )
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+    async def upload_url(self, expiry: Optional[Union[timedelta, int]] = None):
+        &#34;&#34;&#34;
+        Get a temporary writable URL to this file.
+
+        Parameters
+        ----------
+        expiry : int, timedelta, optional
+            The expiry time for the signed URL.
+            If an integer is provided, it is treated as seconds. Default is 600 seconds.
+
+        Returns
+        -------
+        str: The signed URL.
+
+        &#34;&#34;&#34;
+        return await self._sign_url(mode=FileMode.WRITE, expiry=expiry)
+
+    async def download_url(self, expiry: Optional[Union[timedelta, int]] = None):
+        &#34;&#34;&#34;
+        Get a temporary readable URL to this file.
+
+        Parameters
+        ----------
+        expiry : int, timedelta, optional
+            The expiry time for the signed URL.
+            If an integer is provided, it is treated as seconds. Default is 600 seconds.
+
+        Returns
+        -------
+        str: The signed URL.
+
+        &#34;&#34;&#34;
+        return await self._sign_url(mode=FileMode.READ, expiry=expiry)
+
+    async def _sign_url(self, mode: FileMode = FileMode.READ, expiry: Optional[Union[timedelta, int]] = None):
+        &#34;&#34;&#34;Generate a signed URL for reading or writing to a file.&#34;&#34;&#34;
+        if expiry is None:
+            expiry = timedelta(seconds=600)
+        if not isinstance(expiry, timedelta):
+            expiry = timedelta(seconds=expiry)
+
+        try:
+            response = await self._bucket._storage_stub.pre_sign_url(
+                storage_pre_sign_url_request=StoragePreSignUrlRequest(
+                    bucket_name=self._bucket.name, key=self.key, operation=mode.to_request_operation(), expiry=expiry
+                )
+            )
+            return response.url
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+
+LegacyBucketPermission = Literal[&#34;reading&#34;, &#34;writing&#34;, &#34;deleting&#34;]
+BucketPermission = Literal[&#34;read&#34;, &#34;write&#34;, &#34;delete&#34;]
+
+legacy_perms: List[LegacyBucketPermission] = [&#34;reading&#34;, &#34;writing&#34;, &#34;deleting&#34;]
+new_perms: List[BucketPermission] = [&#34;read&#34;, &#34;write&#34;, &#34;delete&#34;]
+
+
+def check_permission(permission: Union[LegacyBucketPermission, BucketPermission]) -&gt; BucketPermission:
+    &#34;&#34;&#34;Check if the permission is valid and return the new permission if it is a legacy permission.&#34;&#34;&#34;
+    if permission in legacy_perms:
+        new_perm = new_perms[legacy_perms.index(cast(LegacyBucketPermission, permission))]
+        warn(
+            f&#34;The permission &#39;{permission}&#39; is deprecated. Use &#39;{new_perm}&#39; instead.&#34;, DeprecationWarning, stacklevel=2
+        )
+        return new_perm
+    elif permission in new_perms:
+        return cast(BucketPermission, permission)
+    else:
+        raise ValueError(&#34;Invalid permission value, must be one of &#39;read&#39;, &#39;write&#39;, or &#39;delete&#39;.&#34;)
+
+
+class BucketNotificationWorkerOptions:
+    &#34;&#34;&#34;Options for bucket notification workers.&#34;&#34;&#34;
+
+    def __init__(self, bucket_name: str, notification_type: str, notification_prefix_filter: str):
+        &#34;&#34;&#34;Construct a new options object.&#34;&#34;&#34;
+        self.bucket_name = bucket_name
+        self.notification_type = BucketNotificationWorkerOptions._to_grpc_event_type(notification_type.lower())
+        self.notification_prefix_filter = notification_prefix_filter
+
+    @staticmethod
+    def _to_grpc_event_type(event_type: str) -&gt; BlobEventType:
+        if event_type == &#34;write&#34;:
+            return BlobEventType.Created
+        elif event_type == &#34;delete&#34;:
+            return BlobEventType.Deleted
+        else:
+            raise ValueError(f&#34;Event type {event_type} is unsupported&#34;)
 
 
 class Bucket(SecureResource):
@@ -79,58 +367,133 @@ class Bucket(SecureResource):
     actions: List[Action]
     _server: FunctionServer
 
-    def __init__(self, name: str):
-        &#34;&#34;&#34;Create a bucket with the name provided or references it if it already exists.&#34;&#34;&#34;
-        super().__init__()
-        self.name = name
-
-    async def _register(self):
+    async def _register(self) -&gt; None:
         try:
             await self._resources_stub.declare(
-                resource_declare_request=ResourceDeclareRequest(resource=self._to_resource())
+                resource_declare_request=ResourceDeclareRequest(id=self._to_resource_id())
             )
         except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err)
+            raise exception_from_grpc_error(grpc_err) from grpc_err
 
-    def _perms_to_actions(self, *args: List[Union[BucketPermission, str]]) -&gt; List[Action]:
-        permission_actions_map = {
-            BucketPermission.reading: [Action.BucketFileGet, Action.BucketFileList],
-            BucketPermission.writing: [Action.BucketFilePut],
-            BucketPermission.deleting: [Action.BucketFileDelete],
+    def _perms_to_actions(self, *args: BucketPermission) -&gt; List[Action]:
+        permission_actions_map: dict[BucketPermission, List[Action]] = {
+            &#34;read&#34;: [Action.BucketFileGet, Action.BucketFileList],
+            &#34;write&#34;: [Action.BucketFilePut],
+            &#34;delete&#34;: [Action.BucketFileDelete],
         }
-        # convert strings to the enum value where needed
-        perms = [
-            permission if isinstance(permission, BucketPermission) else BucketPermission[permission.lower()]
-            for permission in args
-        ]
-        return [action for perm in perms for action in permission_actions_map[perm]]
 
-    def _to_resource(self) -&gt; Resource:
-        return Resource(name=self.name, type=ResourceType.Bucket)
+        return [action for perm in args for action in permission_actions_map[perm]]
 
-    def allow(self, *args: Union[BucketPermission, str]) -&gt; BucketRef:
+    def _to_resource_id(self) -&gt; ResourceIdentifier:
+        return ResourceIdentifier(name=self.name, type=ResourceType.Bucket)
+
+    def allow(
+        self,
+        perm: Union[LegacyBucketPermission, BucketPermission],
+        *args: Union[LegacyBucketPermission, BucketPermission],
+    ) -&gt; BucketRef:
         &#34;&#34;&#34;Request the required permissions for this resource.&#34;&#34;&#34;
-        self._register_policy(*args)
+        all_perms: List[BucketPermission] = [check_permission(perm)] + [check_permission(p) for p in args]
 
-        return Storage().bucket(self.name)
+        str_args = [str(permission) for permission in all_perms]
+        self._register_policy(*str_args)
 
-    def on(self, notification_type: str, notification_prefix_filter: str):
+        return BucketRef(self.name)
+
+    def on(
+        self, notification_type: str, notification_prefix_filter: str
+    ) -&gt; Callable[[BucketNotificationHandler], None]:
         &#34;&#34;&#34;Create and return a bucket notification decorator for this bucket.&#34;&#34;&#34;
-        print(&#34;this has been called&#34;)
 
-        def decorator(func: BucketNotificationMiddleware):
-            print(&#34;this has been called&#34;)
-            self._server = FunctionServer(
-                BucketNotificationWorkerOptions(
-                    bucket_name=self.name,
-                    notification_type=notification_type,
-                    notification_prefix_filter=notification_prefix_filter,
-                )
+        def decorator(func: BucketNotificationHandler) -&gt; None:
+            Listener(
+                bucket_name=self.name,
+                notification_type=notification_type,
+                notification_prefix_filter=notification_prefix_filter,
+                handler=func,
             )
-            self._server.bucket_notification(func)
-            return Nitric._register_worker(self._server)
 
         return decorator
+
+
+class Listener(FunctionServer):
+    &#34;&#34;&#34;A bucket event listener.&#34;&#34;&#34;
+
+    _handler: BucketNotificationHandler
+    _registration_request: RegistrationRequest
+    _responses: AsyncNotifierList[ClientMessage]
+
+    def __init__(
+        self,
+        bucket_name: str,
+        notification_type: str,
+        notification_prefix_filter: str,
+        handler: BucketNotificationHandler,
+    ):
+        &#34;&#34;&#34;Construct a new bucket event listener.&#34;&#34;&#34;
+        self._handler = handler
+        self._responses = AsyncNotifierList()
+
+        event_type = BlobEventType.Created
+        if &#34;del&#34; in notification_type:
+            event_type = BlobEventType.Deleted
+
+        self._registration_request = RegistrationRequest(
+            bucket_name=bucket_name,
+            blob_event_type=event_type,
+            key_prefix_filter=notification_prefix_filter,
+        )
+
+        # noinspection PyProtectedMember
+        Nitric._register_worker(self)
+
+    async def _listener_request_iterator(self):
+        # Register with the server
+        yield ClientMessage(registration_request=self._registration_request)
+        # wait for any responses for the server and send them
+        async for response in self._responses:
+            yield response
+
+    async def start(self) -&gt; None:
+        &#34;&#34;&#34;Register this bucket listener and listen for events.&#34;&#34;&#34;
+        channel = ChannelManager.get_channel()
+        server = StorageListenerStub(channel=channel)
+
+        try:
+            async for server_msg in server.listen(self._listener_request_iterator()):
+                msg_type, _ = betterproto.which_one_of(server_msg, &#34;content&#34;)
+
+                if msg_type == &#34;registration_response&#34;:
+                    continue
+                if msg_type == &#34;blob_event_request&#34;:
+                    ctx = BucketNotificationContext(
+                        request=BucketNotifyRequest(
+                            bucket_name=server_msg.blob_event_request.bucket_name,
+                            key=server_msg.blob_event_request.blob_event.key,
+                            notification_type=server_msg.blob_event_request.blob_event.type,
+                        )
+                    )
+                    response: ClientMessage
+                    try:
+                        result = await self._handler(ctx)
+                        ctx = result if result else ctx
+                        be = BlobEventResponse(success=ctx.res.success)
+                        response = ClientMessage(id=server_msg.id, blob_event_response=be)
+                    except Exception as e:  # pylint: disable=broad-except
+                        logging.exception(&#34;An unhandled error occurred in a bucket event listener: %s&#34;, e)
+                        be = BlobEventResponse(success=False)
+                        response = ClientMessage(id=server_msg.id, blob_event_response=be)
+                    await self._responses.add_item(response)
+        except grpclib.exceptions.GRPCError as e:
+            print(f&#34;Stream terminated: {e.message}&#34;)
+        except grpclib.exceptions.StreamTerminatedError:
+            print(&#34;Stream from membrane closed.&#34;)
+        except KeyboardInterrupt:
+            print(&#34;Keyboard interrupt&#34;)
+        finally:
+            print(&#34;Closing client stream&#34;)
+            channel.close()
+        print(&#34;Listener stopped&#34;)
 
 
 def bucket(name: str) -&gt; Bucket:
@@ -168,6 +531,29 @@ def bucket(name: str) -&gt; Bucket:
     return Nitric._create_resource(Bucket, name)</code></pre>
 </details>
 </dd>
+<dt id="nitric.resources.buckets.check_permission"><code class="name flex">
+<span>def <span class="ident">check_permission</span></span>(<span>permission: Union[LegacyBucketPermission, BucketPermission]) ‑> Literal['read', 'write', 'delete']</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if the permission is valid and return the new permission if it is a legacy permission.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def check_permission(permission: Union[LegacyBucketPermission, BucketPermission]) -&gt; BucketPermission:
+    &#34;&#34;&#34;Check if the permission is valid and return the new permission if it is a legacy permission.&#34;&#34;&#34;
+    if permission in legacy_perms:
+        new_perm = new_perms[legacy_perms.index(cast(LegacyBucketPermission, permission))]
+        warn(
+            f&#34;The permission &#39;{permission}&#39; is deprecated. Use &#39;{new_perm}&#39; instead.&#34;, DeprecationWarning, stacklevel=2
+        )
+        return new_perm
+    elif permission in new_perms:
+        return cast(BucketPermission, permission)
+    else:
+        raise ValueError(&#34;Invalid permission value, must be one of &#39;read&#39;, &#39;write&#39;, or &#39;delete&#39;.&#34;)</code></pre>
+</details>
+</dd>
 </dl>
 </section>
 <section>
@@ -179,7 +565,7 @@ def bucket(name: str) -&gt; Bucket:
 </code></dt>
 <dd>
 <div class="desc"><p>A bucket resource, used for storage and retrieval of blob/binary data.</p>
-<p>Create a bucket with the name provided or references it if it already exists.</p></div>
+<p>Construct a new resource.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -191,68 +577,63 @@ def bucket(name: str) -&gt; Bucket:
     actions: List[Action]
     _server: FunctionServer
 
-    def __init__(self, name: str):
-        &#34;&#34;&#34;Create a bucket with the name provided or references it if it already exists.&#34;&#34;&#34;
-        super().__init__()
-        self.name = name
-
-    async def _register(self):
+    async def _register(self) -&gt; None:
         try:
             await self._resources_stub.declare(
-                resource_declare_request=ResourceDeclareRequest(resource=self._to_resource())
+                resource_declare_request=ResourceDeclareRequest(id=self._to_resource_id())
             )
         except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err)
+            raise exception_from_grpc_error(grpc_err) from grpc_err
 
-    def _perms_to_actions(self, *args: List[Union[BucketPermission, str]]) -&gt; List[Action]:
-        permission_actions_map = {
-            BucketPermission.reading: [Action.BucketFileGet, Action.BucketFileList],
-            BucketPermission.writing: [Action.BucketFilePut],
-            BucketPermission.deleting: [Action.BucketFileDelete],
+    def _perms_to_actions(self, *args: BucketPermission) -&gt; List[Action]:
+        permission_actions_map: dict[BucketPermission, List[Action]] = {
+            &#34;read&#34;: [Action.BucketFileGet, Action.BucketFileList],
+            &#34;write&#34;: [Action.BucketFilePut],
+            &#34;delete&#34;: [Action.BucketFileDelete],
         }
-        # convert strings to the enum value where needed
-        perms = [
-            permission if isinstance(permission, BucketPermission) else BucketPermission[permission.lower()]
-            for permission in args
-        ]
-        return [action for perm in perms for action in permission_actions_map[perm]]
 
-    def _to_resource(self) -&gt; Resource:
-        return Resource(name=self.name, type=ResourceType.Bucket)
+        return [action for perm in args for action in permission_actions_map[perm]]
 
-    def allow(self, *args: Union[BucketPermission, str]) -&gt; BucketRef:
+    def _to_resource_id(self) -&gt; ResourceIdentifier:
+        return ResourceIdentifier(name=self.name, type=ResourceType.Bucket)
+
+    def allow(
+        self,
+        perm: Union[LegacyBucketPermission, BucketPermission],
+        *args: Union[LegacyBucketPermission, BucketPermission],
+    ) -&gt; BucketRef:
         &#34;&#34;&#34;Request the required permissions for this resource.&#34;&#34;&#34;
-        self._register_policy(*args)
+        all_perms: List[BucketPermission] = [check_permission(perm)] + [check_permission(p) for p in args]
 
-        return Storage().bucket(self.name)
+        str_args = [str(permission) for permission in all_perms]
+        self._register_policy(*str_args)
 
-    def on(self, notification_type: str, notification_prefix_filter: str):
+        return BucketRef(self.name)
+
+    def on(
+        self, notification_type: str, notification_prefix_filter: str
+    ) -&gt; Callable[[BucketNotificationHandler], None]:
         &#34;&#34;&#34;Create and return a bucket notification decorator for this bucket.&#34;&#34;&#34;
-        print(&#34;this has been called&#34;)
 
-        def decorator(func: BucketNotificationMiddleware):
-            print(&#34;this has been called&#34;)
-            self._server = FunctionServer(
-                BucketNotificationWorkerOptions(
-                    bucket_name=self.name,
-                    notification_type=notification_type,
-                    notification_prefix_filter=notification_prefix_filter,
-                )
+        def decorator(func: BucketNotificationHandler) -&gt; None:
+            Listener(
+                bucket_name=self.name,
+                notification_type=notification_type,
+                notification_prefix_filter=notification_prefix_filter,
+                handler=func,
             )
-            self._server.bucket_notification(func)
-            return Nitric._register_worker(self._server)
 
         return decorator</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="nitric.resources.base.SecureResource" href="base.html#nitric.resources.base.SecureResource">SecureResource</a></li>
-<li><a title="nitric.resources.base.BaseResource" href="base.html#nitric.resources.base.BaseResource">BaseResource</a></li>
+<li><a title="nitric.resources.resource.SecureResource" href="resource.html#nitric.resources.resource.SecureResource">SecureResource</a></li>
+<li><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></li>
 <li>abc.ABC</li>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="nitric.resources.buckets.Bucket.actions"><code class="name">var <span class="ident">actions</span> : List[<a title="nitric.proto.nitric.resource.v1.Action" href="../proto/nitric/resource/v1/index.html#nitric.proto.nitric.resource.v1.Action">Action</a>]</code></dt>
+<dt id="nitric.resources.buckets.Bucket.actions"><code class="name">var <span class="ident">actions</span> : List[<a title="nitric.proto.resources.v1.Action" href="../proto/resources/v1/index.html#nitric.proto.resources.v1.Action">Action</a>]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -264,7 +645,7 @@ def bucket(name: str) -&gt; Bucket:
 <h3>Methods</h3>
 <dl>
 <dt id="nitric.resources.buckets.Bucket.allow"><code class="name flex">
-<span>def <span class="ident">allow</span></span>(<span>self, *args: Union[<a title="nitric.resources.buckets.BucketPermission" href="#nitric.resources.buckets.BucketPermission">BucketPermission</a>, str]) ‑> <a title="nitric.api.storage.BucketRef" href="../api/storage.html#nitric.api.storage.BucketRef">BucketRef</a></span>
+<span>def <span class="ident">allow</span></span>(<span>self, perm: Union[LegacyBucketPermission, BucketPermission], *args: Union[LegacyBucketPermission, BucketPermission]) ‑> <a title="nitric.resources.buckets.BucketRef" href="#nitric.resources.buckets.BucketRef">BucketRef</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Request the required permissions for this resource.</p></div>
@@ -272,15 +653,22 @@ def bucket(name: str) -&gt; Bucket:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def allow(self, *args: Union[BucketPermission, str]) -&gt; BucketRef:
+<pre><code class="python">def allow(
+    self,
+    perm: Union[LegacyBucketPermission, BucketPermission],
+    *args: Union[LegacyBucketPermission, BucketPermission],
+) -&gt; BucketRef:
     &#34;&#34;&#34;Request the required permissions for this resource.&#34;&#34;&#34;
-    self._register_policy(*args)
+    all_perms: List[BucketPermission] = [check_permission(perm)] + [check_permission(p) for p in args]
 
-    return Storage().bucket(self.name)</code></pre>
+    str_args = [str(permission) for permission in all_perms]
+    self._register_policy(*str_args)
+
+    return BucketRef(self.name)</code></pre>
 </details>
 </dd>
 <dt id="nitric.resources.buckets.Bucket.on"><code class="name flex">
-<span>def <span class="ident">on</span></span>(<span>self, notification_type: str, notification_prefix_filter: str)</span>
+<span>def <span class="ident">on</span></span>(<span>self, notification_type: str, notification_prefix_filter: str) ‑> Callable[[<a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.resources.buckets.BucketNotificationContext" href="#nitric.resources.buckets.BucketNotificationContext">BucketNotificationContext</a>]], NoneType]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Create and return a bucket notification decorator for this bucket.</p></div>
@@ -288,21 +676,18 @@ def bucket(name: str) -&gt; Bucket:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def on(self, notification_type: str, notification_prefix_filter: str):
+<pre><code class="python">def on(
+    self, notification_type: str, notification_prefix_filter: str
+) -&gt; Callable[[BucketNotificationHandler], None]:
     &#34;&#34;&#34;Create and return a bucket notification decorator for this bucket.&#34;&#34;&#34;
-    print(&#34;this has been called&#34;)
 
-    def decorator(func: BucketNotificationMiddleware):
-        print(&#34;this has been called&#34;)
-        self._server = FunctionServer(
-            BucketNotificationWorkerOptions(
-                bucket_name=self.name,
-                notification_type=notification_type,
-                notification_prefix_filter=notification_prefix_filter,
-            )
+    def decorator(func: BucketNotificationHandler) -&gt; None:
+        Listener(
+            bucket_name=self.name,
+            notification_type=notification_type,
+            notification_prefix_filter=notification_prefix_filter,
+            handler=func,
         )
-        self._server.bucket_notification(func)
-        return Nitric._register_worker(self._server)
 
     return decorator</code></pre>
 </details>
@@ -310,29 +695,312 @@ def bucket(name: str) -&gt; Bucket:
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="nitric.resources.base.SecureResource" href="base.html#nitric.resources.base.SecureResource">SecureResource</a></b></code>:
+<li><code><b><a title="nitric.resources.resource.SecureResource" href="resource.html#nitric.resources.resource.SecureResource">SecureResource</a></b></code>:
 <ul class="hlist">
-<li><code><a title="nitric.resources.base.SecureResource.make" href="base.html#nitric.resources.base.BaseResource.make">make</a></code></li>
+<li><code><a title="nitric.resources.resource.SecureResource.make" href="resource.html#nitric.resources.resource.Resource.make">make</a></code></li>
 </ul>
 </li>
 </ul>
 </dd>
-<dt id="nitric.resources.buckets.BucketPermission"><code class="flex name class">
-<span>class <span class="ident">BucketPermission</span></span>
-<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+<dt id="nitric.resources.buckets.BucketNotificationContext"><code class="flex name class">
+<span>class <span class="ident">BucketNotificationContext</span></span>
+<span>(</span><span>request: <a title="nitric.resources.buckets.BucketNotifyRequest" href="#nitric.resources.buckets.BucketNotifyRequest">BucketNotifyRequest</a>, response: Optional[<a title="nitric.resources.buckets.BucketNotifyResponse" href="#nitric.resources.buckets.BucketNotifyResponse">BucketNotifyResponse</a>] = None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Valid query expression operators.</p></div>
+<div class="desc"><p>Represents the full request/response context for a bucket notification trigger.</p>
+<p>Construct a new BucketNotificationContext.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class BucketPermission(Enum):
-    &#34;&#34;&#34;Valid query expression operators.&#34;&#34;&#34;
+<pre><code class="python">class BucketNotificationContext:
+    &#34;&#34;&#34;Represents the full request/response context for a bucket notification trigger.&#34;&#34;&#34;
 
-    reading = &#34;reading&#34;
-    writing = &#34;writing&#34;
-    deleting = &#34;deleting&#34;</code></pre>
+    def __init__(self, request: BucketNotifyRequest, response: Optional[BucketNotifyResponse] = None):
+        &#34;&#34;&#34;Construct a new BucketNotificationContext.&#34;&#34;&#34;
+        self.req = request
+        self.res = response if response else BucketNotifyResponse()</code></pre>
+</details>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="nitric.resources.buckets.FileNotificationContext" href="#nitric.resources.buckets.FileNotificationContext">FileNotificationContext</a></li>
+</ul>
+</dd>
+<dt id="nitric.resources.buckets.BucketNotificationWorkerOptions"><code class="flex name class">
+<span>class <span class="ident">BucketNotificationWorkerOptions</span></span>
+<span>(</span><span>bucket_name: str, notification_type: str, notification_prefix_filter: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Options for bucket notification workers.</p>
+<p>Construct a new options object.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class BucketNotificationWorkerOptions:
+    &#34;&#34;&#34;Options for bucket notification workers.&#34;&#34;&#34;
+
+    def __init__(self, bucket_name: str, notification_type: str, notification_prefix_filter: str):
+        &#34;&#34;&#34;Construct a new options object.&#34;&#34;&#34;
+        self.bucket_name = bucket_name
+        self.notification_type = BucketNotificationWorkerOptions._to_grpc_event_type(notification_type.lower())
+        self.notification_prefix_filter = notification_prefix_filter
+
+    @staticmethod
+    def _to_grpc_event_type(event_type: str) -&gt; BlobEventType:
+        if event_type == &#34;write&#34;:
+            return BlobEventType.Created
+        elif event_type == &#34;delete&#34;:
+            return BlobEventType.Deleted
+        else:
+            raise ValueError(f&#34;Event type {event_type} is unsupported&#34;)</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.buckets.BucketNotifyRequest"><code class="flex name class">
+<span>class <span class="ident">BucketNotifyRequest</span></span>
+<span>(</span><span>bucket_name: str, key: str, notification_type: BlobEventType)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents a translated Event, from a subscribed bucket notification, forwarded from the Nitric Membrane.</p>
+<p>Construct a new BucketNotifyRequest.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class BucketNotifyRequest:
+    &#34;&#34;&#34;Represents a translated Event, from a subscribed bucket notification, forwarded from the Nitric Membrane.&#34;&#34;&#34;
+
+    bucket_name: str
+    key: str
+    notification_type: BlobEventType
+    bucket: BucketRef
+    file: FileRef
+
+    def __init__(self, bucket_name: str, key: str, notification_type: BlobEventType):
+        &#34;&#34;&#34;Construct a new BucketNotifyRequest.&#34;&#34;&#34;
+        self.bucket_name = bucket_name
+        self.key = key
+        self.notification_type = notification_type
+        self.bucket = BucketRef(bucket_name)
+        self.file = self.bucket.file(key)</code></pre>
+</details>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="nitric.resources.buckets.FileNotifyRequest" href="#nitric.resources.buckets.FileNotifyRequest">FileNotifyRequest</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.resources.buckets.BucketNotifyRequest.bucket"><code class="name">var <span class="ident">bucket</span> : <a title="nitric.resources.buckets.BucketRef" href="#nitric.resources.buckets.BucketRef">BucketRef</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.resources.buckets.BucketNotifyRequest.bucket_name"><code class="name">var <span class="ident">bucket_name</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.resources.buckets.BucketNotifyRequest.file"><code class="name">var <span class="ident">file</span> : <a title="nitric.resources.buckets.FileRef" href="#nitric.resources.buckets.FileRef">FileRef</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.resources.buckets.BucketNotifyRequest.key"><code class="name">var <span class="ident">key</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.resources.buckets.BucketNotifyRequest.notification_type"><code class="name">var <span class="ident">notification_type</span> : <a title="nitric.proto.storage.v1.BlobEventType" href="../proto/storage/v1/index.html#nitric.proto.storage.v1.BlobEventType">BlobEventType</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.resources.buckets.BucketNotifyResponse"><code class="flex name class">
+<span>class <span class="ident">BucketNotifyResponse</span></span>
+<span>(</span><span>success: bool = True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents the response to a trigger from a Bucket.</p>
+<p>Construct a new BucketNotificationResponse.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class BucketNotifyResponse:
+    &#34;&#34;&#34;Represents the response to a trigger from a Bucket.&#34;&#34;&#34;
+
+    def __init__(self, success: bool = True):
+        &#34;&#34;&#34;Construct a new BucketNotificationResponse.&#34;&#34;&#34;
+        self.success = success</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.buckets.BucketRef"><code class="flex name class">
+<span>class <span class="ident">BucketRef</span></span>
+<span>(</span><span>name: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A reference to a deployed storage bucket, used to interact with the bucket at runtime.</p>
+<p>Construct a Nitric Storage Client.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class BucketRef(object):
+    &#34;&#34;&#34;A reference to a deployed storage bucket, used to interact with the bucket at runtime.&#34;&#34;&#34;
+
+    _channel: Channel
+    _storage_stub: StorageStub
+    name: str
+
+    def __init__(self, name: str):
+        &#34;&#34;&#34;Construct a Nitric Storage Client.&#34;&#34;&#34;
+        self._channel: Union[Channel, None] = ChannelManager.get_channel()
+        self._storage_stub = StorageStub(channel=self._channel)
+        self.name = name
+
+    def __del__(self):
+        # close the channel when this client is destroyed
+        if self._channel is not None:
+            self._channel.close()
+
+    def file(self, key: str):
+        &#34;&#34;&#34;Return a reference to a file in this bucket.&#34;&#34;&#34;
+        return FileRef(_bucket=self, key=key)
+
+    async def files(self):
+        &#34;&#34;&#34;Return a list of files in this bucket.&#34;&#34;&#34;
+        resp = await self._storage_stub.list_blobs(
+            storage_list_blobs_request=StorageListBlobsRequest(bucket_name=self.name)
+        )
+        return [self.file(f.key) for f in resp.blobs]
+
+    async def exists(self, key: str) -&gt; bool:
+        &#34;&#34;&#34;Return true if a file in the bucket exists.&#34;&#34;&#34;
+        resp = await self._storage_stub.exists(
+            storage_exists_request=StorageExistsRequest(bucket_name=self.name, key=key)
+        )
+        return resp.exists
+
+    def on(
+        self, notification_type: str, notification_prefix_filter: str
+    ) -&gt; Callable[[BucketNotificationHandler], None]:
+        &#34;&#34;&#34;Create and return a bucket notification decorator for this bucket.&#34;&#34;&#34;
+
+        def decorator(func: BucketNotificationHandler) -&gt; None:
+            Listener(
+                bucket_name=self.name,
+                notification_type=notification_type,
+                notification_prefix_filter=notification_prefix_filter,
+                handler=func,
+            )
+
+        return decorator</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.resources.buckets.BucketRef.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.resources.buckets.BucketRef.exists"><code class="name flex">
+<span>async def <span class="ident">exists</span></span>(<span>self, key: str) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return true if a file in the bucket exists.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def exists(self, key: str) -&gt; bool:
+    &#34;&#34;&#34;Return true if a file in the bucket exists.&#34;&#34;&#34;
+    resp = await self._storage_stub.exists(
+        storage_exists_request=StorageExistsRequest(bucket_name=self.name, key=key)
+    )
+    return resp.exists</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.buckets.BucketRef.file"><code class="name flex">
+<span>def <span class="ident">file</span></span>(<span>self, key: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return a reference to a file in this bucket.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def file(self, key: str):
+    &#34;&#34;&#34;Return a reference to a file in this bucket.&#34;&#34;&#34;
+    return FileRef(_bucket=self, key=key)</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.buckets.BucketRef.files"><code class="name flex">
+<span>async def <span class="ident">files</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return a list of files in this bucket.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def files(self):
+    &#34;&#34;&#34;Return a list of files in this bucket.&#34;&#34;&#34;
+    resp = await self._storage_stub.list_blobs(
+        storage_list_blobs_request=StorageListBlobsRequest(bucket_name=self.name)
+    )
+    return [self.file(f.key) for f in resp.blobs]</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.buckets.BucketRef.on"><code class="name flex">
+<span>def <span class="ident">on</span></span>(<span>self, notification_type: str, notification_prefix_filter: str) ‑> Callable[[<a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.resources.buckets.BucketNotificationContext" href="#nitric.resources.buckets.BucketNotificationContext">BucketNotificationContext</a>]], NoneType]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create and return a bucket notification decorator for this bucket.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def on(
+    self, notification_type: str, notification_prefix_filter: str
+) -&gt; Callable[[BucketNotificationHandler], None]:
+    &#34;&#34;&#34;Create and return a bucket notification decorator for this bucket.&#34;&#34;&#34;
+
+    def decorator(func: BucketNotificationHandler) -&gt; None:
+        Listener(
+            bucket_name=self.name,
+            notification_type=notification_type,
+            notification_prefix_filter=notification_prefix_filter,
+            handler=func,
+        )
+
+    return decorator</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.resources.buckets.FileMode"><code class="flex name class">
+<span>class <span class="ident">FileMode</span></span>
+<span>(</span><span>*args, **kwds)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Definition of available operation modes for file signed URLs.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class FileMode(Enum):
+    &#34;&#34;&#34;Definition of available operation modes for file signed URLs.&#34;&#34;&#34;
+
+    READ = 0
+    WRITE = 1
+
+    def to_request_operation(self) -&gt; StoragePreSignUrlRequestOperation:
+        &#34;&#34;&#34;Convert FileMode to a StoragePreSignUrlRequestOperation.&#34;&#34;&#34;
+        if self == FileMode.READ:
+            return StoragePreSignUrlRequestOperation.READ
+        elif self == FileMode.WRITE:
+            return StoragePreSignUrlRequestOperation.WRITE
+        else:
+            raise InvalidArgumentException(&#34;Invalid FileMode&#34;)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -340,17 +1008,495 @@ def bucket(name: str) -&gt; Bucket:
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="nitric.resources.buckets.BucketPermission.deleting"><code class="name">var <span class="ident">deleting</span></code></dt>
+<dt id="nitric.resources.buckets.FileMode.READ"><code class="name">var <span class="ident">READ</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="nitric.resources.buckets.BucketPermission.reading"><code class="name">var <span class="ident">reading</span></code></dt>
+<dt id="nitric.resources.buckets.FileMode.WRITE"><code class="name">var <span class="ident">WRITE</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="nitric.resources.buckets.BucketPermission.writing"><code class="name">var <span class="ident">writing</span></code></dt>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.resources.buckets.FileMode.to_request_operation"><code class="name flex">
+<span>def <span class="ident">to_request_operation</span></span>(<span>self) ‑> <a title="nitric.proto.storage.v1.StoragePreSignUrlRequestOperation" href="../proto/storage/v1/index.html#nitric.proto.storage.v1.StoragePreSignUrlRequestOperation">StoragePreSignUrlRequestOperation</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert FileMode to a StoragePreSignUrlRequestOperation.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_request_operation(self) -&gt; StoragePreSignUrlRequestOperation:
+    &#34;&#34;&#34;Convert FileMode to a StoragePreSignUrlRequestOperation.&#34;&#34;&#34;
+    if self == FileMode.READ:
+        return StoragePreSignUrlRequestOperation.READ
+    elif self == FileMode.WRITE:
+        return StoragePreSignUrlRequestOperation.WRITE
+    else:
+        raise InvalidArgumentException(&#34;Invalid FileMode&#34;)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.resources.buckets.FileNotificationContext"><code class="flex name class">
+<span>class <span class="ident">FileNotificationContext</span></span>
+<span>(</span><span>request: <a title="nitric.resources.buckets.FileNotifyRequest" href="#nitric.resources.buckets.FileNotifyRequest">FileNotifyRequest</a>, response: Optional[<a title="nitric.resources.buckets.BucketNotifyResponse" href="#nitric.resources.buckets.BucketNotifyResponse">BucketNotifyResponse</a>] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents the full request/response context for a bucket notification trigger.</p>
+<p>Construct a new FileNotificationContext.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class FileNotificationContext(BucketNotificationContext):
+    &#34;&#34;&#34;Represents the full request/response context for a bucket notification trigger.&#34;&#34;&#34;
+
+    def __init__(self, request: FileNotifyRequest, response: Optional[BucketNotifyResponse] = None):
+        &#34;&#34;&#34;Construct a new FileNotificationContext.&#34;&#34;&#34;
+        super().__init__(request=request, response=response)
+        self.req = request
+
+    @staticmethod
+    def _from_client_message_with_bucket(msg: BlobEventRequest, bucket_ref) -&gt; FileNotificationContext:
+        &#34;&#34;&#34;Construct a new FileNotificationTrigger from a Bucket Notification trigger from the Nitric Membrane.&#34;&#34;&#34;
+        return FileNotificationContext(
+            request=FileNotifyRequest(
+                bucket_name=msg.bucket_name,
+                key=msg.blob_event.key,
+                bucket_ref=bucket_ref,
+                notification_type=msg.blob_event.type,
+            )
+        )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="nitric.resources.buckets.BucketNotificationContext" href="#nitric.resources.buckets.BucketNotificationContext">BucketNotificationContext</a></li>
+</ul>
+</dd>
+<dt id="nitric.resources.buckets.FileNotifyRequest"><code class="flex name class">
+<span>class <span class="ident">FileNotifyRequest</span></span>
+<span>(</span><span>bucket_name: str, bucket_ref: <a title="nitric.resources.buckets.BucketRef" href="#nitric.resources.buckets.BucketRef">BucketRef</a>, key: str, notification_type: BlobEventType)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents a translated Event, from a subscribed bucket notification, forwarded from the Nitric Membrane.</p>
+<p>Construct a new FileNotificationRequest.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class FileNotifyRequest(BucketNotifyRequest):
+    &#34;&#34;&#34;Represents a translated Event, from a subscribed bucket notification, forwarded from the Nitric Membrane.&#34;&#34;&#34;
+
+    def __init__(
+        self,
+        bucket_name: str,
+        bucket_ref: BucketRef,
+        key: str,
+        notification_type: BlobEventType,
+    ):
+        &#34;&#34;&#34;Construct a new FileNotificationRequest.&#34;&#34;&#34;
+        super().__init__(bucket_name=bucket_name, key=key, notification_type=notification_type)
+        self.file = bucket_ref.file(key)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="nitric.resources.buckets.BucketNotifyRequest" href="#nitric.resources.buckets.BucketNotifyRequest">BucketNotifyRequest</a></li>
+</ul>
+</dd>
+<dt id="nitric.resources.buckets.FileRef"><code class="flex name class">
+<span>class <span class="ident">FileRef</span></span>
+<span>(</span><span>_bucket: <a title="nitric.resources.buckets.BucketRef" href="#nitric.resources.buckets.BucketRef">BucketRef</a>, key: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A reference to a file in a bucket, used to perform operations on that file.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(frozen=True, order=True)
+class FileRef(object):
+    &#34;&#34;&#34;A reference to a file in a bucket, used to perform operations on that file.&#34;&#34;&#34;
+
+    _bucket: BucketRef
+    key: str
+
+    async def write(self, body: bytes):
+        &#34;&#34;&#34;
+        Write the bytes as the content of this file.
+
+        Will create the file if it doesn&#39;t already exist.
+        &#34;&#34;&#34;
+        try:
+            await self._bucket._storage_stub.write(
+                storage_write_request=StorageWriteRequest(bucket_name=self._bucket.name, key=self.key, body=body)
+            )
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+    async def read(self) -&gt; bytes:
+        &#34;&#34;&#34;Read this files contents from the bucket.&#34;&#34;&#34;
+        try:
+            response = await self._bucket._storage_stub.read(
+                storage_read_request=StorageReadRequest(bucket_name=self._bucket.name, key=self.key)
+            )
+            return response.body
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+    async def delete(self):
+        &#34;&#34;&#34;Delete this file from the bucket.&#34;&#34;&#34;
+        try:
+            await self._bucket._storage_stub.delete(
+                storage_delete_request=StorageDeleteRequest(bucket_name=self._bucket.name, key=self.key)
+            )
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+    async def upload_url(self, expiry: Optional[Union[timedelta, int]] = None):
+        &#34;&#34;&#34;
+        Get a temporary writable URL to this file.
+
+        Parameters
+        ----------
+        expiry : int, timedelta, optional
+            The expiry time for the signed URL.
+            If an integer is provided, it is treated as seconds. Default is 600 seconds.
+
+        Returns
+        -------
+        str: The signed URL.
+
+        &#34;&#34;&#34;
+        return await self._sign_url(mode=FileMode.WRITE, expiry=expiry)
+
+    async def download_url(self, expiry: Optional[Union[timedelta, int]] = None):
+        &#34;&#34;&#34;
+        Get a temporary readable URL to this file.
+
+        Parameters
+        ----------
+        expiry : int, timedelta, optional
+            The expiry time for the signed URL.
+            If an integer is provided, it is treated as seconds. Default is 600 seconds.
+
+        Returns
+        -------
+        str: The signed URL.
+
+        &#34;&#34;&#34;
+        return await self._sign_url(mode=FileMode.READ, expiry=expiry)
+
+    async def _sign_url(self, mode: FileMode = FileMode.READ, expiry: Optional[Union[timedelta, int]] = None):
+        &#34;&#34;&#34;Generate a signed URL for reading or writing to a file.&#34;&#34;&#34;
+        if expiry is None:
+            expiry = timedelta(seconds=600)
+        if not isinstance(expiry, timedelta):
+            expiry = timedelta(seconds=expiry)
+
+        try:
+            response = await self._bucket._storage_stub.pre_sign_url(
+                storage_pre_sign_url_request=StoragePreSignUrlRequest(
+                    bucket_name=self._bucket.name, key=self.key, operation=mode.to_request_operation(), expiry=expiry
+                )
+            )
+            return response.url
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.resources.buckets.FileRef.key"><code class="name">var <span class="ident">key</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.resources.buckets.FileRef.delete"><code class="name flex">
+<span>async def <span class="ident">delete</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Delete this file from the bucket.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def delete(self):
+    &#34;&#34;&#34;Delete this file from the bucket.&#34;&#34;&#34;
+    try:
+        await self._bucket._storage_stub.delete(
+            storage_delete_request=StorageDeleteRequest(bucket_name=self._bucket.name, key=self.key)
+        )
+    except GRPCError as grpc_err:
+        raise exception_from_grpc_error(grpc_err) from grpc_err</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.buckets.FileRef.download_url"><code class="name flex">
+<span>async def <span class="ident">download_url</span></span>(<span>self, expiry: Optional[Union[timedelta, int]] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get a temporary readable URL to this file.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>expiry</code></strong> :&ensp;<code>int, timedelta</code>, optional</dt>
+<dd>The expiry time for the signed URL.
+If an integer is provided, it is treated as seconds. Default is 600 seconds.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>str: The signed URL.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def download_url(self, expiry: Optional[Union[timedelta, int]] = None):
+    &#34;&#34;&#34;
+    Get a temporary readable URL to this file.
+
+    Parameters
+    ----------
+    expiry : int, timedelta, optional
+        The expiry time for the signed URL.
+        If an integer is provided, it is treated as seconds. Default is 600 seconds.
+
+    Returns
+    -------
+    str: The signed URL.
+
+    &#34;&#34;&#34;
+    return await self._sign_url(mode=FileMode.READ, expiry=expiry)</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.buckets.FileRef.read"><code class="name flex">
+<span>async def <span class="ident">read</span></span>(<span>self) ‑> bytes</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Read this files contents from the bucket.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def read(self) -&gt; bytes:
+    &#34;&#34;&#34;Read this files contents from the bucket.&#34;&#34;&#34;
+    try:
+        response = await self._bucket._storage_stub.read(
+            storage_read_request=StorageReadRequest(bucket_name=self._bucket.name, key=self.key)
+        )
+        return response.body
+    except GRPCError as grpc_err:
+        raise exception_from_grpc_error(grpc_err) from grpc_err</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.buckets.FileRef.upload_url"><code class="name flex">
+<span>async def <span class="ident">upload_url</span></span>(<span>self, expiry: Optional[Union[timedelta, int]] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get a temporary writable URL to this file.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>expiry</code></strong> :&ensp;<code>int, timedelta</code>, optional</dt>
+<dd>The expiry time for the signed URL.
+If an integer is provided, it is treated as seconds. Default is 600 seconds.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>str: The signed URL.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def upload_url(self, expiry: Optional[Union[timedelta, int]] = None):
+    &#34;&#34;&#34;
+    Get a temporary writable URL to this file.
+
+    Parameters
+    ----------
+    expiry : int, timedelta, optional
+        The expiry time for the signed URL.
+        If an integer is provided, it is treated as seconds. Default is 600 seconds.
+
+    Returns
+    -------
+    str: The signed URL.
+
+    &#34;&#34;&#34;
+    return await self._sign_url(mode=FileMode.WRITE, expiry=expiry)</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.buckets.FileRef.write"><code class="name flex">
+<span>async def <span class="ident">write</span></span>(<span>self, body: bytes)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Write the bytes as the content of this file.</p>
+<p>Will create the file if it doesn't already exist.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def write(self, body: bytes):
+    &#34;&#34;&#34;
+    Write the bytes as the content of this file.
+
+    Will create the file if it doesn&#39;t already exist.
+    &#34;&#34;&#34;
+    try:
+        await self._bucket._storage_stub.write(
+            storage_write_request=StorageWriteRequest(bucket_name=self._bucket.name, key=self.key, body=body)
+        )
+    except GRPCError as grpc_err:
+        raise exception_from_grpc_error(grpc_err) from grpc_err</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.resources.buckets.Listener"><code class="flex name class">
+<span>class <span class="ident">Listener</span></span>
+<span>(</span><span>bucket_name: str, notification_type: str, notification_prefix_filter: str, handler: BucketNotificationHandler)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A bucket event listener.</p>
+<p>Construct a new bucket event listener.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Listener(FunctionServer):
+    &#34;&#34;&#34;A bucket event listener.&#34;&#34;&#34;
+
+    _handler: BucketNotificationHandler
+    _registration_request: RegistrationRequest
+    _responses: AsyncNotifierList[ClientMessage]
+
+    def __init__(
+        self,
+        bucket_name: str,
+        notification_type: str,
+        notification_prefix_filter: str,
+        handler: BucketNotificationHandler,
+    ):
+        &#34;&#34;&#34;Construct a new bucket event listener.&#34;&#34;&#34;
+        self._handler = handler
+        self._responses = AsyncNotifierList()
+
+        event_type = BlobEventType.Created
+        if &#34;del&#34; in notification_type:
+            event_type = BlobEventType.Deleted
+
+        self._registration_request = RegistrationRequest(
+            bucket_name=bucket_name,
+            blob_event_type=event_type,
+            key_prefix_filter=notification_prefix_filter,
+        )
+
+        # noinspection PyProtectedMember
+        Nitric._register_worker(self)
+
+    async def _listener_request_iterator(self):
+        # Register with the server
+        yield ClientMessage(registration_request=self._registration_request)
+        # wait for any responses for the server and send them
+        async for response in self._responses:
+            yield response
+
+    async def start(self) -&gt; None:
+        &#34;&#34;&#34;Register this bucket listener and listen for events.&#34;&#34;&#34;
+        channel = ChannelManager.get_channel()
+        server = StorageListenerStub(channel=channel)
+
+        try:
+            async for server_msg in server.listen(self._listener_request_iterator()):
+                msg_type, _ = betterproto.which_one_of(server_msg, &#34;content&#34;)
+
+                if msg_type == &#34;registration_response&#34;:
+                    continue
+                if msg_type == &#34;blob_event_request&#34;:
+                    ctx = BucketNotificationContext(
+                        request=BucketNotifyRequest(
+                            bucket_name=server_msg.blob_event_request.bucket_name,
+                            key=server_msg.blob_event_request.blob_event.key,
+                            notification_type=server_msg.blob_event_request.blob_event.type,
+                        )
+                    )
+                    response: ClientMessage
+                    try:
+                        result = await self._handler(ctx)
+                        ctx = result if result else ctx
+                        be = BlobEventResponse(success=ctx.res.success)
+                        response = ClientMessage(id=server_msg.id, blob_event_response=be)
+                    except Exception as e:  # pylint: disable=broad-except
+                        logging.exception(&#34;An unhandled error occurred in a bucket event listener: %s&#34;, e)
+                        be = BlobEventResponse(success=False)
+                        response = ClientMessage(id=server_msg.id, blob_event_response=be)
+                    await self._responses.add_item(response)
+        except grpclib.exceptions.GRPCError as e:
+            print(f&#34;Stream terminated: {e.message}&#34;)
+        except grpclib.exceptions.StreamTerminatedError:
+            print(&#34;Stream from membrane closed.&#34;)
+        except KeyboardInterrupt:
+            print(&#34;Keyboard interrupt&#34;)
+        finally:
+            print(&#34;Closing client stream&#34;)
+            channel.close()
+        print(&#34;Listener stopped&#34;)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="nitric.context.FunctionServer" href="../context.html#nitric.context.FunctionServer">FunctionServer</a></li>
+<li>abc.ABC</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.resources.buckets.Listener.start"><code class="name flex">
+<span>async def <span class="ident">start</span></span>(<span>self) ‑> NoneType</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Register this bucket listener and listen for events.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def start(self) -&gt; None:
+    &#34;&#34;&#34;Register this bucket listener and listen for events.&#34;&#34;&#34;
+    channel = ChannelManager.get_channel()
+    server = StorageListenerStub(channel=channel)
+
+    try:
+        async for server_msg in server.listen(self._listener_request_iterator()):
+            msg_type, _ = betterproto.which_one_of(server_msg, &#34;content&#34;)
+
+            if msg_type == &#34;registration_response&#34;:
+                continue
+            if msg_type == &#34;blob_event_request&#34;:
+                ctx = BucketNotificationContext(
+                    request=BucketNotifyRequest(
+                        bucket_name=server_msg.blob_event_request.bucket_name,
+                        key=server_msg.blob_event_request.blob_event.key,
+                        notification_type=server_msg.blob_event_request.blob_event.type,
+                    )
+                )
+                response: ClientMessage
+                try:
+                    result = await self._handler(ctx)
+                    ctx = result if result else ctx
+                    be = BlobEventResponse(success=ctx.res.success)
+                    response = ClientMessage(id=server_msg.id, blob_event_response=be)
+                except Exception as e:  # pylint: disable=broad-except
+                    logging.exception(&#34;An unhandled error occurred in a bucket event listener: %s&#34;, e)
+                    be = BlobEventResponse(success=False)
+                    response = ClientMessage(id=server_msg.id, blob_event_response=be)
+                await self._responses.add_item(response)
+    except grpclib.exceptions.GRPCError as e:
+        print(f&#34;Stream terminated: {e.message}&#34;)
+    except grpclib.exceptions.StreamTerminatedError:
+        print(&#34;Stream from membrane closed.&#34;)
+    except KeyboardInterrupt:
+        print(&#34;Keyboard interrupt&#34;)
+    finally:
+        print(&#34;Closing client stream&#34;)
+        channel.close()
+    print(&#34;Listener stopped&#34;)</code></pre>
+</details>
 </dd>
 </dl>
 </dd>
@@ -371,6 +1517,7 @@ def bucket(name: str) -&gt; Bucket:
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="nitric.resources.buckets.bucket" href="#nitric.resources.buckets.bucket">bucket</a></code></li>
+<li><code><a title="nitric.resources.buckets.check_permission" href="#nitric.resources.buckets.check_permission">check_permission</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
@@ -385,11 +1532,63 @@ def bucket(name: str) -&gt; Bucket:
 </ul>
 </li>
 <li>
-<h4><code><a title="nitric.resources.buckets.BucketPermission" href="#nitric.resources.buckets.BucketPermission">BucketPermission</a></code></h4>
+<h4><code><a title="nitric.resources.buckets.BucketNotificationContext" href="#nitric.resources.buckets.BucketNotificationContext">BucketNotificationContext</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.resources.buckets.BucketNotificationWorkerOptions" href="#nitric.resources.buckets.BucketNotificationWorkerOptions">BucketNotificationWorkerOptions</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.resources.buckets.BucketNotifyRequest" href="#nitric.resources.buckets.BucketNotifyRequest">BucketNotifyRequest</a></code></h4>
 <ul class="">
-<li><code><a title="nitric.resources.buckets.BucketPermission.deleting" href="#nitric.resources.buckets.BucketPermission.deleting">deleting</a></code></li>
-<li><code><a title="nitric.resources.buckets.BucketPermission.reading" href="#nitric.resources.buckets.BucketPermission.reading">reading</a></code></li>
-<li><code><a title="nitric.resources.buckets.BucketPermission.writing" href="#nitric.resources.buckets.BucketPermission.writing">writing</a></code></li>
+<li><code><a title="nitric.resources.buckets.BucketNotifyRequest.bucket" href="#nitric.resources.buckets.BucketNotifyRequest.bucket">bucket</a></code></li>
+<li><code><a title="nitric.resources.buckets.BucketNotifyRequest.bucket_name" href="#nitric.resources.buckets.BucketNotifyRequest.bucket_name">bucket_name</a></code></li>
+<li><code><a title="nitric.resources.buckets.BucketNotifyRequest.file" href="#nitric.resources.buckets.BucketNotifyRequest.file">file</a></code></li>
+<li><code><a title="nitric.resources.buckets.BucketNotifyRequest.key" href="#nitric.resources.buckets.BucketNotifyRequest.key">key</a></code></li>
+<li><code><a title="nitric.resources.buckets.BucketNotifyRequest.notification_type" href="#nitric.resources.buckets.BucketNotifyRequest.notification_type">notification_type</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.resources.buckets.BucketNotifyResponse" href="#nitric.resources.buckets.BucketNotifyResponse">BucketNotifyResponse</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.resources.buckets.BucketRef" href="#nitric.resources.buckets.BucketRef">BucketRef</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.resources.buckets.BucketRef.exists" href="#nitric.resources.buckets.BucketRef.exists">exists</a></code></li>
+<li><code><a title="nitric.resources.buckets.BucketRef.file" href="#nitric.resources.buckets.BucketRef.file">file</a></code></li>
+<li><code><a title="nitric.resources.buckets.BucketRef.files" href="#nitric.resources.buckets.BucketRef.files">files</a></code></li>
+<li><code><a title="nitric.resources.buckets.BucketRef.name" href="#nitric.resources.buckets.BucketRef.name">name</a></code></li>
+<li><code><a title="nitric.resources.buckets.BucketRef.on" href="#nitric.resources.buckets.BucketRef.on">on</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.resources.buckets.FileMode" href="#nitric.resources.buckets.FileMode">FileMode</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.resources.buckets.FileMode.READ" href="#nitric.resources.buckets.FileMode.READ">READ</a></code></li>
+<li><code><a title="nitric.resources.buckets.FileMode.WRITE" href="#nitric.resources.buckets.FileMode.WRITE">WRITE</a></code></li>
+<li><code><a title="nitric.resources.buckets.FileMode.to_request_operation" href="#nitric.resources.buckets.FileMode.to_request_operation">to_request_operation</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.resources.buckets.FileNotificationContext" href="#nitric.resources.buckets.FileNotificationContext">FileNotificationContext</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.resources.buckets.FileNotifyRequest" href="#nitric.resources.buckets.FileNotifyRequest">FileNotifyRequest</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.resources.buckets.FileRef" href="#nitric.resources.buckets.FileRef">FileRef</a></code></h4>
+<ul class="two-column">
+<li><code><a title="nitric.resources.buckets.FileRef.delete" href="#nitric.resources.buckets.FileRef.delete">delete</a></code></li>
+<li><code><a title="nitric.resources.buckets.FileRef.download_url" href="#nitric.resources.buckets.FileRef.download_url">download_url</a></code></li>
+<li><code><a title="nitric.resources.buckets.FileRef.key" href="#nitric.resources.buckets.FileRef.key">key</a></code></li>
+<li><code><a title="nitric.resources.buckets.FileRef.read" href="#nitric.resources.buckets.FileRef.read">read</a></code></li>
+<li><code><a title="nitric.resources.buckets.FileRef.upload_url" href="#nitric.resources.buckets.FileRef.upload_url">upload_url</a></code></li>
+<li><code><a title="nitric.resources.buckets.FileRef.write" href="#nitric.resources.buckets.FileRef.write">write</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.resources.buckets.Listener" href="#nitric.resources.buckets.Listener">Listener</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.resources.buckets.Listener.start" href="#nitric.resources.buckets.Listener.start">start</a></code></li>
 </ul>
 </li>
 </ul>

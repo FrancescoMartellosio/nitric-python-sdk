@@ -46,27 +46,70 @@
 #
 from __future__ import annotations
 
-from nitric.api.events import Events, TopicRef
-from nitric.exception import exception_from_grpc_error
-from typing import List, Union
-from enum import Enum
+import logging
+from typing import Any, Callable, List, Literal
+
+import betterproto
+import grpclib
 from grpclib import GRPCError
+from grpclib.client import Channel
+
 from nitric.application import Nitric
-from nitric.faas import EventMiddleware, FunctionServer, SubscriptionWorkerOptions
-from nitric.proto.nitric.resource.v1 import (
-    Resource,
-    ResourceType,
-    Action,
-    ResourceDeclareRequest,
-)
+from nitric.bidi import AsyncNotifierList
+from nitric.context import EventHandler, FunctionServer, MessageContext, MessageRequest
+from nitric.exception import exception_from_grpc_error
+from nitric.proto.resources.v1 import Action, ResourceDeclareRequest, ResourceIdentifier, ResourceType
+from nitric.proto.topics.v1 import ClientMessage, TopicMessage
+from nitric.proto.topics.v1 import MessageRequest as ProtoMessageRequest
+from nitric.proto.topics.v1 import MessageResponse as ProtoMessageResponse
+from nitric.proto.topics.v1 import RegistrationRequest, SubscriberStub
+from nitric.proto.topics.v1 import TopicPublishRequest, TopicsStub
+from nitric.resources.resource import SecureResource
+from nitric.utils import dict_from_struct, struct_from_dict
+from nitric.channel import ChannelManager
 
-from nitric.resources.base import SecureResource
+TopicPermission = Literal[&#34;publish&#34;]
 
 
-class TopicPermission(Enum):
-    &#34;&#34;&#34;Valid query expression operators.&#34;&#34;&#34;
+class TopicRef:
+    &#34;&#34;&#34;A reference to a deployed topic, used to interact with the topic at runtime.&#34;&#34;&#34;
 
-    publishing = &#34;publishing&#34;
+    _channel: Channel
+    _topics_stub: TopicsStub
+    name: str
+
+    def __init__(self, name: str) -&gt; None:
+        &#34;&#34;&#34;Construct a reference to a deployed Topic.&#34;&#34;&#34;
+        self._channel: Channel = ChannelManager.get_channel()
+        self._topics_stub = TopicsStub(channel=self._channel)
+        self.name = name
+
+    def __del__(self) -&gt; None:
+        # close the channel when this client is destroyed
+        if self._channel is not None:
+            self._channel.close()
+
+    async def publish(
+        self,
+        message: dict[str, Any],
+    ) -&gt; None:
+        &#34;&#34;&#34;
+        Publish a message to a topic, which can be subscribed to by other services.
+
+        :param message: the event to publish
+        :return: the published event, with the id added if one was auto-generated
+        &#34;&#34;&#34;
+        if not isinstance(message, dict):
+            raise ValueError(&#34;Message must be a dictionary&#34;)
+
+        try:
+            proto_message = TopicMessage(struct_payload=struct_from_dict(message))
+            await self._topics_stub.publish(
+                topic_publish_request=TopicPublishRequest(topic_name=self.name, message=proto_message)
+            )
+            return None
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
 
 
 class Topic(SecureResource):
@@ -75,47 +118,108 @@ class Topic(SecureResource):
     name: str
     actions: List[Action]
 
-    def __init__(self, name: str):
-        &#34;&#34;&#34;Construct a new topic.&#34;&#34;&#34;
-        super().__init__()
-        self.name = name
+    def __init__(self, name: str) -&gt; None:
+        &#34;&#34;&#34;Declare a new topic resourced.&#34;&#34;&#34;
+        super().__init__(name)
 
-    async def _register(self):
+    async def _register(self) -&gt; None:
         try:
             await self._resources_stub.declare(
-                resource_declare_request=ResourceDeclareRequest(resource=self._to_resource())
+                resource_declare_request=ResourceDeclareRequest(id=self._to_resource_id())
             )
         except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err)
+            raise exception_from_grpc_error(grpc_err) from grpc_err
 
-    def _to_resource(self) -&gt; Resource:
-        return Resource(name=self.name, type=ResourceType.Topic)
+    def _to_resource_id(self) -&gt; ResourceIdentifier:
+        return ResourceIdentifier(name=self.name, type=ResourceType.Topic)
 
-    def _perms_to_actions(self, *args: Union[TopicPermission, str]) -&gt; List[Action]:
-        _permMap = {TopicPermission.publishing: [Action.TopicEventPublish]}
-        # convert strings to the enum value where needed
-        perms = [
-            permission if isinstance(permission, TopicPermission) else TopicPermission[permission.lower()]
-            for permission in args
-        ]
+    def _perms_to_actions(self, *args: TopicPermission) -&gt; List[Action]:
+        _permMap: dict[TopicPermission, List[Action]] = {&#34;publish&#34;: [Action.TopicPublish]}
 
-        return [action for perm in perms for action in _permMap[perm]]
+        return [action for perm in args for action in _permMap[perm]]
 
-    def allow(self, *args: Union[TopicPermission, str]) -&gt; TopicRef:
+    def allow(self, perm: TopicPermission, *args: TopicPermission) -&gt; TopicRef:
         &#34;&#34;&#34;Request the specified permissions to this resource.&#34;&#34;&#34;
-        self._register_policy(*args)
+        str_args = [perm] + [str(permission) for permission in args]
+        self._register_policy(*str_args)
 
-        return Events().topic(self.name)
+        return TopicRef(self.name)
 
-    def subscribe(self):
+    def subscribe(self) -&gt; Callable[[EventHandler], None]:
         &#34;&#34;&#34;Create and return a subscription decorator for this topic.&#34;&#34;&#34;
 
-        def decorator(func: EventMiddleware):
-            self.server = FunctionServer(SubscriptionWorkerOptions(topic=self.name))
-            self.server.event(func)
-            Nitric._register_worker(self.server)
+        def decorator(func: EventHandler) -&gt; None:
+            Subscriber(
+                topic_name=self.name,
+                handler=func,
+            )
 
         return decorator
+
+
+def _message_context_from_proto(msg: ProtoMessageRequest) -&gt; MessageContext:
+    return MessageContext(
+        request=MessageRequest(
+            data=dict_from_struct(msg.message.struct_payload),
+            topic=msg.topic_name,
+        )
+    )
+
+
+class Subscriber(FunctionServer):
+    &#34;&#34;&#34;A handler for topic messages.&#34;&#34;&#34;
+
+    _handler: EventHandler
+    _registration_request: RegistrationRequest
+    _responses: AsyncNotifierList[ClientMessage]
+
+    def __init__(self, topic_name: str, handler: EventHandler):
+        &#34;&#34;&#34;Construct a new WebsocketHandler.&#34;&#34;&#34;
+        self._handler = handler
+        self._responses = AsyncNotifierList()
+        self._registration_request = RegistrationRequest(topic_name=topic_name)
+
+        Nitric._register_worker(self)
+
+    async def _message_request_iterator(self):
+        # Register with the server
+        yield ClientMessage(registration_request=self._registration_request)
+        # wait for any responses for the server and send them
+        async for response in self._responses:
+            yield response
+
+    async def start(self) -&gt; None:
+        &#34;&#34;&#34;Register this subscriber and listen for messages.&#34;&#34;&#34;
+        channel = ChannelManager.get_channel()
+        server = SubscriberStub(channel=channel)
+
+        try:
+            async for server_msg in server.subscribe(self._message_request_iterator()):
+                msg_type, _ = betterproto.which_one_of(server_msg, &#34;content&#34;)
+
+                if msg_type == &#34;registration_response&#34;:
+                    continue
+                if msg_type == &#34;message_request&#34;:
+                    ctx = _message_context_from_proto(server_msg.message_request)
+
+                    response: ClientMessage
+                    try:
+                        result = await self._handler(ctx)
+                        ctx = result if result else ctx
+                        response = ClientMessage(
+                            id=server_msg.id, message_response=ProtoMessageResponse(success=ctx.res.success)
+                        )
+                    except Exception as e:  # pylint: disable=broad-except
+                        logging.exception(&#34;An unhandled error occurred in a subscription event handler: %s&#34;, e)
+                        response = ClientMessage(id=server_msg.id, message_response=ProtoMessageResponse(success=False))
+                    await self._responses.add_item(response)
+        except grpclib.exceptions.GRPCError as e:
+            print(f&#34;Stream terminated: {e.message}&#34;)
+        except grpclib.exceptions.StreamTerminatedError:
+            print(&#34;Stream from membrane closed.&#34;)
+        finally:
+            print(&#34;Closing client stream&#34;)
+            channel.close()
 
 
 def topic(name: str) -&gt; Topic:
@@ -124,7 +228,8 @@ def topic(name: str) -&gt; Topic:
 
     If a topic has already been registered with the same name, the original reference will be reused.
     &#34;&#34;&#34;
-    return Nitric._create_resource(Topic, name)</code></pre>
+    # type ignored because the create call are treated as protected.
+    return Nitric._create_resource(Topic, name)  # type: ignore pylint: disable=protected-access</code></pre>
 </details>
 </section>
 <section>
@@ -150,7 +255,8 @@ def topic(name: str) -&gt; Topic:
 
     If a topic has already been registered with the same name, the original reference will be reused.
     &#34;&#34;&#34;
-    return Nitric._create_resource(Topic, name)</code></pre>
+    # type ignored because the create call are treated as protected.
+    return Nitric._create_resource(Topic, name)  # type: ignore pylint: disable=protected-access</code></pre>
 </details>
 </dd>
 </dl>
@@ -158,13 +264,131 @@ def topic(name: str) -&gt; Topic:
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
+<dt id="nitric.resources.topics.Subscriber"><code class="flex name class">
+<span>class <span class="ident">Subscriber</span></span>
+<span>(</span><span>topic_name: str, handler: EventHandler)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A handler for topic messages.</p>
+<p>Construct a new WebsocketHandler.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Subscriber(FunctionServer):
+    &#34;&#34;&#34;A handler for topic messages.&#34;&#34;&#34;
+
+    _handler: EventHandler
+    _registration_request: RegistrationRequest
+    _responses: AsyncNotifierList[ClientMessage]
+
+    def __init__(self, topic_name: str, handler: EventHandler):
+        &#34;&#34;&#34;Construct a new WebsocketHandler.&#34;&#34;&#34;
+        self._handler = handler
+        self._responses = AsyncNotifierList()
+        self._registration_request = RegistrationRequest(topic_name=topic_name)
+
+        Nitric._register_worker(self)
+
+    async def _message_request_iterator(self):
+        # Register with the server
+        yield ClientMessage(registration_request=self._registration_request)
+        # wait for any responses for the server and send them
+        async for response in self._responses:
+            yield response
+
+    async def start(self) -&gt; None:
+        &#34;&#34;&#34;Register this subscriber and listen for messages.&#34;&#34;&#34;
+        channel = ChannelManager.get_channel()
+        server = SubscriberStub(channel=channel)
+
+        try:
+            async for server_msg in server.subscribe(self._message_request_iterator()):
+                msg_type, _ = betterproto.which_one_of(server_msg, &#34;content&#34;)
+
+                if msg_type == &#34;registration_response&#34;:
+                    continue
+                if msg_type == &#34;message_request&#34;:
+                    ctx = _message_context_from_proto(server_msg.message_request)
+
+                    response: ClientMessage
+                    try:
+                        result = await self._handler(ctx)
+                        ctx = result if result else ctx
+                        response = ClientMessage(
+                            id=server_msg.id, message_response=ProtoMessageResponse(success=ctx.res.success)
+                        )
+                    except Exception as e:  # pylint: disable=broad-except
+                        logging.exception(&#34;An unhandled error occurred in a subscription event handler: %s&#34;, e)
+                        response = ClientMessage(id=server_msg.id, message_response=ProtoMessageResponse(success=False))
+                    await self._responses.add_item(response)
+        except grpclib.exceptions.GRPCError as e:
+            print(f&#34;Stream terminated: {e.message}&#34;)
+        except grpclib.exceptions.StreamTerminatedError:
+            print(&#34;Stream from membrane closed.&#34;)
+        finally:
+            print(&#34;Closing client stream&#34;)
+            channel.close()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="nitric.context.FunctionServer" href="../context.html#nitric.context.FunctionServer">FunctionServer</a></li>
+<li>abc.ABC</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.resources.topics.Subscriber.start"><code class="name flex">
+<span>async def <span class="ident">start</span></span>(<span>self) ‑> NoneType</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Register this subscriber and listen for messages.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def start(self) -&gt; None:
+    &#34;&#34;&#34;Register this subscriber and listen for messages.&#34;&#34;&#34;
+    channel = ChannelManager.get_channel()
+    server = SubscriberStub(channel=channel)
+
+    try:
+        async for server_msg in server.subscribe(self._message_request_iterator()):
+            msg_type, _ = betterproto.which_one_of(server_msg, &#34;content&#34;)
+
+            if msg_type == &#34;registration_response&#34;:
+                continue
+            if msg_type == &#34;message_request&#34;:
+                ctx = _message_context_from_proto(server_msg.message_request)
+
+                response: ClientMessage
+                try:
+                    result = await self._handler(ctx)
+                    ctx = result if result else ctx
+                    response = ClientMessage(
+                        id=server_msg.id, message_response=ProtoMessageResponse(success=ctx.res.success)
+                    )
+                except Exception as e:  # pylint: disable=broad-except
+                    logging.exception(&#34;An unhandled error occurred in a subscription event handler: %s&#34;, e)
+                    response = ClientMessage(id=server_msg.id, message_response=ProtoMessageResponse(success=False))
+                await self._responses.add_item(response)
+    except grpclib.exceptions.GRPCError as e:
+        print(f&#34;Stream terminated: {e.message}&#34;)
+    except grpclib.exceptions.StreamTerminatedError:
+        print(&#34;Stream from membrane closed.&#34;)
+    finally:
+        print(&#34;Closing client stream&#34;)
+        channel.close()</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
 <dt id="nitric.resources.topics.Topic"><code class="flex name class">
 <span>class <span class="ident">Topic</span></span>
 <span>(</span><span>name: str)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>A topic resource, used for asynchronous messaging between functions.</p>
-<p>Construct a new topic.</p></div>
+<p>Declare a new topic resourced.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -175,57 +399,53 @@ def topic(name: str) -&gt; Topic:
     name: str
     actions: List[Action]
 
-    def __init__(self, name: str):
-        &#34;&#34;&#34;Construct a new topic.&#34;&#34;&#34;
-        super().__init__()
-        self.name = name
+    def __init__(self, name: str) -&gt; None:
+        &#34;&#34;&#34;Declare a new topic resourced.&#34;&#34;&#34;
+        super().__init__(name)
 
-    async def _register(self):
+    async def _register(self) -&gt; None:
         try:
             await self._resources_stub.declare(
-                resource_declare_request=ResourceDeclareRequest(resource=self._to_resource())
+                resource_declare_request=ResourceDeclareRequest(id=self._to_resource_id())
             )
         except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err)
+            raise exception_from_grpc_error(grpc_err) from grpc_err
 
-    def _to_resource(self) -&gt; Resource:
-        return Resource(name=self.name, type=ResourceType.Topic)
+    def _to_resource_id(self) -&gt; ResourceIdentifier:
+        return ResourceIdentifier(name=self.name, type=ResourceType.Topic)
 
-    def _perms_to_actions(self, *args: Union[TopicPermission, str]) -&gt; List[Action]:
-        _permMap = {TopicPermission.publishing: [Action.TopicEventPublish]}
-        # convert strings to the enum value where needed
-        perms = [
-            permission if isinstance(permission, TopicPermission) else TopicPermission[permission.lower()]
-            for permission in args
-        ]
+    def _perms_to_actions(self, *args: TopicPermission) -&gt; List[Action]:
+        _permMap: dict[TopicPermission, List[Action]] = {&#34;publish&#34;: [Action.TopicPublish]}
 
-        return [action for perm in perms for action in _permMap[perm]]
+        return [action for perm in args for action in _permMap[perm]]
 
-    def allow(self, *args: Union[TopicPermission, str]) -&gt; TopicRef:
+    def allow(self, perm: TopicPermission, *args: TopicPermission) -&gt; TopicRef:
         &#34;&#34;&#34;Request the specified permissions to this resource.&#34;&#34;&#34;
-        self._register_policy(*args)
+        str_args = [perm] + [str(permission) for permission in args]
+        self._register_policy(*str_args)
 
-        return Events().topic(self.name)
+        return TopicRef(self.name)
 
-    def subscribe(self):
+    def subscribe(self) -&gt; Callable[[EventHandler], None]:
         &#34;&#34;&#34;Create and return a subscription decorator for this topic.&#34;&#34;&#34;
 
-        def decorator(func: EventMiddleware):
-            self.server = FunctionServer(SubscriptionWorkerOptions(topic=self.name))
-            self.server.event(func)
-            Nitric._register_worker(self.server)
+        def decorator(func: EventHandler) -&gt; None:
+            Subscriber(
+                topic_name=self.name,
+                handler=func,
+            )
 
         return decorator</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="nitric.resources.base.SecureResource" href="base.html#nitric.resources.base.SecureResource">SecureResource</a></li>
-<li><a title="nitric.resources.base.BaseResource" href="base.html#nitric.resources.base.BaseResource">BaseResource</a></li>
+<li><a title="nitric.resources.resource.SecureResource" href="resource.html#nitric.resources.resource.SecureResource">SecureResource</a></li>
+<li><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></li>
 <li>abc.ABC</li>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="nitric.resources.topics.Topic.actions"><code class="name">var <span class="ident">actions</span> : List[<a title="nitric.proto.nitric.resource.v1.Action" href="../proto/nitric/resource/v1/index.html#nitric.proto.nitric.resource.v1.Action">Action</a>]</code></dt>
+<dt id="nitric.resources.topics.Topic.actions"><code class="name">var <span class="ident">actions</span> : List[<a title="nitric.proto.resources.v1.Action" href="../proto/resources/v1/index.html#nitric.proto.resources.v1.Action">Action</a>]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -237,7 +457,7 @@ def topic(name: str) -&gt; Topic:
 <h3>Methods</h3>
 <dl>
 <dt id="nitric.resources.topics.Topic.allow"><code class="name flex">
-<span>def <span class="ident">allow</span></span>(<span>self, *args: Union[<a title="nitric.resources.topics.TopicPermission" href="#nitric.resources.topics.TopicPermission">TopicPermission</a>, str]) ‑> <a title="nitric.api.events.TopicRef" href="../api/events.html#nitric.api.events.TopicRef">TopicRef</a></span>
+<span>def <span class="ident">allow</span></span>(<span>self, perm: TopicPermission, *args: TopicPermission) ‑> <a title="nitric.resources.topics.TopicRef" href="#nitric.resources.topics.TopicRef">TopicRef</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Request the specified permissions to this resource.</p></div>
@@ -245,15 +465,16 @@ def topic(name: str) -&gt; Topic:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def allow(self, *args: Union[TopicPermission, str]) -&gt; TopicRef:
+<pre><code class="python">def allow(self, perm: TopicPermission, *args: TopicPermission) -&gt; TopicRef:
     &#34;&#34;&#34;Request the specified permissions to this resource.&#34;&#34;&#34;
-    self._register_policy(*args)
+    str_args = [perm] + [str(permission) for permission in args]
+    self._register_policy(*str_args)
 
-    return Events().topic(self.name)</code></pre>
+    return TopicRef(self.name)</code></pre>
 </details>
 </dd>
 <dt id="nitric.resources.topics.Topic.subscribe"><code class="name flex">
-<span>def <span class="ident">subscribe</span></span>(<span>self)</span>
+<span>def <span class="ident">subscribe</span></span>(<span>self) ‑> Callable[[<a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.context.MessageContext" href="../context.html#nitric.context.MessageContext">MessageContext</a>]], NoneType]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Create and return a subscription decorator for this topic.</p></div>
@@ -261,13 +482,14 @@ def topic(name: str) -&gt; Topic:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def subscribe(self):
+<pre><code class="python">def subscribe(self) -&gt; Callable[[EventHandler], None]:
     &#34;&#34;&#34;Create and return a subscription decorator for this topic.&#34;&#34;&#34;
 
-    def decorator(func: EventMiddleware):
-        self.server = FunctionServer(SubscriptionWorkerOptions(topic=self.name))
-        self.server.event(func)
-        Nitric._register_worker(self.server)
+    def decorator(func: EventHandler) -&gt; None:
+        Subscriber(
+            topic_name=self.name,
+            handler=func,
+        )
 
     return decorator</code></pre>
 </details>
@@ -275,37 +497,106 @@ def topic(name: str) -&gt; Topic:
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="nitric.resources.base.SecureResource" href="base.html#nitric.resources.base.SecureResource">SecureResource</a></b></code>:
+<li><code><b><a title="nitric.resources.resource.SecureResource" href="resource.html#nitric.resources.resource.SecureResource">SecureResource</a></b></code>:
 <ul class="hlist">
-<li><code><a title="nitric.resources.base.SecureResource.make" href="base.html#nitric.resources.base.BaseResource.make">make</a></code></li>
+<li><code><a title="nitric.resources.resource.SecureResource.make" href="resource.html#nitric.resources.resource.Resource.make">make</a></code></li>
 </ul>
 </li>
 </ul>
 </dd>
-<dt id="nitric.resources.topics.TopicPermission"><code class="flex name class">
-<span>class <span class="ident">TopicPermission</span></span>
-<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+<dt id="nitric.resources.topics.TopicRef"><code class="flex name class">
+<span>class <span class="ident">TopicRef</span></span>
+<span>(</span><span>name: str)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Valid query expression operators.</p></div>
+<div class="desc"><p>A reference to a deployed topic, used to interact with the topic at runtime.</p>
+<p>Construct a reference to a deployed Topic.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class TopicPermission(Enum):
-    &#34;&#34;&#34;Valid query expression operators.&#34;&#34;&#34;
+<pre><code class="python">class TopicRef:
+    &#34;&#34;&#34;A reference to a deployed topic, used to interact with the topic at runtime.&#34;&#34;&#34;
 
-    publishing = &#34;publishing&#34;</code></pre>
+    _channel: Channel
+    _topics_stub: TopicsStub
+    name: str
+
+    def __init__(self, name: str) -&gt; None:
+        &#34;&#34;&#34;Construct a reference to a deployed Topic.&#34;&#34;&#34;
+        self._channel: Channel = ChannelManager.get_channel()
+        self._topics_stub = TopicsStub(channel=self._channel)
+        self.name = name
+
+    def __del__(self) -&gt; None:
+        # close the channel when this client is destroyed
+        if self._channel is not None:
+            self._channel.close()
+
+    async def publish(
+        self,
+        message: dict[str, Any],
+    ) -&gt; None:
+        &#34;&#34;&#34;
+        Publish a message to a topic, which can be subscribed to by other services.
+
+        :param message: the event to publish
+        :return: the published event, with the id added if one was auto-generated
+        &#34;&#34;&#34;
+        if not isinstance(message, dict):
+            raise ValueError(&#34;Message must be a dictionary&#34;)
+
+        try:
+            proto_message = TopicMessage(struct_payload=struct_from_dict(message))
+            await self._topics_stub.publish(
+                topic_publish_request=TopicPublishRequest(topic_name=self.name, message=proto_message)
+            )
+            return None
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err</code></pre>
 </details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>enum.Enum</li>
-</ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="nitric.resources.topics.TopicPermission.publishing"><code class="name">var <span class="ident">publishing</span></code></dt>
+<dt id="nitric.resources.topics.TopicRef.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.resources.topics.TopicRef.publish"><code class="name flex">
+<span>async def <span class="ident">publish</span></span>(<span>self, message: dict[str, Any]) ‑> NoneType</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Publish a message to a topic, which can be subscribed to by other services.</p>
+<p>:param message: the event to publish
+:return: the published event, with the id added if one was auto-generated</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def publish(
+    self,
+    message: dict[str, Any],
+) -&gt; None:
+    &#34;&#34;&#34;
+    Publish a message to a topic, which can be subscribed to by other services.
+
+    :param message: the event to publish
+    :return: the published event, with the id added if one was auto-generated
+    &#34;&#34;&#34;
+    if not isinstance(message, dict):
+        raise ValueError(&#34;Message must be a dictionary&#34;)
+
+    try:
+        proto_message = TopicMessage(struct_payload=struct_from_dict(message))
+        await self._topics_stub.publish(
+            topic_publish_request=TopicPublishRequest(topic_name=self.name, message=proto_message)
+        )
+        return None
+    except GRPCError as grpc_err:
+        raise exception_from_grpc_error(grpc_err) from grpc_err</code></pre>
+</details>
 </dd>
 </dl>
 </dd>
@@ -331,6 +622,12 @@ def topic(name: str) -&gt; Topic:
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
+<h4><code><a title="nitric.resources.topics.Subscriber" href="#nitric.resources.topics.Subscriber">Subscriber</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.resources.topics.Subscriber.start" href="#nitric.resources.topics.Subscriber.start">start</a></code></li>
+</ul>
+</li>
+<li>
 <h4><code><a title="nitric.resources.topics.Topic" href="#nitric.resources.topics.Topic">Topic</a></code></h4>
 <ul class="">
 <li><code><a title="nitric.resources.topics.Topic.actions" href="#nitric.resources.topics.Topic.actions">actions</a></code></li>
@@ -340,9 +637,10 @@ def topic(name: str) -&gt; Topic:
 </ul>
 </li>
 <li>
-<h4><code><a title="nitric.resources.topics.TopicPermission" href="#nitric.resources.topics.TopicPermission">TopicPermission</a></code></h4>
+<h4><code><a title="nitric.resources.topics.TopicRef" href="#nitric.resources.topics.TopicRef">TopicRef</a></code></h4>
 <ul class="">
-<li><code><a title="nitric.resources.topics.TopicPermission.publishing" href="#nitric.resources.topics.TopicPermission.publishing">publishing</a></code></li>
+<li><code><a title="nitric.resources.topics.TopicRef.name" href="#nitric.resources.topics.TopicRef.name">name</a></code></li>
+<li><code><a title="nitric.resources.topics.TopicRef.publish" href="#nitric.resources.topics.TopicRef.publish">publish</a></code></li>
 </ul>
 </li>
 </ul>

@@ -44,6 +44,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from typing import Callable, Optional, Union
+
 from grpclib import GRPCError
 
 
@@ -179,15 +181,23 @@ class NitricResourceException(Exception):
 class NitricUnavailableException(Exception):
     &#34;&#34;&#34;Unable to connect to a nitric server.&#34;&#34;&#34;
 
-    pass
+    def __init__(self, message: str):
+        super().__init__(&#34;Unable to connect to nitric server.&#34; + (&#34; &#34; + message if message else &#34;&#34;))
+
+
+class NitricNotRunningException(Exception):
+    &#34;&#34;&#34;The Nitric application wasn&#39;t started before the program exited.&#34;&#34;&#34;
+
+    def __init__(self):
+        super().__init__(&#34;The Nitric application was not started, call Nitric.run() to start the application.&#34;)
 
 
 def exception_from_grpc_error(error: GRPCError):
     &#34;&#34;&#34;Translate a gRPC error to a nitric api exception.&#34;&#34;&#34;
-    return exception_from_grpc_code(error.status.value, error.message)
+    return exception_from_grpc_code(error.status.value, error.message or &#34;&#34;)
 
 
-def exception_from_grpc_code(code: int, message: str = None):
+def exception_from_grpc_code(code: int, message: Optional[str] = None):
     &#34;&#34;&#34;
     Return a new instance of the appropriate exception for the given status code.
 
@@ -199,9 +209,13 @@ def exception_from_grpc_code(code: int, message: str = None):
     return _exception_code_map[code](message)
 
 
+_zero_code_exception: Callable[[Union[str, None]], Exception] = lambda message: Exception(
+    &#34;Error returned with status 0, which is a success status&#34;
+)
+
 # Map of gRPC status codes to the appropriate exception class.
 _exception_code_map = {
-    0: lambda message: Exception(&#34;Error returned with status 0, which is a success status&#34;),
+    0: _zero_code_exception,
     1: CancelledException,
     2: UnknownException,
     3: InvalidArgumentException,
@@ -229,7 +243,7 @@ _exception_code_map = {
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="nitric.exception.exception_from_grpc_code"><code class="name flex">
-<span>def <span class="ident">exception_from_grpc_code</span></span>(<span>code: int, message: str = None)</span>
+<span>def <span class="ident">exception_from_grpc_code</span></span>(<span>code: int, message: Optional[str] = None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Return a new instance of the appropriate exception for the given status code.</p>
@@ -238,7 +252,7 @@ _exception_code_map = {
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def exception_from_grpc_code(code: int, message: str = None):
+<pre><code class="python">def exception_from_grpc_code(code: int, message: Optional[str] = None):
     &#34;&#34;&#34;
     Return a new instance of the appropriate exception for the given status code.
 
@@ -261,7 +275,7 @@ _exception_code_map = {
 </summary>
 <pre><code class="python">def exception_from_grpc_error(error: GRPCError):
     &#34;&#34;&#34;Translate a gRPC error to a nitric api exception.&#34;&#34;&#34;
-    return exception_from_grpc_code(error.status.value, error.message)</code></pre>
+    return exception_from_grpc_code(error.status.value, error.message or &#34;&#34;)</code></pre>
 </details>
 </dd>
 </dl>
@@ -457,6 +471,27 @@ regardless of the state of the system (e.g., a malformed file name).</p></div>
 <li>builtins.BaseException</li>
 </ul>
 </dd>
+<dt id="nitric.exception.NitricNotRunningException"><code class="flex name class">
+<span>class <span class="ident">NitricNotRunningException</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>The Nitric application wasn't started before the program exited.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class NitricNotRunningException(Exception):
+    &#34;&#34;&#34;The Nitric application wasn&#39;t started before the program exited.&#34;&#34;&#34;
+
+    def __init__(self):
+        super().__init__(&#34;The Nitric application was not started, call Nitric.run() to start the application.&#34;)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
 <dt id="nitric.exception.NitricResourceException"><code class="flex name class">
 <span>class <span class="ident">NitricResourceException</span></span>
 <span>(</span><span>*args, **kwargs)</span>
@@ -520,7 +555,7 @@ regardless of the state of the system (e.g., a malformed file name).</p></div>
 </dd>
 <dt id="nitric.exception.NitricUnavailableException"><code class="flex name class">
 <span>class <span class="ident">NitricUnavailableException</span></span>
-<span>(</span><span>*args, **kwargs)</span>
+<span>(</span><span>message: str)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Unable to connect to a nitric server.</p></div>
@@ -531,7 +566,8 @@ regardless of the state of the system (e.g., a malformed file name).</p></div>
 <pre><code class="python">class NitricUnavailableException(Exception):
     &#34;&#34;&#34;Unable to connect to a nitric server.&#34;&#34;&#34;
 
-    pass</code></pre>
+    def __init__(self, message: str):
+        super().__init__(&#34;Unable to connect to nitric server.&#34; + (&#34; &#34; + message if message else &#34;&#34;))</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -775,6 +811,9 @@ regardless of the state of the system (e.g., a malformed file name).</p></div>
 </li>
 <li>
 <h4><code><a title="nitric.exception.InvalidArgumentException" href="#nitric.exception.InvalidArgumentException">InvalidArgumentException</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.exception.NitricNotRunningException" href="#nitric.exception.NitricNotRunningException">NitricNotRunningException</a></code></h4>
 </li>
 <li>
 <h4><code><a title="nitric.exception.NitricResourceException" href="#nitric.exception.NitricResourceException">NitricResourceException</a></code></h4>

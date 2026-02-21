@@ -45,26 +45,18 @@
 # limitations under the License.
 #
 import asyncio
-from os import getenv, environ
+from typing import Any, Dict, List, Type, TypeVar
 
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider, sampling
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.instrumentation.grpc import GrpcInstrumentorClient
-
-from nitric.faas import FunctionServer
+from nitric.context import FunctionServer
 from nitric.exception import NitricUnavailableException
-
-# from nitric.resources.base import BaseResource
-from typing import Dict, List, Type, Any, TypeVar
-
 
 BT = TypeVar(&#34;BT&#34;)
 
 
 class Nitric:
     &#34;&#34;&#34;Represents a nitric app.&#34;&#34;&#34;
+
+    _has_run = False
 
     _workers: List[FunctionServer] = []
     _cache: Dict[str, Dict[str, Any]] = {
@@ -74,6 +66,12 @@ class Nitric:
         &#34;secret&#34;: {},
         &#34;queue&#34;: {},
         &#34;collection&#34;: {},
+        &#34;websocket&#34;: {},
+        &#34;keyvaluestore&#34;: {},
+        &#34;oidcsecuritydefinition&#34;: {},
+        &#34;sql&#34;: {},
+        &#34;job&#34;: {},
+        &#34;jobdefinition&#34;: {},
     }
 
     @classmethod
@@ -82,48 +80,39 @@ class Nitric:
         cls._workers.append(srv)
 
     @classmethod
-    def _create_resource(cls, resource: Type[BT], name: str, *args, **kwargs) -&gt; BT:
+    def _create_resource(cls, resource: Type[BT], name: str, *args: Any, **kwargs: Any) -&gt; BT:
         try:
             resource_type = resource.__name__.lower()
-            if cls._cache.get(resource_type).get(name) is None:
-                cls._cache[resource_type][name] = resource.make(name, *args, **kwargs)
+            cached_resources = cls._cache.get(resource_type)
+            if cached_resources is None or cached_resources.get(name) is None:
+                cls._cache[resource_type][name] = resource.make(name, *args, **kwargs)  # type: ignore
 
             return cls._cache[resource_type][name]
-        except ConnectionRefusedError:
+        except ConnectionRefusedError as cre:
             raise NitricUnavailableException(
-                &#39;Unable to connect to a nitric server! If you\&#39;re running locally make sure to run &#34;nitric start&#34;&#39;
-            )
+                &#34;The nitric server may not be running or the host/port is inaccessible&#34;
+            ) from cre
 
     @classmethod
-    def _create_tracer(cls, local: bool = True, sampler: int = 100) -&gt; TracerProvider:
-        local_run = local or &#34;OTELCOL_BIN&#34; not in environ
-        samplePercent = int(getenv(&#34;NITRIC_TRACE_SAMPLE_PERCENT&#34;, sampler)) / 100.0
+    def has_run(cls) -&gt; bool:
+        &#34;&#34;&#34;
+        Check if the Nitric application has been started.
 
-        # If its a local run use a console exporter, otherwise export using OTEL Protocol
-        exporter = OTLPSpanExporter(endpoint=&#34;http://localhost:4317&#34;, insecure=True)
-        if local_run:
-            exporter = ConsoleSpanExporter()
-
-        provider = TracerProvider(
-            active_span_processor=BatchSpanProcessor(exporter),
-            sampler=sampling.TraceIdRatioBased(samplePercent),
-        )
-        trace.set_tracer_provider(provider)
-
-        grpc_client_instrumentor = GrpcInstrumentorClient()
-        grpc_client_instrumentor.instrument()
-
-        return provider
+        Returns:
+            bool: True if the Nitric application has been started, False otherwise.
+        &#34;&#34;&#34;
+        return cls._has_run
 
     @classmethod
-    def run(cls):
+    def run(cls) -&gt; None:
         &#34;&#34;&#34;
         Start the nitric application.
 
         This will execute in an existing event loop if there is one, otherwise it will attempt to create its own.
         &#34;&#34;&#34;
-        provider = cls._create_tracer()
-        print(cls._workers)
+        if cls._has_run:
+            print(&#34;The Nitric application has already been started, Nitric.run() should only be called once.&#34;)
+        cls._has_run = True
         try:
             try:
                 loop = asyncio.get_running_loop()
@@ -132,14 +121,12 @@ class Nitric:
 
             loop.run_until_complete(asyncio.gather(*[wkr.start() for wkr in cls._workers]))
         except KeyboardInterrupt:
+
             print(&#34;\nexiting&#34;)
-        except ConnectionRefusedError:
+        except ConnectionRefusedError as cre:
             raise NitricUnavailableException(
-                &#39;Unable to connect to a nitric server! If you\&#39;re running locally make sure to run &#34;nitric start&#34;&#39;
-            )
-        finally:
-            if provider is not None:
-                provider.force_flush()</code></pre>
+                &#39;If you\&#39;re running locally use &#34;nitric start&#34; or &#34;nitric run&#34; to start your application&#39;
+            ) from cre</code></pre>
 </details>
 </section>
 <section>
@@ -163,6 +150,8 @@ class Nitric:
 <pre><code class="python">class Nitric:
     &#34;&#34;&#34;Represents a nitric app.&#34;&#34;&#34;
 
+    _has_run = False
+
     _workers: List[FunctionServer] = []
     _cache: Dict[str, Dict[str, Any]] = {
         &#34;api&#34;: {},
@@ -171,6 +160,12 @@ class Nitric:
         &#34;secret&#34;: {},
         &#34;queue&#34;: {},
         &#34;collection&#34;: {},
+        &#34;websocket&#34;: {},
+        &#34;keyvaluestore&#34;: {},
+        &#34;oidcsecuritydefinition&#34;: {},
+        &#34;sql&#34;: {},
+        &#34;job&#34;: {},
+        &#34;jobdefinition&#34;: {},
     }
 
     @classmethod
@@ -179,48 +174,39 @@ class Nitric:
         cls._workers.append(srv)
 
     @classmethod
-    def _create_resource(cls, resource: Type[BT], name: str, *args, **kwargs) -&gt; BT:
+    def _create_resource(cls, resource: Type[BT], name: str, *args: Any, **kwargs: Any) -&gt; BT:
         try:
             resource_type = resource.__name__.lower()
-            if cls._cache.get(resource_type).get(name) is None:
-                cls._cache[resource_type][name] = resource.make(name, *args, **kwargs)
+            cached_resources = cls._cache.get(resource_type)
+            if cached_resources is None or cached_resources.get(name) is None:
+                cls._cache[resource_type][name] = resource.make(name, *args, **kwargs)  # type: ignore
 
             return cls._cache[resource_type][name]
-        except ConnectionRefusedError:
+        except ConnectionRefusedError as cre:
             raise NitricUnavailableException(
-                &#39;Unable to connect to a nitric server! If you\&#39;re running locally make sure to run &#34;nitric start&#34;&#39;
-            )
+                &#34;The nitric server may not be running or the host/port is inaccessible&#34;
+            ) from cre
 
     @classmethod
-    def _create_tracer(cls, local: bool = True, sampler: int = 100) -&gt; TracerProvider:
-        local_run = local or &#34;OTELCOL_BIN&#34; not in environ
-        samplePercent = int(getenv(&#34;NITRIC_TRACE_SAMPLE_PERCENT&#34;, sampler)) / 100.0
+    def has_run(cls) -&gt; bool:
+        &#34;&#34;&#34;
+        Check if the Nitric application has been started.
 
-        # If its a local run use a console exporter, otherwise export using OTEL Protocol
-        exporter = OTLPSpanExporter(endpoint=&#34;http://localhost:4317&#34;, insecure=True)
-        if local_run:
-            exporter = ConsoleSpanExporter()
-
-        provider = TracerProvider(
-            active_span_processor=BatchSpanProcessor(exporter),
-            sampler=sampling.TraceIdRatioBased(samplePercent),
-        )
-        trace.set_tracer_provider(provider)
-
-        grpc_client_instrumentor = GrpcInstrumentorClient()
-        grpc_client_instrumentor.instrument()
-
-        return provider
+        Returns:
+            bool: True if the Nitric application has been started, False otherwise.
+        &#34;&#34;&#34;
+        return cls._has_run
 
     @classmethod
-    def run(cls):
+    def run(cls) -&gt; None:
         &#34;&#34;&#34;
         Start the nitric application.
 
         This will execute in an existing event loop if there is one, otherwise it will attempt to create its own.
         &#34;&#34;&#34;
-        provider = cls._create_tracer()
-        print(cls._workers)
+        if cls._has_run:
+            print(&#34;The Nitric application has already been started, Nitric.run() should only be called once.&#34;)
+        cls._has_run = True
         try:
             try:
                 loop = asyncio.get_running_loop()
@@ -229,19 +215,42 @@ class Nitric:
 
             loop.run_until_complete(asyncio.gather(*[wkr.start() for wkr in cls._workers]))
         except KeyboardInterrupt:
+
             print(&#34;\nexiting&#34;)
-        except ConnectionRefusedError:
+        except ConnectionRefusedError as cre:
             raise NitricUnavailableException(
-                &#39;Unable to connect to a nitric server! If you\&#39;re running locally make sure to run &#34;nitric start&#34;&#39;
-            )
-        finally:
-            if provider is not None:
-                provider.force_flush()</code></pre>
+                &#39;If you\&#39;re running locally use &#34;nitric start&#34; or &#34;nitric run&#34; to start your application&#39;
+            ) from cre</code></pre>
 </details>
 <h3>Static methods</h3>
 <dl>
+<dt id="nitric.application.Nitric.has_run"><code class="name flex">
+<span>def <span class="ident">has_run</span></span>(<span>) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if the Nitric application has been started.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the Nitric application has been started, False otherwise.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+def has_run(cls) -&gt; bool:
+    &#34;&#34;&#34;
+    Check if the Nitric application has been started.
+
+    Returns:
+        bool: True if the Nitric application has been started, False otherwise.
+    &#34;&#34;&#34;
+    return cls._has_run</code></pre>
+</details>
+</dd>
 <dt id="nitric.application.Nitric.run"><code class="name flex">
-<span>def <span class="ident">run</span></span>(<span>)</span>
+<span>def <span class="ident">run</span></span>(<span>) ‑> NoneType</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Start the nitric application.</p>
@@ -251,14 +260,15 @@ class Nitric:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@classmethod
-def run(cls):
+def run(cls) -&gt; None:
     &#34;&#34;&#34;
     Start the nitric application.
 
     This will execute in an existing event loop if there is one, otherwise it will attempt to create its own.
     &#34;&#34;&#34;
-    provider = cls._create_tracer()
-    print(cls._workers)
+    if cls._has_run:
+        print(&#34;The Nitric application has already been started, Nitric.run() should only be called once.&#34;)
+    cls._has_run = True
     try:
         try:
             loop = asyncio.get_running_loop()
@@ -267,14 +277,12 @@ def run(cls):
 
         loop.run_until_complete(asyncio.gather(*[wkr.start() for wkr in cls._workers]))
     except KeyboardInterrupt:
+
         print(&#34;\nexiting&#34;)
-    except ConnectionRefusedError:
+    except ConnectionRefusedError as cre:
         raise NitricUnavailableException(
-            &#39;Unable to connect to a nitric server! If you\&#39;re running locally make sure to run &#34;nitric start&#34;&#39;
-        )
-    finally:
-        if provider is not None:
-            provider.force_flush()</code></pre>
+            &#39;If you\&#39;re running locally use &#34;nitric start&#34; or &#34;nitric run&#34; to start your application&#39;
+        ) from cre</code></pre>
 </details>
 </dd>
 </dl>
@@ -298,6 +306,7 @@ def run(cls):
 <li>
 <h4><code><a title="nitric.application.Nitric" href="#nitric.application.Nitric">Nitric</a></code></h4>
 <ul class="">
+<li><code><a title="nitric.application.Nitric.has_run" href="#nitric.application.Nitric.has_run">has_run</a></code></li>
 <li><code><a title="nitric.application.Nitric.run" href="#nitric.application.Nitric.run">run</a></code></li>
 </ul>
 </li>

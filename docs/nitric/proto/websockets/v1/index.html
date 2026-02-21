@@ -1,0 +1,1578 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>nitric.proto.websockets.v1 API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>nitric.proto.websockets.v1</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">#
+# Copyright (c) 2021 Nitric Technologies Pty Ltd.
+#
+# This file is part of Nitric Python 3 SDK.
+# See https://github.com/nitrictech/python-sdk for further info.
+#
+# Licensed under the Apache License, Version 2.0 (the &#34;License&#34;);
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an &#34;AS IS&#34; BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Generated by the protocol buffer compiler.  DO NOT EDIT!
+# sources: nitric/proto/websockets/v1/websockets.proto
+# plugin: python-betterproto
+# This file has been @generated
+
+from dataclasses import dataclass
+from typing import (
+    TYPE_CHECKING,
+    AsyncIterable,
+    AsyncIterator,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Union,
+)
+
+import betterproto
+import grpclib
+from betterproto.grpc.grpclib_server import ServiceBase
+
+
+if TYPE_CHECKING:
+    import grpclib.server
+    from betterproto.grpc.grpclib_client import MetadataLike
+    from grpclib.metadata import Deadline
+
+
+class WebsocketEventType(betterproto.Enum):
+    Connect = 0
+    &#34;&#34;&#34;Specialised Event for handling new client connections&#34;&#34;&#34;
+
+    Disconnect = 1
+    &#34;&#34;&#34;Specialised Event for handling existing client connections&#34;&#34;&#34;
+
+    Message = 2
+    &#34;&#34;&#34;All other types of events are messages&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class WebsocketDetailsRequest(betterproto.Message):
+    socket_name: str = betterproto.string_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class WebsocketDetailsResponse(betterproto.Message):
+    url: str = betterproto.string_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class WebsocketSendRequest(betterproto.Message):
+    socket_name: str = betterproto.string_field(1)
+    &#34;&#34;&#34;The nitric name of the socket to send on&#34;&#34;&#34;
+
+    connection_id: str = betterproto.string_field(2)
+    &#34;&#34;&#34;The connection ID of the client to send to&#34;&#34;&#34;
+
+    data: bytes = betterproto.bytes_field(3)
+    &#34;&#34;&#34;The data to send to the socket&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class WebsocketSendResponse(betterproto.Message):
+    pass
+
+
+@dataclass(eq=False, repr=False)
+class WebsocketCloseConnectionRequest(betterproto.Message):
+    socket_name: str = betterproto.string_field(1)
+    &#34;&#34;&#34;The nitric name of the socket to send on&#34;&#34;&#34;
+
+    connection_id: str = betterproto.string_field(2)
+    &#34;&#34;&#34;The connection ID of the client to send to&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class WebsocketCloseConnectionResponse(betterproto.Message):
+    pass
+
+
+@dataclass(eq=False, repr=False)
+class ClientMessage(betterproto.Message):
+    &#34;&#34;&#34;ClientMessages are sent from the service to the nitric server&#34;&#34;&#34;
+
+    id: str = betterproto.string_field(1)
+    &#34;&#34;&#34;Globally unique id to pair requests/responses&#34;&#34;&#34;
+
+    registration_request: &#34;RegistrationRequest&#34; = betterproto.message_field(
+        2, group=&#34;content&#34;
+    )
+    &#34;&#34;&#34;
+    Client initialisation request A worker will not be eligible for triggers
+    until it has identified itself
+    &#34;&#34;&#34;
+
+    websocket_event_response: &#34;WebsocketEventResponse&#34; = betterproto.message_field(
+        3, group=&#34;content&#34;
+    )
+    &#34;&#34;&#34;Client responding with result of a trigger&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class RegistrationResponse(betterproto.Message):
+    &#34;&#34;&#34;Placeholder message&#34;&#34;&#34;
+
+    pass
+
+
+@dataclass(eq=False, repr=False)
+class RegistrationRequest(betterproto.Message):
+    socket_name: str = betterproto.string_field(1)
+    &#34;&#34;&#34;The nitric name of the socket that this worker listens on&#34;&#34;&#34;
+
+    event_type: &#34;WebsocketEventType&#34; = betterproto.enum_field(2)
+    &#34;&#34;&#34;The type of event that this worker handles&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class WebsocketEventRequest(betterproto.Message):
+    socket_name: str = betterproto.string_field(1)
+    &#34;&#34;&#34;The nitric name of the socket that this worker listens on&#34;&#34;&#34;
+
+    connection_id: str = betterproto.string_field(2)
+    &#34;&#34;&#34;The connection this trigger came from&#34;&#34;&#34;
+
+    connection: &#34;WebsocketConnectionEvent&#34; = betterproto.message_field(
+        10, group=&#34;websocket_event&#34;
+    )
+    disconnection: &#34;WebsocketDisconnectionEvent&#34; = betterproto.message_field(
+        11, group=&#34;websocket_event&#34;
+    )
+    message: &#34;WebsocketMessageEvent&#34; = betterproto.message_field(
+        12, group=&#34;websocket_event&#34;
+    )
+
+
+@dataclass(eq=False, repr=False)
+class QueryValue(betterproto.Message):
+    value: List[str] = betterproto.string_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class ServerMessage(betterproto.Message):
+    &#34;&#34;&#34;ServerMessages are sent from the nitric server to the service&#34;&#34;&#34;
+
+    id: str = betterproto.string_field(1)
+    &#34;&#34;&#34;Server message ID, used to pair requests/responses&#34;&#34;&#34;
+
+    registration_response: &#34;RegistrationResponse&#34; = betterproto.message_field(
+        2, group=&#34;content&#34;
+    )
+    &#34;&#34;&#34;
+    Server responding with client configuration details to an InitRequest
+    &#34;&#34;&#34;
+
+    websocket_event_request: &#34;WebsocketEventRequest&#34; = betterproto.message_field(
+        3, group=&#34;content&#34;
+    )
+    &#34;&#34;&#34;Server requesting client to process an event&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class WebsocketEventResponse(betterproto.Message):
+    connection_response: &#34;WebsocketConnectionResponse&#34; = betterproto.message_field(
+        10, group=&#34;websocket_response&#34;
+    )
+
+
+@dataclass(eq=False, repr=False)
+class WebsocketConnectionEvent(betterproto.Message):
+    query_params: Dict[str, &#34;QueryValue&#34;] = betterproto.map_field(
+        1, betterproto.TYPE_STRING, betterproto.TYPE_MESSAGE
+    )
+    &#34;&#34;&#34;The query params available in the connection request&#34;&#34;&#34;
+
+
+@dataclass(eq=False, repr=False)
+class WebsocketConnectionResponse(betterproto.Message):
+    reject: bool = betterproto.bool_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class WebsocketDisconnectionEvent(betterproto.Message):
+    pass
+
+
+@dataclass(eq=False, repr=False)
+class WebsocketMessageEvent(betterproto.Message):
+    body: bytes = betterproto.bytes_field(1)
+    &#34;&#34;&#34;Data available on&#34;&#34;&#34;
+
+
+class WebsocketStub(betterproto.ServiceStub):
+    async def send_message(
+        self,
+        websocket_send_request: &#34;WebsocketSendRequest&#34;,
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional[&#34;Deadline&#34;] = None,
+        metadata: Optional[&#34;MetadataLike&#34;] = None
+    ) -&gt; &#34;WebsocketSendResponse&#34;:
+        return await self._unary_unary(
+            &#34;/nitric.proto.websockets.v1.Websocket/SendMessage&#34;,
+            websocket_send_request,
+            WebsocketSendResponse,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
+    async def close_connection(
+        self,
+        websocket_close_connection_request: &#34;WebsocketCloseConnectionRequest&#34;,
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional[&#34;Deadline&#34;] = None,
+        metadata: Optional[&#34;MetadataLike&#34;] = None
+    ) -&gt; &#34;WebsocketCloseConnectionResponse&#34;:
+        return await self._unary_unary(
+            &#34;/nitric.proto.websockets.v1.Websocket/CloseConnection&#34;,
+            websocket_close_connection_request,
+            WebsocketCloseConnectionResponse,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
+    async def socket_details(
+        self,
+        websocket_details_request: &#34;WebsocketDetailsRequest&#34;,
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional[&#34;Deadline&#34;] = None,
+        metadata: Optional[&#34;MetadataLike&#34;] = None
+    ) -&gt; &#34;WebsocketDetailsResponse&#34;:
+        return await self._unary_unary(
+            &#34;/nitric.proto.websockets.v1.Websocket/SocketDetails&#34;,
+            websocket_details_request,
+            WebsocketDetailsResponse,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
+
+class WebsocketHandlerStub(betterproto.ServiceStub):
+    async def handle_events(
+        self,
+        client_message_iterator: Union[
+            AsyncIterable[&#34;ClientMessage&#34;], Iterable[&#34;ClientMessage&#34;]
+        ],
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional[&#34;Deadline&#34;] = None,
+        metadata: Optional[&#34;MetadataLike&#34;] = None
+    ) -&gt; AsyncIterator[&#34;ServerMessage&#34;]:
+        async for response in self._stream_stream(
+            &#34;/nitric.proto.websockets.v1.WebsocketHandler/HandleEvents&#34;,
+            client_message_iterator,
+            ClientMessage,
+            ServerMessage,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        ):
+            yield response
+
+
+class WebsocketBase(ServiceBase):
+    async def send_message(
+        self, websocket_send_request: &#34;WebsocketSendRequest&#34;
+    ) -&gt; &#34;WebsocketSendResponse&#34;:
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def close_connection(
+        self, websocket_close_connection_request: &#34;WebsocketCloseConnectionRequest&#34;
+    ) -&gt; &#34;WebsocketCloseConnectionResponse&#34;:
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def socket_details(
+        self, websocket_details_request: &#34;WebsocketDetailsRequest&#34;
+    ) -&gt; &#34;WebsocketDetailsResponse&#34;:
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def __rpc_send_message(
+        self,
+        stream: &#34;grpclib.server.Stream[WebsocketSendRequest, WebsocketSendResponse]&#34;,
+    ) -&gt; None:
+        request = await stream.recv_message()
+        response = await self.send_message(request)
+        await stream.send_message(response)
+
+    async def __rpc_close_connection(
+        self,
+        stream: &#34;grpclib.server.Stream[WebsocketCloseConnectionRequest, WebsocketCloseConnectionResponse]&#34;,
+    ) -&gt; None:
+        request = await stream.recv_message()
+        response = await self.close_connection(request)
+        await stream.send_message(response)
+
+    async def __rpc_socket_details(
+        self,
+        stream: &#34;grpclib.server.Stream[WebsocketDetailsRequest, WebsocketDetailsResponse]&#34;,
+    ) -&gt; None:
+        request = await stream.recv_message()
+        response = await self.socket_details(request)
+        await stream.send_message(response)
+
+    def __mapping__(self) -&gt; Dict[str, grpclib.const.Handler]:
+        return {
+            &#34;/nitric.proto.websockets.v1.Websocket/SendMessage&#34;: grpclib.const.Handler(
+                self.__rpc_send_message,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                WebsocketSendRequest,
+                WebsocketSendResponse,
+            ),
+            &#34;/nitric.proto.websockets.v1.Websocket/CloseConnection&#34;: grpclib.const.Handler(
+                self.__rpc_close_connection,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                WebsocketCloseConnectionRequest,
+                WebsocketCloseConnectionResponse,
+            ),
+            &#34;/nitric.proto.websockets.v1.Websocket/SocketDetails&#34;: grpclib.const.Handler(
+                self.__rpc_socket_details,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                WebsocketDetailsRequest,
+                WebsocketDetailsResponse,
+            ),
+        }
+
+
+class WebsocketHandlerBase(ServiceBase):
+    async def handle_events(
+        self, client_message_iterator: AsyncIterator[&#34;ClientMessage&#34;]
+    ) -&gt; AsyncIterator[&#34;ServerMessage&#34;]:
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+        yield ServerMessage()
+
+    async def __rpc_handle_events(
+        self, stream: &#34;grpclib.server.Stream[ClientMessage, ServerMessage]&#34;
+    ) -&gt; None:
+        request = stream.__aiter__()
+        await self._call_rpc_handler_server_stream(
+            self.handle_events,
+            stream,
+            request,
+        )
+
+    def __mapping__(self) -&gt; Dict[str, grpclib.const.Handler]:
+        return {
+            &#34;/nitric.proto.websockets.v1.WebsocketHandler/HandleEvents&#34;: grpclib.const.Handler(
+                self.__rpc_handle_events,
+                grpclib.const.Cardinality.STREAM_STREAM,
+                ClientMessage,
+                ServerMessage,
+            ),
+        }</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="nitric.proto.websockets.v1.ClientMessage"><code class="flex name class">
+<span>class <span class="ident">ClientMessage</span></span>
+<span>(</span><span>id: str = &lt;object object&gt;, registration_request: <a title="nitric.proto.websockets.v1.RegistrationRequest" href="#nitric.proto.websockets.v1.RegistrationRequest">RegistrationRequest</a> = &lt;object object&gt;, websocket_event_response: <a title="nitric.proto.websockets.v1.WebsocketEventResponse" href="#nitric.proto.websockets.v1.WebsocketEventResponse">WebsocketEventResponse</a> = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>ClientMessages are sent from the service to the nitric server</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class ClientMessage(betterproto.Message):
+    &#34;&#34;&#34;ClientMessages are sent from the service to the nitric server&#34;&#34;&#34;
+
+    id: str = betterproto.string_field(1)
+    &#34;&#34;&#34;Globally unique id to pair requests/responses&#34;&#34;&#34;
+
+    registration_request: &#34;RegistrationRequest&#34; = betterproto.message_field(
+        2, group=&#34;content&#34;
+    )
+    &#34;&#34;&#34;
+    Client initialisation request A worker will not be eligible for triggers
+    until it has identified itself
+    &#34;&#34;&#34;
+
+    websocket_event_response: &#34;WebsocketEventResponse&#34; = betterproto.message_field(
+        3, group=&#34;content&#34;
+    )
+    &#34;&#34;&#34;Client responding with result of a trigger&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.websockets.v1.ClientMessage.id"><code class="name">var <span class="ident">id</span> : str</code></dt>
+<dd>
+<div class="desc"><p>Globally unique id to pair requests/responses</p></div>
+</dd>
+<dt id="nitric.proto.websockets.v1.ClientMessage.registration_request"><code class="name">var <span class="ident">registration_request</span> : <a title="nitric.proto.websockets.v1.RegistrationRequest" href="#nitric.proto.websockets.v1.RegistrationRequest">RegistrationRequest</a></code></dt>
+<dd>
+<div class="desc"><p>Client initialisation request A worker will not be eligible for triggers
+until it has identified itself</p></div>
+</dd>
+<dt id="nitric.proto.websockets.v1.ClientMessage.websocket_event_response"><code class="name">var <span class="ident">websocket_event_response</span> : <a title="nitric.proto.websockets.v1.WebsocketEventResponse" href="#nitric.proto.websockets.v1.WebsocketEventResponse">WebsocketEventResponse</a></code></dt>
+<dd>
+<div class="desc"><p>Client responding with result of a trigger</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.websockets.v1.QueryValue"><code class="flex name class">
+<span>class <span class="ident">QueryValue</span></span>
+<span>(</span><span>value: List[str] = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>QueryValue(value: List[str] = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class QueryValue(betterproto.Message):
+    value: List[str] = betterproto.string_field(1)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.websockets.v1.QueryValue.value"><code class="name">var <span class="ident">value</span> : List[str]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.websockets.v1.RegistrationRequest"><code class="flex name class">
+<span>class <span class="ident">RegistrationRequest</span></span>
+<span>(</span><span>socket_name: str = &lt;object object&gt;, event_type: <a title="nitric.proto.websockets.v1.WebsocketEventType" href="#nitric.proto.websockets.v1.WebsocketEventType">WebsocketEventType</a> = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>RegistrationRequest(socket_name: str = <object object at 0x733dc69ac250>, event_type: 'WebsocketEventType' = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class RegistrationRequest(betterproto.Message):
+    socket_name: str = betterproto.string_field(1)
+    &#34;&#34;&#34;The nitric name of the socket that this worker listens on&#34;&#34;&#34;
+
+    event_type: &#34;WebsocketEventType&#34; = betterproto.enum_field(2)
+    &#34;&#34;&#34;The type of event that this worker handles&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.websockets.v1.RegistrationRequest.event_type"><code class="name">var <span class="ident">event_type</span> : <a title="nitric.proto.websockets.v1.WebsocketEventType" href="#nitric.proto.websockets.v1.WebsocketEventType">WebsocketEventType</a></code></dt>
+<dd>
+<div class="desc"><p>The type of event that this worker handles</p></div>
+</dd>
+<dt id="nitric.proto.websockets.v1.RegistrationRequest.socket_name"><code class="name">var <span class="ident">socket_name</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The nitric name of the socket that this worker listens on</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.websockets.v1.RegistrationResponse"><code class="flex name class">
+<span>class <span class="ident">RegistrationResponse</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Placeholder message</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class RegistrationResponse(betterproto.Message):
+    &#34;&#34;&#34;Placeholder message&#34;&#34;&#34;
+
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+</dd>
+<dt id="nitric.proto.websockets.v1.ServerMessage"><code class="flex name class">
+<span>class <span class="ident">ServerMessage</span></span>
+<span>(</span><span>id: str = &lt;object object&gt;, registration_response: <a title="nitric.proto.websockets.v1.RegistrationResponse" href="#nitric.proto.websockets.v1.RegistrationResponse">RegistrationResponse</a> = &lt;object object&gt;, websocket_event_request: <a title="nitric.proto.websockets.v1.WebsocketEventRequest" href="#nitric.proto.websockets.v1.WebsocketEventRequest">WebsocketEventRequest</a> = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>ServerMessages are sent from the nitric server to the service</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class ServerMessage(betterproto.Message):
+    &#34;&#34;&#34;ServerMessages are sent from the nitric server to the service&#34;&#34;&#34;
+
+    id: str = betterproto.string_field(1)
+    &#34;&#34;&#34;Server message ID, used to pair requests/responses&#34;&#34;&#34;
+
+    registration_response: &#34;RegistrationResponse&#34; = betterproto.message_field(
+        2, group=&#34;content&#34;
+    )
+    &#34;&#34;&#34;
+    Server responding with client configuration details to an InitRequest
+    &#34;&#34;&#34;
+
+    websocket_event_request: &#34;WebsocketEventRequest&#34; = betterproto.message_field(
+        3, group=&#34;content&#34;
+    )
+    &#34;&#34;&#34;Server requesting client to process an event&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.websockets.v1.ServerMessage.id"><code class="name">var <span class="ident">id</span> : str</code></dt>
+<dd>
+<div class="desc"><p>Server message ID, used to pair requests/responses</p></div>
+</dd>
+<dt id="nitric.proto.websockets.v1.ServerMessage.registration_response"><code class="name">var <span class="ident">registration_response</span> : <a title="nitric.proto.websockets.v1.RegistrationResponse" href="#nitric.proto.websockets.v1.RegistrationResponse">RegistrationResponse</a></code></dt>
+<dd>
+<div class="desc"><p>Server responding with client configuration details to an InitRequest</p></div>
+</dd>
+<dt id="nitric.proto.websockets.v1.ServerMessage.websocket_event_request"><code class="name">var <span class="ident">websocket_event_request</span> : <a title="nitric.proto.websockets.v1.WebsocketEventRequest" href="#nitric.proto.websockets.v1.WebsocketEventRequest">WebsocketEventRequest</a></code></dt>
+<dd>
+<div class="desc"><p>Server requesting client to process an event</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketBase"><code class="flex name class">
+<span>class <span class="ident">WebsocketBase</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Base class for async gRPC servers.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class WebsocketBase(ServiceBase):
+    async def send_message(
+        self, websocket_send_request: &#34;WebsocketSendRequest&#34;
+    ) -&gt; &#34;WebsocketSendResponse&#34;:
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def close_connection(
+        self, websocket_close_connection_request: &#34;WebsocketCloseConnectionRequest&#34;
+    ) -&gt; &#34;WebsocketCloseConnectionResponse&#34;:
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def socket_details(
+        self, websocket_details_request: &#34;WebsocketDetailsRequest&#34;
+    ) -&gt; &#34;WebsocketDetailsResponse&#34;:
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def __rpc_send_message(
+        self,
+        stream: &#34;grpclib.server.Stream[WebsocketSendRequest, WebsocketSendResponse]&#34;,
+    ) -&gt; None:
+        request = await stream.recv_message()
+        response = await self.send_message(request)
+        await stream.send_message(response)
+
+    async def __rpc_close_connection(
+        self,
+        stream: &#34;grpclib.server.Stream[WebsocketCloseConnectionRequest, WebsocketCloseConnectionResponse]&#34;,
+    ) -&gt; None:
+        request = await stream.recv_message()
+        response = await self.close_connection(request)
+        await stream.send_message(response)
+
+    async def __rpc_socket_details(
+        self,
+        stream: &#34;grpclib.server.Stream[WebsocketDetailsRequest, WebsocketDetailsResponse]&#34;,
+    ) -&gt; None:
+        request = await stream.recv_message()
+        response = await self.socket_details(request)
+        await stream.send_message(response)
+
+    def __mapping__(self) -&gt; Dict[str, grpclib.const.Handler]:
+        return {
+            &#34;/nitric.proto.websockets.v1.Websocket/SendMessage&#34;: grpclib.const.Handler(
+                self.__rpc_send_message,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                WebsocketSendRequest,
+                WebsocketSendResponse,
+            ),
+            &#34;/nitric.proto.websockets.v1.Websocket/CloseConnection&#34;: grpclib.const.Handler(
+                self.__rpc_close_connection,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                WebsocketCloseConnectionRequest,
+                WebsocketCloseConnectionResponse,
+            ),
+            &#34;/nitric.proto.websockets.v1.Websocket/SocketDetails&#34;: grpclib.const.Handler(
+                self.__rpc_socket_details,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                WebsocketDetailsRequest,
+                WebsocketDetailsResponse,
+            ),
+        }</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.grpc.grpclib_server.ServiceBase</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.proto.websockets.v1.WebsocketBase.close_connection"><code class="name flex">
+<span>async def <span class="ident">close_connection</span></span>(<span>self, websocket_close_connection_request: <a title="nitric.proto.websockets.v1.WebsocketCloseConnectionRequest" href="#nitric.proto.websockets.v1.WebsocketCloseConnectionRequest">WebsocketCloseConnectionRequest</a>) ‑> <a title="nitric.proto.websockets.v1.WebsocketCloseConnectionResponse" href="#nitric.proto.websockets.v1.WebsocketCloseConnectionResponse">WebsocketCloseConnectionResponse</a></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def close_connection(
+    self, websocket_close_connection_request: &#34;WebsocketCloseConnectionRequest&#34;
+) -&gt; &#34;WebsocketCloseConnectionResponse&#34;:
+    raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)</code></pre>
+</details>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketBase.send_message"><code class="name flex">
+<span>async def <span class="ident">send_message</span></span>(<span>self, websocket_send_request: <a title="nitric.proto.websockets.v1.WebsocketSendRequest" href="#nitric.proto.websockets.v1.WebsocketSendRequest">WebsocketSendRequest</a>) ‑> <a title="nitric.proto.websockets.v1.WebsocketSendResponse" href="#nitric.proto.websockets.v1.WebsocketSendResponse">WebsocketSendResponse</a></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def send_message(
+    self, websocket_send_request: &#34;WebsocketSendRequest&#34;
+) -&gt; &#34;WebsocketSendResponse&#34;:
+    raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)</code></pre>
+</details>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketBase.socket_details"><code class="name flex">
+<span>async def <span class="ident">socket_details</span></span>(<span>self, websocket_details_request: <a title="nitric.proto.websockets.v1.WebsocketDetailsRequest" href="#nitric.proto.websockets.v1.WebsocketDetailsRequest">WebsocketDetailsRequest</a>) ‑> <a title="nitric.proto.websockets.v1.WebsocketDetailsResponse" href="#nitric.proto.websockets.v1.WebsocketDetailsResponse">WebsocketDetailsResponse</a></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def socket_details(
+    self, websocket_details_request: &#34;WebsocketDetailsRequest&#34;
+) -&gt; &#34;WebsocketDetailsResponse&#34;:
+    raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketCloseConnectionRequest"><code class="flex name class">
+<span>class <span class="ident">WebsocketCloseConnectionRequest</span></span>
+<span>(</span><span>socket_name: str = &lt;object object&gt;, connection_id: str = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>WebsocketCloseConnectionRequest(socket_name: str = <object object at 0x733dc69ac250>, connection_id: str = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class WebsocketCloseConnectionRequest(betterproto.Message):
+    socket_name: str = betterproto.string_field(1)
+    &#34;&#34;&#34;The nitric name of the socket to send on&#34;&#34;&#34;
+
+    connection_id: str = betterproto.string_field(2)
+    &#34;&#34;&#34;The connection ID of the client to send to&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.websockets.v1.WebsocketCloseConnectionRequest.connection_id"><code class="name">var <span class="ident">connection_id</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The connection ID of the client to send to</p></div>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketCloseConnectionRequest.socket_name"><code class="name">var <span class="ident">socket_name</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The nitric name of the socket to send on</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketCloseConnectionResponse"><code class="flex name class">
+<span>class <span class="ident">WebsocketCloseConnectionResponse</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>WebsocketCloseConnectionResponse()</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class WebsocketCloseConnectionResponse(betterproto.Message):
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketConnectionEvent"><code class="flex name class">
+<span>class <span class="ident">WebsocketConnectionEvent</span></span>
+<span>(</span><span>query_params: Dict[str, ForwardRef('<a title="nitric.proto.websockets.v1.QueryValue" href="#nitric.proto.websockets.v1.QueryValue">QueryValue</a>')] = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>WebsocketConnectionEvent(query_params: Dict[str, ForwardRef('QueryValue')] = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class WebsocketConnectionEvent(betterproto.Message):
+    query_params: Dict[str, &#34;QueryValue&#34;] = betterproto.map_field(
+        1, betterproto.TYPE_STRING, betterproto.TYPE_MESSAGE
+    )
+    &#34;&#34;&#34;The query params available in the connection request&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.websockets.v1.WebsocketConnectionEvent.query_params"><code class="name">var <span class="ident">query_params</span> : Dict[str, <a title="nitric.proto.websockets.v1.QueryValue" href="#nitric.proto.websockets.v1.QueryValue">QueryValue</a>]</code></dt>
+<dd>
+<div class="desc"><p>The query params available in the connection request</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketConnectionResponse"><code class="flex name class">
+<span>class <span class="ident">WebsocketConnectionResponse</span></span>
+<span>(</span><span>reject: bool = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>WebsocketConnectionResponse(reject: bool = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class WebsocketConnectionResponse(betterproto.Message):
+    reject: bool = betterproto.bool_field(1)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.websockets.v1.WebsocketConnectionResponse.reject"><code class="name">var <span class="ident">reject</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketDetailsRequest"><code class="flex name class">
+<span>class <span class="ident">WebsocketDetailsRequest</span></span>
+<span>(</span><span>socket_name: str = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>WebsocketDetailsRequest(socket_name: str = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class WebsocketDetailsRequest(betterproto.Message):
+    socket_name: str = betterproto.string_field(1)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.websockets.v1.WebsocketDetailsRequest.socket_name"><code class="name">var <span class="ident">socket_name</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketDetailsResponse"><code class="flex name class">
+<span>class <span class="ident">WebsocketDetailsResponse</span></span>
+<span>(</span><span>url: str = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>WebsocketDetailsResponse(url: str = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class WebsocketDetailsResponse(betterproto.Message):
+    url: str = betterproto.string_field(1)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.websockets.v1.WebsocketDetailsResponse.url"><code class="name">var <span class="ident">url</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketDisconnectionEvent"><code class="flex name class">
+<span>class <span class="ident">WebsocketDisconnectionEvent</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>WebsocketDisconnectionEvent()</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class WebsocketDisconnectionEvent(betterproto.Message):
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketEventRequest"><code class="flex name class">
+<span>class <span class="ident">WebsocketEventRequest</span></span>
+<span>(</span><span>socket_name: str = &lt;object object&gt;, connection_id: str = &lt;object object&gt;, connection: <a title="nitric.proto.websockets.v1.WebsocketConnectionEvent" href="#nitric.proto.websockets.v1.WebsocketConnectionEvent">WebsocketConnectionEvent</a> = &lt;object object&gt;, disconnection: <a title="nitric.proto.websockets.v1.WebsocketDisconnectionEvent" href="#nitric.proto.websockets.v1.WebsocketDisconnectionEvent">WebsocketDisconnectionEvent</a> = &lt;object object&gt;, message: <a title="nitric.proto.websockets.v1.WebsocketMessageEvent" href="#nitric.proto.websockets.v1.WebsocketMessageEvent">WebsocketMessageEvent</a> = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>WebsocketEventRequest(socket_name: str = <object object at 0x733dc69ac250>, connection_id: str = <object object at 0x733dc69ac250>, connection: 'WebsocketConnectionEvent' = <object object at 0x733dc69ac250>, disconnection: 'WebsocketDisconnectionEvent' = <object object at 0x733dc69ac250>, message: 'WebsocketMessageEvent' = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class WebsocketEventRequest(betterproto.Message):
+    socket_name: str = betterproto.string_field(1)
+    &#34;&#34;&#34;The nitric name of the socket that this worker listens on&#34;&#34;&#34;
+
+    connection_id: str = betterproto.string_field(2)
+    &#34;&#34;&#34;The connection this trigger came from&#34;&#34;&#34;
+
+    connection: &#34;WebsocketConnectionEvent&#34; = betterproto.message_field(
+        10, group=&#34;websocket_event&#34;
+    )
+    disconnection: &#34;WebsocketDisconnectionEvent&#34; = betterproto.message_field(
+        11, group=&#34;websocket_event&#34;
+    )
+    message: &#34;WebsocketMessageEvent&#34; = betterproto.message_field(
+        12, group=&#34;websocket_event&#34;
+    )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.websockets.v1.WebsocketEventRequest.connection"><code class="name">var <span class="ident">connection</span> : <a title="nitric.proto.websockets.v1.WebsocketConnectionEvent" href="#nitric.proto.websockets.v1.WebsocketConnectionEvent">WebsocketConnectionEvent</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketEventRequest.connection_id"><code class="name">var <span class="ident">connection_id</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The connection this trigger came from</p></div>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketEventRequest.disconnection"><code class="name">var <span class="ident">disconnection</span> : <a title="nitric.proto.websockets.v1.WebsocketDisconnectionEvent" href="#nitric.proto.websockets.v1.WebsocketDisconnectionEvent">WebsocketDisconnectionEvent</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketEventRequest.message"><code class="name">var <span class="ident">message</span> : <a title="nitric.proto.websockets.v1.WebsocketMessageEvent" href="#nitric.proto.websockets.v1.WebsocketMessageEvent">WebsocketMessageEvent</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketEventRequest.socket_name"><code class="name">var <span class="ident">socket_name</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The nitric name of the socket that this worker listens on</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketEventResponse"><code class="flex name class">
+<span>class <span class="ident">WebsocketEventResponse</span></span>
+<span>(</span><span>connection_response: <a title="nitric.proto.websockets.v1.WebsocketConnectionResponse" href="#nitric.proto.websockets.v1.WebsocketConnectionResponse">WebsocketConnectionResponse</a> = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>WebsocketEventResponse(connection_response: 'WebsocketConnectionResponse' = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class WebsocketEventResponse(betterproto.Message):
+    connection_response: &#34;WebsocketConnectionResponse&#34; = betterproto.message_field(
+        10, group=&#34;websocket_response&#34;
+    )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.websockets.v1.WebsocketEventResponse.connection_response"><code class="name">var <span class="ident">connection_response</span> : <a title="nitric.proto.websockets.v1.WebsocketConnectionResponse" href="#nitric.proto.websockets.v1.WebsocketConnectionResponse">WebsocketConnectionResponse</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketEventType"><code class="flex name class">
+<span>class <span class="ident">WebsocketEventType</span></span>
+<span>(</span><span>*args, **kwds)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The base class for protobuf enumerations, all generated enumerations will inherit
+from this. Bases :class:<code>enum.IntEnum</code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class WebsocketEventType(betterproto.Enum):
+    Connect = 0
+    &#34;&#34;&#34;Specialised Event for handling new client connections&#34;&#34;&#34;
+
+    Disconnect = 1
+    &#34;&#34;&#34;Specialised Event for handling existing client connections&#34;&#34;&#34;
+
+    Message = 2
+    &#34;&#34;&#34;All other types of events are messages&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Enum</li>
+<li>enum.IntEnum</li>
+<li>builtins.int</li>
+<li>enum.ReprEnum</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.websockets.v1.WebsocketEventType.Connect"><code class="name">var <span class="ident">Connect</span></code></dt>
+<dd>
+<div class="desc"><p>Specialised Event for handling new client connections</p></div>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketEventType.Disconnect"><code class="name">var <span class="ident">Disconnect</span></code></dt>
+<dd>
+<div class="desc"><p>Specialised Event for handling existing client connections</p></div>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketEventType.Message"><code class="name">var <span class="ident">Message</span></code></dt>
+<dd>
+<div class="desc"><p>All other types of events are messages</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketHandlerBase"><code class="flex name class">
+<span>class <span class="ident">WebsocketHandlerBase</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Base class for async gRPC servers.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class WebsocketHandlerBase(ServiceBase):
+    async def handle_events(
+        self, client_message_iterator: AsyncIterator[&#34;ClientMessage&#34;]
+    ) -&gt; AsyncIterator[&#34;ServerMessage&#34;]:
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+        yield ServerMessage()
+
+    async def __rpc_handle_events(
+        self, stream: &#34;grpclib.server.Stream[ClientMessage, ServerMessage]&#34;
+    ) -&gt; None:
+        request = stream.__aiter__()
+        await self._call_rpc_handler_server_stream(
+            self.handle_events,
+            stream,
+            request,
+        )
+
+    def __mapping__(self) -&gt; Dict[str, grpclib.const.Handler]:
+        return {
+            &#34;/nitric.proto.websockets.v1.WebsocketHandler/HandleEvents&#34;: grpclib.const.Handler(
+                self.__rpc_handle_events,
+                grpclib.const.Cardinality.STREAM_STREAM,
+                ClientMessage,
+                ServerMessage,
+            ),
+        }</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.grpc.grpclib_server.ServiceBase</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.proto.websockets.v1.WebsocketHandlerBase.handle_events"><code class="name flex">
+<span>async def <span class="ident">handle_events</span></span>(<span>self, client_message_iterator: AsyncIterator[ForwardRef('<a title="nitric.proto.websockets.v1.ClientMessage" href="#nitric.proto.websockets.v1.ClientMessage">ClientMessage</a>')]) ‑> AsyncIterator[<a title="nitric.proto.apis.v1.ServerMessage" href="../../apis/v1/index.html#nitric.proto.apis.v1.ServerMessage">ServerMessage</a>]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def handle_events(
+    self, client_message_iterator: AsyncIterator[&#34;ClientMessage&#34;]
+) -&gt; AsyncIterator[&#34;ServerMessage&#34;]:
+    raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+    yield ServerMessage()</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketHandlerStub"><code class="flex name class">
+<span>class <span class="ident">WebsocketHandlerStub</span></span>
+<span>(</span><span>channel: Channel, *, timeout: Optional[float] = None, deadline: Optional[ForwardRef('Deadline')] = None, metadata: Union[Mapping[str, Union[str, bytes]], Collection[Tuple[str, Union[str, bytes]]], NoneType] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Base class for async gRPC clients.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class WebsocketHandlerStub(betterproto.ServiceStub):
+    async def handle_events(
+        self,
+        client_message_iterator: Union[
+            AsyncIterable[&#34;ClientMessage&#34;], Iterable[&#34;ClientMessage&#34;]
+        ],
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional[&#34;Deadline&#34;] = None,
+        metadata: Optional[&#34;MetadataLike&#34;] = None
+    ) -&gt; AsyncIterator[&#34;ServerMessage&#34;]:
+        async for response in self._stream_stream(
+            &#34;/nitric.proto.websockets.v1.WebsocketHandler/HandleEvents&#34;,
+            client_message_iterator,
+            ClientMessage,
+            ServerMessage,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        ):
+            yield response</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.grpc.grpclib_client.ServiceStub</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.proto.websockets.v1.WebsocketHandlerStub.handle_events"><code class="name flex">
+<span>async def <span class="ident">handle_events</span></span>(<span>self, client_message_iterator: Union[AsyncIterable[ForwardRef('<a title="nitric.proto.websockets.v1.ClientMessage" href="#nitric.proto.websockets.v1.ClientMessage">ClientMessage</a>')], Iterable[ForwardRef('<a title="nitric.proto.websockets.v1.ClientMessage" href="#nitric.proto.websockets.v1.ClientMessage">ClientMessage</a>')]], *, timeout: Optional[float] = None, deadline: Optional[ForwardRef('Deadline')] = None, metadata: Optional[ForwardRef('MetadataLike')] = None) ‑> AsyncIterator[<a title="nitric.proto.websockets.v1.ServerMessage" href="#nitric.proto.websockets.v1.ServerMessage">ServerMessage</a>]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def handle_events(
+    self,
+    client_message_iterator: Union[
+        AsyncIterable[&#34;ClientMessage&#34;], Iterable[&#34;ClientMessage&#34;]
+    ],
+    *,
+    timeout: Optional[float] = None,
+    deadline: Optional[&#34;Deadline&#34;] = None,
+    metadata: Optional[&#34;MetadataLike&#34;] = None
+) -&gt; AsyncIterator[&#34;ServerMessage&#34;]:
+    async for response in self._stream_stream(
+        &#34;/nitric.proto.websockets.v1.WebsocketHandler/HandleEvents&#34;,
+        client_message_iterator,
+        ClientMessage,
+        ServerMessage,
+        timeout=timeout,
+        deadline=deadline,
+        metadata=metadata,
+    ):
+        yield response</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketMessageEvent"><code class="flex name class">
+<span>class <span class="ident">WebsocketMessageEvent</span></span>
+<span>(</span><span>body: bytes = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>WebsocketMessageEvent(body: bytes = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class WebsocketMessageEvent(betterproto.Message):
+    body: bytes = betterproto.bytes_field(1)
+    &#34;&#34;&#34;Data available on&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.websockets.v1.WebsocketMessageEvent.body"><code class="name">var <span class="ident">body</span> : bytes</code></dt>
+<dd>
+<div class="desc"><p>Data available on</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketSendRequest"><code class="flex name class">
+<span>class <span class="ident">WebsocketSendRequest</span></span>
+<span>(</span><span>socket_name: str = &lt;object object&gt;, connection_id: str = &lt;object object&gt;, data: bytes = &lt;object object&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>WebsocketSendRequest(socket_name: str = <object object at 0x733dc69ac250>, connection_id: str = <object object at 0x733dc69ac250>, data: bytes = <object object at 0x733dc69ac250>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class WebsocketSendRequest(betterproto.Message):
+    socket_name: str = betterproto.string_field(1)
+    &#34;&#34;&#34;The nitric name of the socket to send on&#34;&#34;&#34;
+
+    connection_id: str = betterproto.string_field(2)
+    &#34;&#34;&#34;The connection ID of the client to send to&#34;&#34;&#34;
+
+    data: bytes = betterproto.bytes_field(3)
+    &#34;&#34;&#34;The data to send to the socket&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.websockets.v1.WebsocketSendRequest.connection_id"><code class="name">var <span class="ident">connection_id</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The connection ID of the client to send to</p></div>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketSendRequest.data"><code class="name">var <span class="ident">data</span> : bytes</code></dt>
+<dd>
+<div class="desc"><p>The data to send to the socket</p></div>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketSendRequest.socket_name"><code class="name">var <span class="ident">socket_name</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The nitric name of the socket to send on</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketSendResponse"><code class="flex name class">
+<span>class <span class="ident">WebsocketSendResponse</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>WebsocketSendResponse()</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(eq=False, repr=False)
+class WebsocketSendResponse(betterproto.Message):
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.Message</li>
+<li>abc.ABC</li>
+</ul>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketStub"><code class="flex name class">
+<span>class <span class="ident">WebsocketStub</span></span>
+<span>(</span><span>channel: Channel, *, timeout: Optional[float] = None, deadline: Optional[ForwardRef('Deadline')] = None, metadata: Union[Mapping[str, Union[str, bytes]], Collection[Tuple[str, Union[str, bytes]]], NoneType] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Base class for async gRPC clients.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class WebsocketStub(betterproto.ServiceStub):
+    async def send_message(
+        self,
+        websocket_send_request: &#34;WebsocketSendRequest&#34;,
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional[&#34;Deadline&#34;] = None,
+        metadata: Optional[&#34;MetadataLike&#34;] = None
+    ) -&gt; &#34;WebsocketSendResponse&#34;:
+        return await self._unary_unary(
+            &#34;/nitric.proto.websockets.v1.Websocket/SendMessage&#34;,
+            websocket_send_request,
+            WebsocketSendResponse,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
+    async def close_connection(
+        self,
+        websocket_close_connection_request: &#34;WebsocketCloseConnectionRequest&#34;,
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional[&#34;Deadline&#34;] = None,
+        metadata: Optional[&#34;MetadataLike&#34;] = None
+    ) -&gt; &#34;WebsocketCloseConnectionResponse&#34;:
+        return await self._unary_unary(
+            &#34;/nitric.proto.websockets.v1.Websocket/CloseConnection&#34;,
+            websocket_close_connection_request,
+            WebsocketCloseConnectionResponse,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
+    async def socket_details(
+        self,
+        websocket_details_request: &#34;WebsocketDetailsRequest&#34;,
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional[&#34;Deadline&#34;] = None,
+        metadata: Optional[&#34;MetadataLike&#34;] = None
+    ) -&gt; &#34;WebsocketDetailsResponse&#34;:
+        return await self._unary_unary(
+            &#34;/nitric.proto.websockets.v1.Websocket/SocketDetails&#34;,
+            websocket_details_request,
+            WebsocketDetailsResponse,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>betterproto.grpc.grpclib_client.ServiceStub</li>
+<li>abc.ABC</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.proto.websockets.v1.WebsocketStub.close_connection"><code class="name flex">
+<span>async def <span class="ident">close_connection</span></span>(<span>self, websocket_close_connection_request: <a title="nitric.proto.websockets.v1.WebsocketCloseConnectionRequest" href="#nitric.proto.websockets.v1.WebsocketCloseConnectionRequest">WebsocketCloseConnectionRequest</a>, *, timeout: Optional[float] = None, deadline: Optional[ForwardRef('Deadline')] = None, metadata: Optional[ForwardRef('MetadataLike')] = None) ‑> <a title="nitric.proto.websockets.v1.WebsocketCloseConnectionResponse" href="#nitric.proto.websockets.v1.WebsocketCloseConnectionResponse">WebsocketCloseConnectionResponse</a></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def close_connection(
+    self,
+    websocket_close_connection_request: &#34;WebsocketCloseConnectionRequest&#34;,
+    *,
+    timeout: Optional[float] = None,
+    deadline: Optional[&#34;Deadline&#34;] = None,
+    metadata: Optional[&#34;MetadataLike&#34;] = None
+) -&gt; &#34;WebsocketCloseConnectionResponse&#34;:
+    return await self._unary_unary(
+        &#34;/nitric.proto.websockets.v1.Websocket/CloseConnection&#34;,
+        websocket_close_connection_request,
+        WebsocketCloseConnectionResponse,
+        timeout=timeout,
+        deadline=deadline,
+        metadata=metadata,
+    )</code></pre>
+</details>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketStub.send_message"><code class="name flex">
+<span>async def <span class="ident">send_message</span></span>(<span>self, websocket_send_request: <a title="nitric.proto.websockets.v1.WebsocketSendRequest" href="#nitric.proto.websockets.v1.WebsocketSendRequest">WebsocketSendRequest</a>, *, timeout: Optional[float] = None, deadline: Optional[ForwardRef('Deadline')] = None, metadata: Optional[ForwardRef('MetadataLike')] = None) ‑> <a title="nitric.proto.websockets.v1.WebsocketSendResponse" href="#nitric.proto.websockets.v1.WebsocketSendResponse">WebsocketSendResponse</a></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def send_message(
+    self,
+    websocket_send_request: &#34;WebsocketSendRequest&#34;,
+    *,
+    timeout: Optional[float] = None,
+    deadline: Optional[&#34;Deadline&#34;] = None,
+    metadata: Optional[&#34;MetadataLike&#34;] = None
+) -&gt; &#34;WebsocketSendResponse&#34;:
+    return await self._unary_unary(
+        &#34;/nitric.proto.websockets.v1.Websocket/SendMessage&#34;,
+        websocket_send_request,
+        WebsocketSendResponse,
+        timeout=timeout,
+        deadline=deadline,
+        metadata=metadata,
+    )</code></pre>
+</details>
+</dd>
+<dt id="nitric.proto.websockets.v1.WebsocketStub.socket_details"><code class="name flex">
+<span>async def <span class="ident">socket_details</span></span>(<span>self, websocket_details_request: <a title="nitric.proto.websockets.v1.WebsocketDetailsRequest" href="#nitric.proto.websockets.v1.WebsocketDetailsRequest">WebsocketDetailsRequest</a>, *, timeout: Optional[float] = None, deadline: Optional[ForwardRef('Deadline')] = None, metadata: Optional[ForwardRef('MetadataLike')] = None) ‑> <a title="nitric.proto.websockets.v1.WebsocketDetailsResponse" href="#nitric.proto.websockets.v1.WebsocketDetailsResponse">WebsocketDetailsResponse</a></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def socket_details(
+    self,
+    websocket_details_request: &#34;WebsocketDetailsRequest&#34;,
+    *,
+    timeout: Optional[float] = None,
+    deadline: Optional[&#34;Deadline&#34;] = None,
+    metadata: Optional[&#34;MetadataLike&#34;] = None
+) -&gt; &#34;WebsocketDetailsResponse&#34;:
+    return await self._unary_unary(
+        &#34;/nitric.proto.websockets.v1.Websocket/SocketDetails&#34;,
+        websocket_details_request,
+        WebsocketDetailsResponse,
+        timeout=timeout,
+        deadline=deadline,
+        metadata=metadata,
+    )</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="nitric.proto.websockets" href="../index.html">nitric.proto.websockets</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.ClientMessage" href="#nitric.proto.websockets.v1.ClientMessage">ClientMessage</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.websockets.v1.ClientMessage.id" href="#nitric.proto.websockets.v1.ClientMessage.id">id</a></code></li>
+<li><code><a title="nitric.proto.websockets.v1.ClientMessage.registration_request" href="#nitric.proto.websockets.v1.ClientMessage.registration_request">registration_request</a></code></li>
+<li><code><a title="nitric.proto.websockets.v1.ClientMessage.websocket_event_response" href="#nitric.proto.websockets.v1.ClientMessage.websocket_event_response">websocket_event_response</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.QueryValue" href="#nitric.proto.websockets.v1.QueryValue">QueryValue</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.websockets.v1.QueryValue.value" href="#nitric.proto.websockets.v1.QueryValue.value">value</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.RegistrationRequest" href="#nitric.proto.websockets.v1.RegistrationRequest">RegistrationRequest</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.websockets.v1.RegistrationRequest.event_type" href="#nitric.proto.websockets.v1.RegistrationRequest.event_type">event_type</a></code></li>
+<li><code><a title="nitric.proto.websockets.v1.RegistrationRequest.socket_name" href="#nitric.proto.websockets.v1.RegistrationRequest.socket_name">socket_name</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.RegistrationResponse" href="#nitric.proto.websockets.v1.RegistrationResponse">RegistrationResponse</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.ServerMessage" href="#nitric.proto.websockets.v1.ServerMessage">ServerMessage</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.websockets.v1.ServerMessage.id" href="#nitric.proto.websockets.v1.ServerMessage.id">id</a></code></li>
+<li><code><a title="nitric.proto.websockets.v1.ServerMessage.registration_response" href="#nitric.proto.websockets.v1.ServerMessage.registration_response">registration_response</a></code></li>
+<li><code><a title="nitric.proto.websockets.v1.ServerMessage.websocket_event_request" href="#nitric.proto.websockets.v1.ServerMessage.websocket_event_request">websocket_event_request</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.WebsocketBase" href="#nitric.proto.websockets.v1.WebsocketBase">WebsocketBase</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.websockets.v1.WebsocketBase.close_connection" href="#nitric.proto.websockets.v1.WebsocketBase.close_connection">close_connection</a></code></li>
+<li><code><a title="nitric.proto.websockets.v1.WebsocketBase.send_message" href="#nitric.proto.websockets.v1.WebsocketBase.send_message">send_message</a></code></li>
+<li><code><a title="nitric.proto.websockets.v1.WebsocketBase.socket_details" href="#nitric.proto.websockets.v1.WebsocketBase.socket_details">socket_details</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.WebsocketCloseConnectionRequest" href="#nitric.proto.websockets.v1.WebsocketCloseConnectionRequest">WebsocketCloseConnectionRequest</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.websockets.v1.WebsocketCloseConnectionRequest.connection_id" href="#nitric.proto.websockets.v1.WebsocketCloseConnectionRequest.connection_id">connection_id</a></code></li>
+<li><code><a title="nitric.proto.websockets.v1.WebsocketCloseConnectionRequest.socket_name" href="#nitric.proto.websockets.v1.WebsocketCloseConnectionRequest.socket_name">socket_name</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.WebsocketCloseConnectionResponse" href="#nitric.proto.websockets.v1.WebsocketCloseConnectionResponse">WebsocketCloseConnectionResponse</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.WebsocketConnectionEvent" href="#nitric.proto.websockets.v1.WebsocketConnectionEvent">WebsocketConnectionEvent</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.websockets.v1.WebsocketConnectionEvent.query_params" href="#nitric.proto.websockets.v1.WebsocketConnectionEvent.query_params">query_params</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.WebsocketConnectionResponse" href="#nitric.proto.websockets.v1.WebsocketConnectionResponse">WebsocketConnectionResponse</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.websockets.v1.WebsocketConnectionResponse.reject" href="#nitric.proto.websockets.v1.WebsocketConnectionResponse.reject">reject</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.WebsocketDetailsRequest" href="#nitric.proto.websockets.v1.WebsocketDetailsRequest">WebsocketDetailsRequest</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.websockets.v1.WebsocketDetailsRequest.socket_name" href="#nitric.proto.websockets.v1.WebsocketDetailsRequest.socket_name">socket_name</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.WebsocketDetailsResponse" href="#nitric.proto.websockets.v1.WebsocketDetailsResponse">WebsocketDetailsResponse</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.websockets.v1.WebsocketDetailsResponse.url" href="#nitric.proto.websockets.v1.WebsocketDetailsResponse.url">url</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.WebsocketDisconnectionEvent" href="#nitric.proto.websockets.v1.WebsocketDisconnectionEvent">WebsocketDisconnectionEvent</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.WebsocketEventRequest" href="#nitric.proto.websockets.v1.WebsocketEventRequest">WebsocketEventRequest</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.websockets.v1.WebsocketEventRequest.connection" href="#nitric.proto.websockets.v1.WebsocketEventRequest.connection">connection</a></code></li>
+<li><code><a title="nitric.proto.websockets.v1.WebsocketEventRequest.connection_id" href="#nitric.proto.websockets.v1.WebsocketEventRequest.connection_id">connection_id</a></code></li>
+<li><code><a title="nitric.proto.websockets.v1.WebsocketEventRequest.disconnection" href="#nitric.proto.websockets.v1.WebsocketEventRequest.disconnection">disconnection</a></code></li>
+<li><code><a title="nitric.proto.websockets.v1.WebsocketEventRequest.message" href="#nitric.proto.websockets.v1.WebsocketEventRequest.message">message</a></code></li>
+<li><code><a title="nitric.proto.websockets.v1.WebsocketEventRequest.socket_name" href="#nitric.proto.websockets.v1.WebsocketEventRequest.socket_name">socket_name</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.WebsocketEventResponse" href="#nitric.proto.websockets.v1.WebsocketEventResponse">WebsocketEventResponse</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.websockets.v1.WebsocketEventResponse.connection_response" href="#nitric.proto.websockets.v1.WebsocketEventResponse.connection_response">connection_response</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.WebsocketEventType" href="#nitric.proto.websockets.v1.WebsocketEventType">WebsocketEventType</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.websockets.v1.WebsocketEventType.Connect" href="#nitric.proto.websockets.v1.WebsocketEventType.Connect">Connect</a></code></li>
+<li><code><a title="nitric.proto.websockets.v1.WebsocketEventType.Disconnect" href="#nitric.proto.websockets.v1.WebsocketEventType.Disconnect">Disconnect</a></code></li>
+<li><code><a title="nitric.proto.websockets.v1.WebsocketEventType.Message" href="#nitric.proto.websockets.v1.WebsocketEventType.Message">Message</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.WebsocketHandlerBase" href="#nitric.proto.websockets.v1.WebsocketHandlerBase">WebsocketHandlerBase</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.websockets.v1.WebsocketHandlerBase.handle_events" href="#nitric.proto.websockets.v1.WebsocketHandlerBase.handle_events">handle_events</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.WebsocketHandlerStub" href="#nitric.proto.websockets.v1.WebsocketHandlerStub">WebsocketHandlerStub</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.websockets.v1.WebsocketHandlerStub.handle_events" href="#nitric.proto.websockets.v1.WebsocketHandlerStub.handle_events">handle_events</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.WebsocketMessageEvent" href="#nitric.proto.websockets.v1.WebsocketMessageEvent">WebsocketMessageEvent</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.websockets.v1.WebsocketMessageEvent.body" href="#nitric.proto.websockets.v1.WebsocketMessageEvent.body">body</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.WebsocketSendRequest" href="#nitric.proto.websockets.v1.WebsocketSendRequest">WebsocketSendRequest</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.websockets.v1.WebsocketSendRequest.connection_id" href="#nitric.proto.websockets.v1.WebsocketSendRequest.connection_id">connection_id</a></code></li>
+<li><code><a title="nitric.proto.websockets.v1.WebsocketSendRequest.data" href="#nitric.proto.websockets.v1.WebsocketSendRequest.data">data</a></code></li>
+<li><code><a title="nitric.proto.websockets.v1.WebsocketSendRequest.socket_name" href="#nitric.proto.websockets.v1.WebsocketSendRequest.socket_name">socket_name</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.WebsocketSendResponse" href="#nitric.proto.websockets.v1.WebsocketSendResponse">WebsocketSendResponse</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.proto.websockets.v1.WebsocketStub" href="#nitric.proto.websockets.v1.WebsocketStub">WebsocketStub</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.websockets.v1.WebsocketStub.close_connection" href="#nitric.proto.websockets.v1.WebsocketStub.close_connection">close_connection</a></code></li>
+<li><code><a title="nitric.proto.websockets.v1.WebsocketStub.send_message" href="#nitric.proto.websockets.v1.WebsocketStub.send_message">send_message</a></code></li>
+<li><code><a title="nitric.proto.websockets.v1.WebsocketStub.socket_details" href="#nitric.proto.websockets.v1.WebsocketStub.socket_details">socket_details</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

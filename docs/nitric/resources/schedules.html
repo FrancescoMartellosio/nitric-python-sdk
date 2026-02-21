@@ -45,61 +45,179 @@
 # limitations under the License.
 #
 from __future__ import annotations
+
+import logging
+from datetime import timedelta
+from enum import Enum
+from typing import Callable, List
+
+import betterproto
+import grpclib.exceptions
+
 from nitric.application import Nitric
-from nitric.faas import FunctionServer, EventMiddleware, RateWorkerOptions, Frequency
+from nitric.bidi import AsyncNotifierList
+from nitric.context import FunctionServer, IntervalContext, IntervalHandler
+from nitric.proto.schedules.v1 import (
+    ClientMessage,
+    IntervalResponse,
+    RegistrationRequest,
+    ScheduleCron,
+    ScheduleEvery,
+    SchedulesStub,
+)
+from nitric.channel import ChannelManager
 
 
-class Schedule:
+class ScheduleServer(FunctionServer):
     &#34;&#34;&#34;A schedule for running functions on a cadence.&#34;&#34;&#34;
 
     description: str
-    server: FunctionServer
 
-    def start(self):
-        &#34;&#34;&#34;Start the function server that executes the scheduled middleware.&#34;&#34;&#34;
-        return self.server.start()
+    handler: IntervalHandler
+    _registration_request: RegistrationRequest
+    _responses: AsyncNotifierList[ClientMessage]
 
     def __init__(self, description: str):
-        &#34;&#34;&#34;Construct a new schedule.&#34;&#34;&#34;
+        &#34;&#34;&#34;Create a schedule for running functions on a cadence.&#34;&#34;&#34;
         self.description = description
+        self._responses = AsyncNotifierList()
 
-    def every(self, rate_description: str, *middleware: EventMiddleware):
+    def every(self, rate_description: str, handler: IntervalHandler) -&gt; None:
         &#34;&#34;&#34;
-        Register middleware to be run at the specified rate.
+        Register a function to be run at the specified rate.
 
         E.g. every(&#34;3 hours&#34;)
         &#34;&#34;&#34;
-        rate_description = rate_description.lower()
+        self._registration_request = RegistrationRequest(
+            schedule_name=self.description,
+            every=ScheduleEvery(rate=rate_description.lower()),
+        )
 
-        if not any([frequency in rate_description for frequency in Frequency.as_str_list()]):
-            # handle singular frequencies. e.g. every(&#39;day&#39;)
-            rate_description = f&#34;1 {rate_description}s&#34;  # &#39;day&#39; becomes &#39;1 days&#39;
+        self.handler = handler
+
+        Nitric._register_worker(self)  # type: ignore pylint: disable=protected-access
+
+    def cron(self, cron_expression: str, handler: IntervalHandler) -&gt; None:
+        &#34;&#34;&#34;
+        Register a function to be run at the specified cron schedule.
+
+        E.g. cron(&#34;3 * * * *&#34;)
+        &#34;&#34;&#34;
+        self._registration_request = RegistrationRequest(
+            schedule_name=self.description,
+            cron=ScheduleCron(expression=cron_expression),
+        )
+
+        self.handler = handler
+
+        Nitric._register_worker(self)  # type: ignore pylint: disable=protected-access
+
+    async def _schedule_request_iterator(self):
+        # Register with the server
+        yield ClientMessage(registration_request=self._registration_request)
+        # wait for any responses for the server and send them
+        async for response in self._responses:
+            yield response
+
+    async def start(self) -&gt; None:
+        &#34;&#34;&#34;Register this schedule and start listening for requests.&#34;&#34;&#34;
+        channel = ChannelManager.get_channel()
+        schedules_stub = SchedulesStub(channel=channel)
 
         try:
-            rate, freq_str = rate_description.split(&#34; &#34;)
-            freq = Frequency.from_str(freq_str)
+            async for server_msg in schedules_stub.schedule(self._schedule_request_iterator()):
+                msg_type, _ = betterproto.which_one_of(server_msg, &#34;content&#34;)
+
+                if msg_type == &#34;registration_response&#34;:
+                    continue
+                if msg_type == &#34;interval_request&#34;:
+                    ctx = IntervalContext(server_msg)
+                    try:
+                        await self.handler(ctx)
+                    except Exception as e:  # pylint: disable=broad-except
+                        logging.exception(&#34;An unhandled error occurred in a scheduled function: %s&#34;, e)
+                    resp = IntervalResponse()
+                    await self._responses.add_item(ClientMessage(id=server_msg.id, interval_response=resp))
+        except grpclib.exceptions.GRPCError as e:
+            print(f&#34;Stream terminated: {e.message}&#34;)
+        except grpclib.exceptions.StreamTerminatedError:
+            print(&#34;Stream from membrane closed.&#34;)
+        finally:
+            print(&#34;Closing client stream&#34;)
+            channel.close()
+
+
+class Frequency(Enum):
+    &#34;&#34;&#34;Valid schedule frequencies.&#34;&#34;&#34;
+
+    MINUTES = &#34;minutes&#34;
+    HOURS = &#34;hours&#34;
+    DAYS = &#34;days&#34;
+
+    @staticmethod
+    def from_str(value: str) -&gt; Frequency:
+        &#34;&#34;&#34;Convert a string frequency value to Frequency.&#34;&#34;&#34;
+        try:
+            return Frequency[value.strip().upper()]
         except Exception:
-            raise Exception(f&#34;invalid rate expression, frequency must be one of {Frequency.as_str_list()}&#34;)
+            raise ValueError(f&#34;{value} is not a valid frequency&#34;)
 
-        if not rate.isdigit():
-            raise Exception(&#34;invalid rate expression, expression must begin with a positive integer&#34;)
+    @staticmethod
+    def as_str_list() -&gt; List[str]:
+        &#34;&#34;&#34;Return all frequency values as a list of strings.&#34;&#34;&#34;
+        return [str(frequency.value) for frequency in Frequency]
 
-        opts = RateWorkerOptions(self.description, int(rate), freq)
+    def as_time(self, rate: int) -&gt; timedelta:
+        &#34;&#34;&#34;Convert the rate to minutes based on the frequency.&#34;&#34;&#34;
+        if self == Frequency.MINUTES:
+            return timedelta(minutes=rate)
+        elif self == Frequency.HOURS:
+            return timedelta(hours=rate)
+        elif self == Frequency.DAYS:
+            return timedelta(days=rate)
+        else:
+            raise ValueError(f&#34;{self} is not a valid frequency&#34;)
 
-        self.server = FunctionServer(opts)
-        self.server.event(*middleware)
-        return Nitric._register_worker(self.server)
+
+class Schedule:
+    &#34;&#34;&#34;A raw schedule to be deployed and assigned a rate or cron interval.&#34;&#34;&#34;
+
+    def __init__(self, description: str):
+        &#34;&#34;&#34;Create a new schedule resource.&#34;&#34;&#34;
+        self.description = description
+
+    def every(self, every: str) -&gt; Callable[[IntervalHandler], ScheduleServer]:
+        &#34;&#34;&#34;
+        Set the schedule interval.
+
+        e.g. every(&#39;3 days&#39;).
+        &#34;&#34;&#34;
+
+        def decorator(func: IntervalHandler) -&gt; ScheduleServer:
+            r = ScheduleServer(self.description)
+            r.every(every, func)
+            return r
+
+        return decorator
+
+    def cron(self, cron: str) -&gt; Callable[[IntervalHandler], ScheduleServer]:
+        &#34;&#34;&#34;
+        Set the schedule interval.
+
+        e.g. cron(&#39;3 * * * *&#39;).
+        &#34;&#34;&#34;
+
+        def decorator(func: IntervalHandler) -&gt; ScheduleServer:
+            r = ScheduleServer(self.description)
+            r.cron(cron, func)
+            return r
+
+        return decorator
 
 
-def schedule(description: str, every: str):
-    &#34;&#34;&#34;Return a schedule decorator.&#34;&#34;&#34;
-
-    def decorator(func: EventMiddleware):
-        r = Schedule(description)
-        r.every(every, func)
-        return r
-
-    return decorator</code></pre>
+def schedule(description: str) -&gt; Schedule:
+    &#34;&#34;&#34;Return a schedule.&#34;&#34;&#34;
+    return Schedule(description=description)</code></pre>
 </details>
 </section>
 <section>
@@ -110,23 +228,17 @@ def schedule(description: str, every: str):
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="nitric.resources.schedules.schedule"><code class="name flex">
-<span>def <span class="ident">schedule</span></span>(<span>description: str, every: str)</span>
+<span>def <span class="ident">schedule</span></span>(<span>description: str) ‑> <a title="nitric.resources.schedules.Schedule" href="#nitric.resources.schedules.Schedule">Schedule</a></span>
 </code></dt>
 <dd>
-<div class="desc"><p>Return a schedule decorator.</p></div>
+<div class="desc"><p>Return a schedule.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def schedule(description: str, every: str):
-    &#34;&#34;&#34;Return a schedule decorator.&#34;&#34;&#34;
-
-    def decorator(func: EventMiddleware):
-        r = Schedule(description)
-        r.every(every, func)
-        return r
-
-    return decorator</code></pre>
+<pre><code class="python">def schedule(description: str) -&gt; Schedule:
+    &#34;&#34;&#34;Return a schedule.&#34;&#34;&#34;
+    return Schedule(description=description)</code></pre>
 </details>
 </dd>
 </dl>
@@ -134,121 +246,421 @@ def schedule(description: str, every: str):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
+<dt id="nitric.resources.schedules.Frequency"><code class="flex name class">
+<span>class <span class="ident">Frequency</span></span>
+<span>(</span><span>*args, **kwds)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Valid schedule frequencies.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Frequency(Enum):
+    &#34;&#34;&#34;Valid schedule frequencies.&#34;&#34;&#34;
+
+    MINUTES = &#34;minutes&#34;
+    HOURS = &#34;hours&#34;
+    DAYS = &#34;days&#34;
+
+    @staticmethod
+    def from_str(value: str) -&gt; Frequency:
+        &#34;&#34;&#34;Convert a string frequency value to Frequency.&#34;&#34;&#34;
+        try:
+            return Frequency[value.strip().upper()]
+        except Exception:
+            raise ValueError(f&#34;{value} is not a valid frequency&#34;)
+
+    @staticmethod
+    def as_str_list() -&gt; List[str]:
+        &#34;&#34;&#34;Return all frequency values as a list of strings.&#34;&#34;&#34;
+        return [str(frequency.value) for frequency in Frequency]
+
+    def as_time(self, rate: int) -&gt; timedelta:
+        &#34;&#34;&#34;Convert the rate to minutes based on the frequency.&#34;&#34;&#34;
+        if self == Frequency.MINUTES:
+            return timedelta(minutes=rate)
+        elif self == Frequency.HOURS:
+            return timedelta(hours=rate)
+        elif self == Frequency.DAYS:
+            return timedelta(days=rate)
+        else:
+            raise ValueError(f&#34;{self} is not a valid frequency&#34;)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.resources.schedules.Frequency.DAYS"><code class="name">var <span class="ident">DAYS</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.resources.schedules.Frequency.HOURS"><code class="name">var <span class="ident">HOURS</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.resources.schedules.Frequency.MINUTES"><code class="name">var <span class="ident">MINUTES</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Static methods</h3>
+<dl>
+<dt id="nitric.resources.schedules.Frequency.as_str_list"><code class="name flex">
+<span>def <span class="ident">as_str_list</span></span>(<span>) ‑> List[str]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return all frequency values as a list of strings.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def as_str_list() -&gt; List[str]:
+    &#34;&#34;&#34;Return all frequency values as a list of strings.&#34;&#34;&#34;
+    return [str(frequency.value) for frequency in Frequency]</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.schedules.Frequency.from_str"><code class="name flex">
+<span>def <span class="ident">from_str</span></span>(<span>value: str) ‑> <a title="nitric.resources.schedules.Frequency" href="#nitric.resources.schedules.Frequency">Frequency</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert a string frequency value to Frequency.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def from_str(value: str) -&gt; Frequency:
+    &#34;&#34;&#34;Convert a string frequency value to Frequency.&#34;&#34;&#34;
+    try:
+        return Frequency[value.strip().upper()]
+    except Exception:
+        raise ValueError(f&#34;{value} is not a valid frequency&#34;)</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.resources.schedules.Frequency.as_time"><code class="name flex">
+<span>def <span class="ident">as_time</span></span>(<span>self, rate: int) ‑> datetime.timedelta</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert the rate to minutes based on the frequency.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def as_time(self, rate: int) -&gt; timedelta:
+    &#34;&#34;&#34;Convert the rate to minutes based on the frequency.&#34;&#34;&#34;
+    if self == Frequency.MINUTES:
+        return timedelta(minutes=rate)
+    elif self == Frequency.HOURS:
+        return timedelta(hours=rate)
+    elif self == Frequency.DAYS:
+        return timedelta(days=rate)
+    else:
+        raise ValueError(f&#34;{self} is not a valid frequency&#34;)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
 <dt id="nitric.resources.schedules.Schedule"><code class="flex name class">
 <span>class <span class="ident">Schedule</span></span>
 <span>(</span><span>description: str)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>A schedule for running functions on a cadence.</p>
-<p>Construct a new schedule.</p></div>
+<div class="desc"><p>A raw schedule to be deployed and assigned a rate or cron interval.</p>
+<p>Create a new schedule resource.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Schedule:
+    &#34;&#34;&#34;A raw schedule to be deployed and assigned a rate or cron interval.&#34;&#34;&#34;
+
+    def __init__(self, description: str):
+        &#34;&#34;&#34;Create a new schedule resource.&#34;&#34;&#34;
+        self.description = description
+
+    def every(self, every: str) -&gt; Callable[[IntervalHandler], ScheduleServer]:
+        &#34;&#34;&#34;
+        Set the schedule interval.
+
+        e.g. every(&#39;3 days&#39;).
+        &#34;&#34;&#34;
+
+        def decorator(func: IntervalHandler) -&gt; ScheduleServer:
+            r = ScheduleServer(self.description)
+            r.every(every, func)
+            return r
+
+        return decorator
+
+    def cron(self, cron: str) -&gt; Callable[[IntervalHandler], ScheduleServer]:
+        &#34;&#34;&#34;
+        Set the schedule interval.
+
+        e.g. cron(&#39;3 * * * *&#39;).
+        &#34;&#34;&#34;
+
+        def decorator(func: IntervalHandler) -&gt; ScheduleServer:
+            r = ScheduleServer(self.description)
+            r.cron(cron, func)
+            return r
+
+        return decorator</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.resources.schedules.Schedule.cron"><code class="name flex">
+<span>def <span class="ident">cron</span></span>(<span>self, cron: str) ‑> Callable[[<a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.context.IntervalContext" href="../context.html#nitric.context.IntervalContext">IntervalContext</a>]], <a title="nitric.resources.schedules.ScheduleServer" href="#nitric.resources.schedules.ScheduleServer">ScheduleServer</a>]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Set the schedule interval.</p>
+<p>e.g. cron('3 * * * *').</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cron(self, cron: str) -&gt; Callable[[IntervalHandler], ScheduleServer]:
+    &#34;&#34;&#34;
+    Set the schedule interval.
+
+    e.g. cron(&#39;3 * * * *&#39;).
+    &#34;&#34;&#34;
+
+    def decorator(func: IntervalHandler) -&gt; ScheduleServer:
+        r = ScheduleServer(self.description)
+        r.cron(cron, func)
+        return r
+
+    return decorator</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.schedules.Schedule.every"><code class="name flex">
+<span>def <span class="ident">every</span></span>(<span>self, every: str) ‑> Callable[[<a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.context.IntervalContext" href="../context.html#nitric.context.IntervalContext">IntervalContext</a>]], <a title="nitric.resources.schedules.ScheduleServer" href="#nitric.resources.schedules.ScheduleServer">ScheduleServer</a>]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Set the schedule interval.</p>
+<p>e.g. every('3 days').</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def every(self, every: str) -&gt; Callable[[IntervalHandler], ScheduleServer]:
+    &#34;&#34;&#34;
+    Set the schedule interval.
+
+    e.g. every(&#39;3 days&#39;).
+    &#34;&#34;&#34;
+
+    def decorator(func: IntervalHandler) -&gt; ScheduleServer:
+        r = ScheduleServer(self.description)
+        r.every(every, func)
+        return r
+
+    return decorator</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.resources.schedules.ScheduleServer"><code class="flex name class">
+<span>class <span class="ident">ScheduleServer</span></span>
+<span>(</span><span>description: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A schedule for running functions on a cadence.</p>
+<p>Create a schedule for running functions on a cadence.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ScheduleServer(FunctionServer):
     &#34;&#34;&#34;A schedule for running functions on a cadence.&#34;&#34;&#34;
 
     description: str
-    server: FunctionServer
 
-    def start(self):
-        &#34;&#34;&#34;Start the function server that executes the scheduled middleware.&#34;&#34;&#34;
-        return self.server.start()
+    handler: IntervalHandler
+    _registration_request: RegistrationRequest
+    _responses: AsyncNotifierList[ClientMessage]
 
     def __init__(self, description: str):
-        &#34;&#34;&#34;Construct a new schedule.&#34;&#34;&#34;
+        &#34;&#34;&#34;Create a schedule for running functions on a cadence.&#34;&#34;&#34;
         self.description = description
+        self._responses = AsyncNotifierList()
 
-    def every(self, rate_description: str, *middleware: EventMiddleware):
+    def every(self, rate_description: str, handler: IntervalHandler) -&gt; None:
         &#34;&#34;&#34;
-        Register middleware to be run at the specified rate.
+        Register a function to be run at the specified rate.
 
         E.g. every(&#34;3 hours&#34;)
         &#34;&#34;&#34;
-        rate_description = rate_description.lower()
+        self._registration_request = RegistrationRequest(
+            schedule_name=self.description,
+            every=ScheduleEvery(rate=rate_description.lower()),
+        )
 
-        if not any([frequency in rate_description for frequency in Frequency.as_str_list()]):
-            # handle singular frequencies. e.g. every(&#39;day&#39;)
-            rate_description = f&#34;1 {rate_description}s&#34;  # &#39;day&#39; becomes &#39;1 days&#39;
+        self.handler = handler
+
+        Nitric._register_worker(self)  # type: ignore pylint: disable=protected-access
+
+    def cron(self, cron_expression: str, handler: IntervalHandler) -&gt; None:
+        &#34;&#34;&#34;
+        Register a function to be run at the specified cron schedule.
+
+        E.g. cron(&#34;3 * * * *&#34;)
+        &#34;&#34;&#34;
+        self._registration_request = RegistrationRequest(
+            schedule_name=self.description,
+            cron=ScheduleCron(expression=cron_expression),
+        )
+
+        self.handler = handler
+
+        Nitric._register_worker(self)  # type: ignore pylint: disable=protected-access
+
+    async def _schedule_request_iterator(self):
+        # Register with the server
+        yield ClientMessage(registration_request=self._registration_request)
+        # wait for any responses for the server and send them
+        async for response in self._responses:
+            yield response
+
+    async def start(self) -&gt; None:
+        &#34;&#34;&#34;Register this schedule and start listening for requests.&#34;&#34;&#34;
+        channel = ChannelManager.get_channel()
+        schedules_stub = SchedulesStub(channel=channel)
 
         try:
-            rate, freq_str = rate_description.split(&#34; &#34;)
-            freq = Frequency.from_str(freq_str)
-        except Exception:
-            raise Exception(f&#34;invalid rate expression, frequency must be one of {Frequency.as_str_list()}&#34;)
+            async for server_msg in schedules_stub.schedule(self._schedule_request_iterator()):
+                msg_type, _ = betterproto.which_one_of(server_msg, &#34;content&#34;)
 
-        if not rate.isdigit():
-            raise Exception(&#34;invalid rate expression, expression must begin with a positive integer&#34;)
-
-        opts = RateWorkerOptions(self.description, int(rate), freq)
-
-        self.server = FunctionServer(opts)
-        self.server.event(*middleware)
-        return Nitric._register_worker(self.server)</code></pre>
+                if msg_type == &#34;registration_response&#34;:
+                    continue
+                if msg_type == &#34;interval_request&#34;:
+                    ctx = IntervalContext(server_msg)
+                    try:
+                        await self.handler(ctx)
+                    except Exception as e:  # pylint: disable=broad-except
+                        logging.exception(&#34;An unhandled error occurred in a scheduled function: %s&#34;, e)
+                    resp = IntervalResponse()
+                    await self._responses.add_item(ClientMessage(id=server_msg.id, interval_response=resp))
+        except grpclib.exceptions.GRPCError as e:
+            print(f&#34;Stream terminated: {e.message}&#34;)
+        except grpclib.exceptions.StreamTerminatedError:
+            print(&#34;Stream from membrane closed.&#34;)
+        finally:
+            print(&#34;Closing client stream&#34;)
+            channel.close()</code></pre>
 </details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="nitric.context.FunctionServer" href="../context.html#nitric.context.FunctionServer">FunctionServer</a></li>
+<li>abc.ABC</li>
+</ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="nitric.resources.schedules.Schedule.description"><code class="name">var <span class="ident">description</span> : str</code></dt>
+<dt id="nitric.resources.schedules.ScheduleServer.description"><code class="name">var <span class="ident">description</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="nitric.resources.schedules.Schedule.server"><code class="name">var <span class="ident">server</span> : <a title="nitric.faas.FunctionServer" href="../faas.html#nitric.faas.FunctionServer">FunctionServer</a></code></dt>
+<dt id="nitric.resources.schedules.ScheduleServer.handler"><code class="name">var <span class="ident">handler</span> : <a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.context.IntervalContext" href="../context.html#nitric.context.IntervalContext">IntervalContext</a>]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="nitric.resources.schedules.Schedule.every"><code class="name flex">
-<span>def <span class="ident">every</span></span>(<span>self, rate_description: str, *middleware: EventMiddleware)</span>
+<dt id="nitric.resources.schedules.ScheduleServer.cron"><code class="name flex">
+<span>def <span class="ident">cron</span></span>(<span>self, cron_expression: str, handler: IntervalHandler) ‑> NoneType</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Register middleware to be run at the specified rate.</p>
+<div class="desc"><p>Register a function to be run at the specified cron schedule.</p>
+<p>E.g. cron("3 * * * *")</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cron(self, cron_expression: str, handler: IntervalHandler) -&gt; None:
+    &#34;&#34;&#34;
+    Register a function to be run at the specified cron schedule.
+
+    E.g. cron(&#34;3 * * * *&#34;)
+    &#34;&#34;&#34;
+    self._registration_request = RegistrationRequest(
+        schedule_name=self.description,
+        cron=ScheduleCron(expression=cron_expression),
+    )
+
+    self.handler = handler
+
+    Nitric._register_worker(self)  # type: ignore pylint: disable=protected-access</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.schedules.ScheduleServer.every"><code class="name flex">
+<span>def <span class="ident">every</span></span>(<span>self, rate_description: str, handler: IntervalHandler) ‑> NoneType</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Register a function to be run at the specified rate.</p>
 <p>E.g. every("3 hours")</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def every(self, rate_description: str, *middleware: EventMiddleware):
+<pre><code class="python">def every(self, rate_description: str, handler: IntervalHandler) -&gt; None:
     &#34;&#34;&#34;
-    Register middleware to be run at the specified rate.
+    Register a function to be run at the specified rate.
 
     E.g. every(&#34;3 hours&#34;)
     &#34;&#34;&#34;
-    rate_description = rate_description.lower()
+    self._registration_request = RegistrationRequest(
+        schedule_name=self.description,
+        every=ScheduleEvery(rate=rate_description.lower()),
+    )
 
-    if not any([frequency in rate_description for frequency in Frequency.as_str_list()]):
-        # handle singular frequencies. e.g. every(&#39;day&#39;)
-        rate_description = f&#34;1 {rate_description}s&#34;  # &#39;day&#39; becomes &#39;1 days&#39;
+    self.handler = handler
 
-    try:
-        rate, freq_str = rate_description.split(&#34; &#34;)
-        freq = Frequency.from_str(freq_str)
-    except Exception:
-        raise Exception(f&#34;invalid rate expression, frequency must be one of {Frequency.as_str_list()}&#34;)
-
-    if not rate.isdigit():
-        raise Exception(&#34;invalid rate expression, expression must begin with a positive integer&#34;)
-
-    opts = RateWorkerOptions(self.description, int(rate), freq)
-
-    self.server = FunctionServer(opts)
-    self.server.event(*middleware)
-    return Nitric._register_worker(self.server)</code></pre>
+    Nitric._register_worker(self)  # type: ignore pylint: disable=protected-access</code></pre>
 </details>
 </dd>
-<dt id="nitric.resources.schedules.Schedule.start"><code class="name flex">
-<span>def <span class="ident">start</span></span>(<span>self)</span>
+<dt id="nitric.resources.schedules.ScheduleServer.start"><code class="name flex">
+<span>async def <span class="ident">start</span></span>(<span>self) ‑> NoneType</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Start the function server that executes the scheduled middleware.</p></div>
+<div class="desc"><p>Register this schedule and start listening for requests.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def start(self):
-    &#34;&#34;&#34;Start the function server that executes the scheduled middleware.&#34;&#34;&#34;
-    return self.server.start()</code></pre>
+<pre><code class="python">async def start(self) -&gt; None:
+    &#34;&#34;&#34;Register this schedule and start listening for requests.&#34;&#34;&#34;
+    channel = ChannelManager.get_channel()
+    schedules_stub = SchedulesStub(channel=channel)
+
+    try:
+        async for server_msg in schedules_stub.schedule(self._schedule_request_iterator()):
+            msg_type, _ = betterproto.which_one_of(server_msg, &#34;content&#34;)
+
+            if msg_type == &#34;registration_response&#34;:
+                continue
+            if msg_type == &#34;interval_request&#34;:
+                ctx = IntervalContext(server_msg)
+                try:
+                    await self.handler(ctx)
+                except Exception as e:  # pylint: disable=broad-except
+                    logging.exception(&#34;An unhandled error occurred in a scheduled function: %s&#34;, e)
+                resp = IntervalResponse()
+                await self._responses.add_item(ClientMessage(id=server_msg.id, interval_response=resp))
+    except grpclib.exceptions.GRPCError as e:
+        print(f&#34;Stream terminated: {e.message}&#34;)
+    except grpclib.exceptions.StreamTerminatedError:
+        print(&#34;Stream from membrane closed.&#34;)
+    finally:
+        print(&#34;Closing client stream&#34;)
+        channel.close()</code></pre>
 </details>
 </dd>
 </dl>
@@ -275,12 +687,31 @@ def schedule(description: str, every: str):
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
+<h4><code><a title="nitric.resources.schedules.Frequency" href="#nitric.resources.schedules.Frequency">Frequency</a></code></h4>
+<ul class="two-column">
+<li><code><a title="nitric.resources.schedules.Frequency.DAYS" href="#nitric.resources.schedules.Frequency.DAYS">DAYS</a></code></li>
+<li><code><a title="nitric.resources.schedules.Frequency.HOURS" href="#nitric.resources.schedules.Frequency.HOURS">HOURS</a></code></li>
+<li><code><a title="nitric.resources.schedules.Frequency.MINUTES" href="#nitric.resources.schedules.Frequency.MINUTES">MINUTES</a></code></li>
+<li><code><a title="nitric.resources.schedules.Frequency.as_str_list" href="#nitric.resources.schedules.Frequency.as_str_list">as_str_list</a></code></li>
+<li><code><a title="nitric.resources.schedules.Frequency.as_time" href="#nitric.resources.schedules.Frequency.as_time">as_time</a></code></li>
+<li><code><a title="nitric.resources.schedules.Frequency.from_str" href="#nitric.resources.schedules.Frequency.from_str">from_str</a></code></li>
+</ul>
+</li>
+<li>
 <h4><code><a title="nitric.resources.schedules.Schedule" href="#nitric.resources.schedules.Schedule">Schedule</a></code></h4>
 <ul class="">
-<li><code><a title="nitric.resources.schedules.Schedule.description" href="#nitric.resources.schedules.Schedule.description">description</a></code></li>
+<li><code><a title="nitric.resources.schedules.Schedule.cron" href="#nitric.resources.schedules.Schedule.cron">cron</a></code></li>
 <li><code><a title="nitric.resources.schedules.Schedule.every" href="#nitric.resources.schedules.Schedule.every">every</a></code></li>
-<li><code><a title="nitric.resources.schedules.Schedule.server" href="#nitric.resources.schedules.Schedule.server">server</a></code></li>
-<li><code><a title="nitric.resources.schedules.Schedule.start" href="#nitric.resources.schedules.Schedule.start">start</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.resources.schedules.ScheduleServer" href="#nitric.resources.schedules.ScheduleServer">ScheduleServer</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.resources.schedules.ScheduleServer.cron" href="#nitric.resources.schedules.ScheduleServer.cron">cron</a></code></li>
+<li><code><a title="nitric.resources.schedules.ScheduleServer.description" href="#nitric.resources.schedules.ScheduleServer.description">description</a></code></li>
+<li><code><a title="nitric.resources.schedules.ScheduleServer.every" href="#nitric.resources.schedules.ScheduleServer.every">every</a></code></li>
+<li><code><a title="nitric.resources.schedules.ScheduleServer.handler" href="#nitric.resources.schedules.ScheduleServer.handler">handler</a></code></li>
+<li><code><a title="nitric.resources.schedules.ScheduleServer.start" href="#nitric.resources.schedules.ScheduleServer.start">start</a></code></li>
 </ul>
 </li>
 </ul>

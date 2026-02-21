@@ -47,13 +47,16 @@
 #
 &#34;&#34;&#34;Nitric Python SDK API Documentation. See: https://nitric.io/docs?lang=python for full framework documentation.&#34;&#34;&#34;
 
-from nitric.resources.apis import Api, api, MethodOptions, ApiOptions, ApiDetails, JwtSecurityDefinition
-from nitric.resources.buckets import Bucket, bucket
-from nitric.resources.collections import Collection, collection
-from nitric.resources.queues import Queue, queue
-from nitric.resources.schedules import Schedule, schedule
+from nitric.resources.apis import Api, api, ApiOptions, ApiDetails, JwtSecurityDefinition, oidc_rule
+from nitric.resources.buckets import Bucket, bucket, BucketNotificationContext, FileNotificationContext
+from nitric.resources.kv import KeyValueStoreRef, kv
+from nitric.resources.schedules import ScheduleServer, schedule
 from nitric.resources.secrets import Secret, secret
 from nitric.resources.topics import Topic, topic
+from nitric.resources.websockets import Websocket, websocket
+from nitric.resources.queues import Queue, queue
+from nitric.resources.sql import Sql, sql
+from nitric.resources.job import job, Job
 
 __all__ = [
     &#34;api&#34;,
@@ -61,19 +64,27 @@ __all__ = [
     &#34;ApiOptions&#34;,
     &#34;ApiDetails&#34;,
     &#34;JwtSecurityDefinition&#34;,
-    &#34;MethodOptions&#34;,
     &#34;bucket&#34;,
     &#34;Bucket&#34;,
-    &#34;collection&#34;,
-    &#34;Collection&#34;,
+    &#34;BucketNotificationContext&#34;,
+    &#34;FileNotificationContext&#34;,
+    &#34;kv&#34;,
+    &#34;KeyValueStoreRef&#34;,
+    &#34;job&#34;,
+    &#34;Job&#34;,
+    &#34;oidc_rule&#34;,
     &#34;queue&#34;,
     &#34;Queue&#34;,
-    &#34;Schedule&#34;,
+    &#34;ScheduleServer&#34;,
     &#34;schedule&#34;,
     &#34;secret&#34;,
     &#34;Secret&#34;,
+    &#34;sql&#34;,
+    &#34;Sql&#34;,
     &#34;topic&#34;,
     &#34;Topic&#34;,
+    &#34;websocket&#34;,
+    &#34;Websocket&#34;,
 ]</code></pre>
 </details>
 </section>
@@ -84,19 +95,15 @@ __all__ = [
 <dd>
 <div class="desc"></div>
 </dd>
-<dt><code class="name"><a title="nitric.resources.base" href="base.html">nitric.resources.base</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
 <dt><code class="name"><a title="nitric.resources.buckets" href="buckets.html">nitric.resources.buckets</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt><code class="name"><a title="nitric.resources.collections" href="collections.html">nitric.resources.collections</a></code></dt>
+<dt><code class="name"><a title="nitric.resources.queues" href="queues.html">nitric.resources.queues</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt><code class="name"><a title="nitric.resources.queues" href="queues.html">nitric.resources.queues</a></code></dt>
+<dt><code class="name"><a title="nitric.resources.resource" href="resource.html">nitric.resources.resource</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -108,7 +115,15 @@ __all__ = [
 <dd>
 <div class="desc"></div>
 </dd>
+<dt><code class="name"><a title="nitric.resources.spark" href="spark.html">nitric.resources.spark</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt><code class="name"><a title="nitric.resources.topics" href="topics.html">nitric.resources.topics</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt><code class="name"><a title="nitric.resources.websockets" href="websockets.html">nitric.resources.websockets</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -120,7 +135,7 @@ __all__ = [
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="nitric.resources.api"><code class="name flex">
-<span>def <span class="ident">api</span></span>(<span>name: str, opts: <a title="nitric.resources.ApiOptions" href="#nitric.resources.ApiOptions">ApiOptions</a> = None) ‑> <a title="nitric.resources.apis.Api" href="apis.html#nitric.resources.apis.Api">Api</a></span>
+<span>def <span class="ident">api</span></span>(<span>name: str, opts: Optional[<a title="nitric.resources.ApiOptions" href="#nitric.resources.ApiOptions">ApiOptions</a>] = None) ‑> <a title="nitric.resources.apis.Api" href="apis.html#nitric.resources.apis.Api">Api</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Create a new API resource.</p></div>
@@ -128,9 +143,9 @@ __all__ = [
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def api(name: str, opts: ApiOptions = None) -&gt; Api:
+<pre><code class="python">def api(name: str, opts: Optional[ApiOptions] = None) -&gt; Api:
     &#34;&#34;&#34;Create a new API resource.&#34;&#34;&#34;
-    return Nitric._create_resource(Api, name, opts=opts)</code></pre>
+    return Nitric._create_resource(Api, name, opts=opts)  # type: ignore pylint: disable=protected-access</code></pre>
 </details>
 </dd>
 <dt id="nitric.resources.bucket"><code class="name flex">
@@ -152,23 +167,57 @@ __all__ = [
     return Nitric._create_resource(Bucket, name)</code></pre>
 </details>
 </dd>
-<dt id="nitric.resources.collection"><code class="name flex">
-<span>def <span class="ident">collection</span></span>(<span>name: str) ‑> <a title="nitric.resources.collections.Collection" href="collections.html#nitric.resources.collections.Collection">Collection</a></span>
+<dt id="nitric.resources.job"><code class="name flex">
+<span>def <span class="ident">job</span></span>(<span>name: str) ‑> nitric.resources.job.Job</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Create and register a collection.</p>
-<p>If a collection has already been registered with the same name, the original reference will be reused.</p></div>
+<div class="desc"><p>Create and register a job.</p>
+<p>If a job has already been registered with the same name, the original reference will be reused.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def collection(name: str) -&gt; Collection:
+<pre><code class="python">def job(name: str) -&gt; Job:
     &#34;&#34;&#34;
-    Create and register a collection.
+    Create and register a job.
 
-    If a collection has already been registered with the same name, the original reference will be reused.
+    If a job has already been registered with the same name, the original reference will be reused.
     &#34;&#34;&#34;
-    return Nitric._create_resource(Collection, name)</code></pre>
+    # type ignored because the create call are treated as protected.
+    return Nitric._create_resource(Job, name)  # type: ignore pylint: disable=protected-access</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.kv"><code class="name flex">
+<span>def <span class="ident">kv</span></span>(<span>name: str) ‑> nitric.resources.kv.KeyValueStore</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create and register a key value store.</p>
+<p>If a key value store has already been registered with the same name, the original reference will be reused.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def kv(name: str) -&gt; KeyValueStore:
+    &#34;&#34;&#34;
+    Create and register a key value store.
+
+    If a key value store has already been registered with the same name, the original reference will be reused.
+    &#34;&#34;&#34;
+    return Nitric._create_resource(KeyValueStore, name)  # type: ignore pylint: disable=protected-access</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.oidc_rule"><code class="name flex">
+<span>def <span class="ident">oidc_rule</span></span>(<span>name: str, issuer: str, audiences: List[str]) ‑> Callable[[List[str]], <a title="nitric.resources.apis.ScopedOidcOptions" href="apis.html#nitric.resources.apis.ScopedOidcOptions">ScopedOidcOptions</a>]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a function that returns scoped OIDC security definitions.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def oidc_rule(name: str, issuer: str, audiences: List[str]) -&gt; Callable[[List[str]], ScopedOidcOptions]:
+    &#34;&#34;&#34;Create a function that returns scoped OIDC security definitions.&#34;&#34;&#34;
+    return lambda scopes: ScopedOidcOptions(name, issuer, audiences, scopes)</code></pre>
 </details>
 </dd>
 <dt id="nitric.resources.queue"><code class="name flex">
@@ -187,27 +236,21 @@ __all__ = [
 
     If a queue has already been registered with the same name, the original reference will be reused.
     &#34;&#34;&#34;
-    return Nitric._create_resource(Queue, name)</code></pre>
+    return Nitric._create_resource(Queue, name)  # type: ignore pylint: disable=protected-access</code></pre>
 </details>
 </dd>
 <dt id="nitric.resources.schedule"><code class="name flex">
-<span>def <span class="ident">schedule</span></span>(<span>description: str, every: str)</span>
+<span>def <span class="ident">schedule</span></span>(<span>description: str) ‑> <a title="nitric.resources.schedules.Schedule" href="schedules.html#nitric.resources.schedules.Schedule">Schedule</a></span>
 </code></dt>
 <dd>
-<div class="desc"><p>Return a schedule decorator.</p></div>
+<div class="desc"><p>Return a schedule.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def schedule(description: str, every: str):
-    &#34;&#34;&#34;Return a schedule decorator.&#34;&#34;&#34;
-
-    def decorator(func: EventMiddleware):
-        r = Schedule(description)
-        r.every(every, func)
-        return r
-
-    return decorator</code></pre>
+<pre><code class="python">def schedule(description: str) -&gt; Schedule:
+    &#34;&#34;&#34;Return a schedule.&#34;&#34;&#34;
+    return Schedule(description=description)</code></pre>
 </details>
 </dd>
 <dt id="nitric.resources.secret"><code class="name flex">
@@ -226,7 +269,26 @@ __all__ = [
 
     If a secret has already been registered with the same name, the original reference will be reused.
     &#34;&#34;&#34;
-    return Nitric._create_resource(Secret, name)</code></pre>
+    return Nitric._create_resource(Secret, name)  # type: ignore pylint: disable=protected-access</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.sql"><code class="name flex">
+<span>def <span class="ident">sql</span></span>(<span>name: str, migrations: Union[str, None] = None) ‑> nitric.resources.sql.Sql</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create and register a sql database.</p>
+<p>If a sql databse has already been registered with the same name, the original reference will be reused.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sql(name: str, migrations: Union[str, None] = None) -&gt; Sql:
+    &#34;&#34;&#34;
+    Create and register a sql database.
+
+    If a sql databse has already been registered with the same name, the original reference will be reused.
+    &#34;&#34;&#34;
+    return Nitric._create_resource(Sql, name, migrations)</code></pre>
 </details>
 </dd>
 <dt id="nitric.resources.topic"><code class="name flex">
@@ -245,7 +307,27 @@ __all__ = [
 
     If a topic has already been registered with the same name, the original reference will be reused.
     &#34;&#34;&#34;
-    return Nitric._create_resource(Topic, name)</code></pre>
+    # type ignored because the create call are treated as protected.
+    return Nitric._create_resource(Topic, name)  # type: ignore pylint: disable=protected-access</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.websocket"><code class="name flex">
+<span>def <span class="ident">websocket</span></span>(<span>name: str) ‑> <a title="nitric.resources.websockets.Websocket" href="websockets.html#nitric.resources.websockets.Websocket">Websocket</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create and registers a websocket.</p>
+<p>If a websocket has already been registered with the same name, the original reference will be reused.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def websocket(name: str) -&gt; Websocket:
+    &#34;&#34;&#34;
+    Create and registers a websocket.
+
+    If a websocket has already been registered with the same name, the original reference will be reused.
+    &#34;&#34;&#34;
+    return Nitric._create_resource(Websocket, name)  # type: ignore pylint: disable=protected-access</code></pre>
 </details>
 </dd>
 </dl>
@@ -255,7 +337,7 @@ __all__ = [
 <dl>
 <dt id="nitric.resources.Api"><code class="flex name class">
 <span>class <span class="ident">Api</span></span>
-<span>(</span><span>name: str, opts: <a title="nitric.resources.ApiOptions" href="#nitric.resources.ApiOptions">ApiOptions</a> = None)</span>
+<span>(</span><span>name: str, opts: Optional[<a title="nitric.resources.ApiOptions" href="#nitric.resources.ApiOptions">ApiOptions</a>] = None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>An HTTP API.</p>
@@ -272,51 +354,58 @@ __all__ = [
     path: str
     middleware: List[HttpMiddleware]
     routes: List[Route]
-    security_definitions: dict[str, SecurityDefinition]
-    security: dict[str, List[str]]
+    security: Optional[List[ScopedOidcOptions]]
+    _api_stub: ApiStub
 
-    def __init__(self, name: str, opts: ApiOptions = None):
+    def __init__(self, name: str, opts: Optional[ApiOptions] = None):
         &#34;&#34;&#34;Construct a new HTTP API.&#34;&#34;&#34;
-        super().__init__()
+        super().__init__(name)
+        self._api_stub = ApiStub(channel=self._channel)
         if opts is None:
             opts = ApiOptions()
 
-        self.name = name
-        self.middleware = opts.middleware if opts.middleware is not None else []
+        self.middleware = (
+            opts.middleware
+            if isinstance(opts.middleware, list)
+            else [opts.middleware] if opts.middleware is not None else []
+        )
         self.path = opts.path
         self.routes = []
-        self.security_definitions = opts.security_definitions
         self.security = opts.security
 
-    async def _register(self):
+    async def _register(self) -&gt; None:
         try:
             await self._resources_stub.declare(
                 resource_declare_request=ResourceDeclareRequest(
-                    resource=_to_resource(self),
+                    id=_to_resource_identifier(self),
                     api=ApiResource(
-                        security_definitions=_security_definition_to_grpc_declaration(self.security_definitions),
                         security=_security_to_grpc_declaration(self.security),
                     ),
                 )
             )
-        except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err)
 
-    def _route(self, match: str, opts: RouteOptions = None) -&gt; Route:
+            # Attach security rules for this api
+            for security_rule in self.security if self.security else []:
+                _attach_oidc(api_name=self.name, options=security_rule)
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+    def _route(self, match: str, opts: Optional[RouteOptions] = None) -&gt; Route:
         &#34;&#34;&#34;Define an HTTP route to be handled by this API.&#34;&#34;&#34;
         if opts is None:
             opts = RouteOptions()
+
+        if self.middleware is not None:
+            opts.middleware = (self.middleware + opts.middleware) if opts.middleware is not None else self.middleware
 
         r = Route(self, match, opts)
         self.routes.append(r)
         return r
 
-    def all(self, match: str, opts: MethodOptions = None):
+    def all(self, match: str, opts: Optional[MethodOptions] = None) -&gt; Callable[[HttpHandler], None]:
         &#34;&#34;&#34;Define an HTTP route which will respond to HTTP GET requests.&#34;&#34;&#34;
-        if opts is None:
-            opts = MethodOptions()
 
-        def decorator(function: HttpMiddleware):
+        def decorator(function: HttpHandler) -&gt; None:
             r = self._route(match)
             r.method(
                 [
@@ -328,83 +417,85 @@ __all__ = [
                     HttpMethod.OPTIONS,
                 ],
                 function,
-                opts=opts,
+                opts=opts if opts is not None else MethodOptions(security=None),
             )
 
         return decorator
 
-    def methods(self, methods: List[HttpMethod], match: str, opts: MethodOptions = None):
+    def methods(
+        self, methods: List[HttpMethod], match: str, opts: Optional[MethodOptions] = None
+    ) -&gt; Callable[[HttpHandler], None]:
         &#34;&#34;&#34;Define an HTTP route which will respond to specific HTTP requests defined by a list of verbs.&#34;&#34;&#34;
         if opts is None:
             opts = MethodOptions()
 
-        def decorator(function: HttpMiddleware):
+        def decorator(function: HttpHandler) -&gt; None:
             r = self._route(match)
             r.method(methods, function, opts=opts)
 
         return decorator
 
-    def get(self, match: str, opts: MethodOptions = None):
+    def get(self, match: str, opts: Optional[MethodOptions] = None) -&gt; Callable[[HttpHandler], None]:
         &#34;&#34;&#34;Define an HTTP route which will respond to HTTP GET requests.&#34;&#34;&#34;
         if opts is None:
             opts = MethodOptions()
 
-        def decorator(function: HttpMiddleware):
+        def decorator(function: HttpHandler) -&gt; None:
             r = self._route(match)
             r.get(function, opts=opts)
 
         return decorator
 
-    def post(self, match: str, opts: MethodOptions = None):
+    def post(self, match: str, opts: Optional[MethodOptions] = None) -&gt; Callable[[HttpHandler], None]:
         &#34;&#34;&#34;Define an HTTP route which will respond to HTTP POST requests.&#34;&#34;&#34;
         if opts is None:
             opts = MethodOptions()
 
-        def decorator(function: HttpMiddleware):
+        def decorator(function: HttpHandler) -&gt; None:
             r = self._route(match)
             r.post(function, opts=opts)
 
         return decorator
 
-    def delete(self, match: str, opts: MethodOptions = None):
+    def delete(self, match: str, opts: Optional[MethodOptions] = None) -&gt; Callable[[HttpHandler], None]:
         &#34;&#34;&#34;Define an HTTP route which will respond to HTTP DELETE requests.&#34;&#34;&#34;
         if opts is None:
             opts = MethodOptions()
 
-        def decorator(function: HttpMiddleware):
+        def decorator(function: HttpHandler) -&gt; None:
             r = self._route(match)
             r.delete(function, opts=opts)
 
         return decorator
 
-    def options(self, match: str, opts: MethodOptions = None):
+    def options(self, match: str, opts: Optional[MethodOptions] = None) -&gt; Callable[[HttpHandler], None]:
         &#34;&#34;&#34;Define an HTTP route which will respond to HTTP OPTIONS requests.&#34;&#34;&#34;
         if opts is None:
             opts = MethodOptions()
 
-        def decorator(function: HttpMiddleware):
+        def decorator(function: HttpHandler) -&gt; None:
             r = self._route(match)
             r.options(function, opts=opts)
 
         return decorator
 
-    def patch(self, match: str, opts: MethodOptions = None):
+    def patch(self, match: str, opts: Optional[MethodOptions] = None) -&gt; Callable[[HttpHandler], None]:
         &#34;&#34;&#34;Define an HTTP route which will respond to HTTP PATCH requests.&#34;&#34;&#34;
         if opts is None:
             opts = MethodOptions()
 
-        def decorator(function: HttpMiddleware):
+        def decorator(function: HttpHandler) -&gt; None:
             r = self._route(match)
             r.patch(function, opts=opts)
 
         return decorator
 
-    def put(self, match: str, opts: MethodOptions = None):
+    def put(self, match: str, opts: Optional[MethodOptions] = None) -&gt; Callable[[HttpHandler], None]:
         &#34;&#34;&#34;Define an HTTP route which will respond to HTTP PUT requests.&#34;&#34;&#34;
         if opts is None:
             opts = MethodOptions()
 
-        def decorator(function: HttpMiddleware):
+        def decorator(function: HttpHandler) -&gt; None:
             r = self._route(match)
             r.put(function, opts=opts)
 
@@ -413,14 +504,14 @@ __all__ = [
     async def _details(self) -&gt; ApiDetails:
         &#34;&#34;&#34;Get the API deployment details.&#34;&#34;&#34;
         try:
-            res = await self._resources_stub.details(
-                resource_details_request=ResourceDetailsRequest(
-                    resource=_to_resource(self),
+            res = await self._api_stub.api_details(
+                api_details_request=ApiDetailsRequest(
+                    api_name=self.name,
                 )
             )
-            return ApiDetails(res.id, res.provider, res.service, res.api.url)
+            return ApiDetails(res.url)
         except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err)
+            raise exception_from_grpc_error(grpc_err) from grpc_err
 
     async def url(self) -&gt; str:
         &#34;&#34;&#34;Get the APIs live URL.&#34;&#34;&#34;
@@ -429,7 +520,7 @@ __all__ = [
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="nitric.resources.base.BaseResource" href="base.html#nitric.resources.base.BaseResource">BaseResource</a></li>
+<li><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></li>
 <li>abc.ABC</li>
 </ul>
 <h3>Class variables</h3>
@@ -438,7 +529,7 @@ __all__ = [
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="nitric.resources.Api.middleware"><code class="name">var <span class="ident">middleware</span> : List[Callable[[<a title="nitric.faas.HttpContext" href="../faas.html#nitric.faas.HttpContext">HttpContext</a>, Coroutine[Any, Any, Optional[<a title="nitric.faas.HttpContext" href="../faas.html#nitric.faas.HttpContext">HttpContext</a>]]], Coroutine[Any, Any, Optional[<a title="nitric.faas.HttpContext" href="../faas.html#nitric.faas.HttpContext">HttpContext</a>]]]]</code></dt>
+<dt id="nitric.resources.Api.middleware"><code class="name">var <span class="ident">middleware</span> : List[<a title="nitric.context.Middleware" href="../context.html#nitric.context.Middleware">Middleware</a>[<a title="nitric.context.HttpContext" href="../context.html#nitric.context.HttpContext">HttpContext</a>]]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -454,11 +545,7 @@ __all__ = [
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="nitric.resources.Api.security"><code class="name">var <span class="ident">security</span> : dict[str, typing.List[str]]</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="nitric.resources.Api.security_definitions"><code class="name">var <span class="ident">security_definitions</span> : dict[str, <a title="nitric.resources.apis.JwtSecurityDefinition" href="apis.html#nitric.resources.apis.JwtSecurityDefinition">JwtSecurityDefinition</a>]</code></dt>
+<dt id="nitric.resources.Api.security"><code class="name">var <span class="ident">security</span> : Optional[List[<a title="nitric.resources.apis.ScopedOidcOptions" href="apis.html#nitric.resources.apis.ScopedOidcOptions">ScopedOidcOptions</a>]]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -466,7 +553,7 @@ __all__ = [
 <h3>Methods</h3>
 <dl>
 <dt id="nitric.resources.Api.all"><code class="name flex">
-<span>def <span class="ident">all</span></span>(<span>self, match: str, opts: <a title="nitric.resources.MethodOptions" href="#nitric.resources.MethodOptions">MethodOptions</a> = None)</span>
+<span>def <span class="ident">all</span></span>(<span>self, match: str, opts: Optional[MethodOptions] = None) ‑> Callable[[<a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.context.HttpContext" href="../context.html#nitric.context.HttpContext">HttpContext</a>]], NoneType]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Define an HTTP route which will respond to HTTP GET requests.</p></div>
@@ -474,12 +561,10 @@ __all__ = [
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def all(self, match: str, opts: MethodOptions = None):
+<pre><code class="python">def all(self, match: str, opts: Optional[MethodOptions] = None) -&gt; Callable[[HttpHandler], None]:
     &#34;&#34;&#34;Define an HTTP route which will respond to HTTP GET requests.&#34;&#34;&#34;
-    if opts is None:
-        opts = MethodOptions()
 
-    def decorator(function: HttpMiddleware):
+    def decorator(function: HttpHandler) -&gt; None:
         r = self._route(match)
         r.method(
             [
@@ -491,14 +576,14 @@ __all__ = [
                 HttpMethod.OPTIONS,
             ],
             function,
-            opts=opts,
+            opts=opts if opts is not None else MethodOptions(security=None),
         )
 
     return decorator</code></pre>
 </details>
 </dd>
 <dt id="nitric.resources.Api.delete"><code class="name flex">
-<span>def <span class="ident">delete</span></span>(<span>self, match: str, opts: <a title="nitric.resources.MethodOptions" href="#nitric.resources.MethodOptions">MethodOptions</a> = None)</span>
+<span>def <span class="ident">delete</span></span>(<span>self, match: str, opts: Optional[MethodOptions] = None) ‑> Callable[[<a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.context.HttpContext" href="../context.html#nitric.context.HttpContext">HttpContext</a>]], NoneType]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Define an HTTP route which will respond to HTTP DELETE requests.</p></div>
@@ -506,12 +591,12 @@ __all__ = [
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def delete(self, match: str, opts: MethodOptions = None):
+<pre><code class="python">def delete(self, match: str, opts: Optional[MethodOptions] = None) -&gt; Callable[[HttpHandler], None]:
     &#34;&#34;&#34;Define an HTTP route which will respond to HTTP DELETE requests.&#34;&#34;&#34;
     if opts is None:
         opts = MethodOptions()
 
-    def decorator(function: HttpMiddleware):
+    def decorator(function: HttpHandler) -&gt; None:
         r = self._route(match)
         r.delete(function, opts=opts)
 
@@ -519,7 +604,7 @@ __all__ = [
 </details>
 </dd>
 <dt id="nitric.resources.Api.get"><code class="name flex">
-<span>def <span class="ident">get</span></span>(<span>self, match: str, opts: <a title="nitric.resources.MethodOptions" href="#nitric.resources.MethodOptions">MethodOptions</a> = None)</span>
+<span>def <span class="ident">get</span></span>(<span>self, match: str, opts: Optional[MethodOptions] = None) ‑> Callable[[<a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.context.HttpContext" href="../context.html#nitric.context.HttpContext">HttpContext</a>]], NoneType]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Define an HTTP route which will respond to HTTP GET requests.</p></div>
@@ -527,12 +612,12 @@ __all__ = [
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get(self, match: str, opts: MethodOptions = None):
+<pre><code class="python">def get(self, match: str, opts: Optional[MethodOptions] = None) -&gt; Callable[[HttpHandler], None]:
     &#34;&#34;&#34;Define an HTTP route which will respond to HTTP GET requests.&#34;&#34;&#34;
     if opts is None:
         opts = MethodOptions()
 
-    def decorator(function: HttpMiddleware):
+    def decorator(function: HttpHandler) -&gt; None:
         r = self._route(match)
         r.get(function, opts=opts)
 
@@ -540,7 +625,7 @@ __all__ = [
 </details>
 </dd>
 <dt id="nitric.resources.Api.methods"><code class="name flex">
-<span>def <span class="ident">methods</span></span>(<span>self, methods: List[HttpMethod], match: str, opts: <a title="nitric.resources.MethodOptions" href="#nitric.resources.MethodOptions">MethodOptions</a> = None)</span>
+<span>def <span class="ident">methods</span></span>(<span>self, methods: List[HttpMethod], match: str, opts: Optional[MethodOptions] = None) ‑> Callable[[<a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.context.HttpContext" href="../context.html#nitric.context.HttpContext">HttpContext</a>]], NoneType]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Define an HTTP route which will respond to specific HTTP requests defined by a list of verbs.</p></div>
@@ -548,12 +633,14 @@ __all__ = [
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def methods(self, methods: List[HttpMethod], match: str, opts: MethodOptions = None):
+<pre><code class="python">def methods(
+    self, methods: List[HttpMethod], match: str, opts: Optional[MethodOptions] = None
+) -&gt; Callable[[HttpHandler], None]:
     &#34;&#34;&#34;Define an HTTP route which will respond to specific HTTP requests defined by a list of verbs.&#34;&#34;&#34;
     if opts is None:
         opts = MethodOptions()
 
-    def decorator(function: HttpMiddleware):
+    def decorator(function: HttpHandler) -&gt; None:
         r = self._route(match)
         r.method(methods, function, opts=opts)
 
@@ -561,7 +648,7 @@ __all__ = [
 </details>
 </dd>
 <dt id="nitric.resources.Api.options"><code class="name flex">
-<span>def <span class="ident">options</span></span>(<span>self, match: str, opts: <a title="nitric.resources.MethodOptions" href="#nitric.resources.MethodOptions">MethodOptions</a> = None)</span>
+<span>def <span class="ident">options</span></span>(<span>self, match: str, opts: Optional[MethodOptions] = None) ‑> Callable[[<a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.context.HttpContext" href="../context.html#nitric.context.HttpContext">HttpContext</a>]], NoneType]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Define an HTTP route which will respond to HTTP OPTIONS requests.</p></div>
@@ -569,12 +656,12 @@ __all__ = [
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def options(self, match: str, opts: MethodOptions = None):
+<pre><code class="python">def options(self, match: str, opts: Optional[MethodOptions] = None) -&gt; Callable[[HttpHandler], None]:
     &#34;&#34;&#34;Define an HTTP route which will respond to HTTP OPTIONS requests.&#34;&#34;&#34;
     if opts is None:
         opts = MethodOptions()
 
-    def decorator(function: HttpMiddleware):
+    def decorator(function: HttpHandler) -&gt; None:
         r = self._route(match)
         r.options(function, opts=opts)
 
@@ -582,7 +669,7 @@ __all__ = [
 </details>
 </dd>
 <dt id="nitric.resources.Api.patch"><code class="name flex">
-<span>def <span class="ident">patch</span></span>(<span>self, match: str, opts: <a title="nitric.resources.MethodOptions" href="#nitric.resources.MethodOptions">MethodOptions</a> = None)</span>
+<span>def <span class="ident">patch</span></span>(<span>self, match: str, opts: Optional[MethodOptions] = None) ‑> Callable[[<a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.context.HttpContext" href="../context.html#nitric.context.HttpContext">HttpContext</a>]], NoneType]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Define an HTTP route which will respond to HTTP PATCH requests.</p></div>
@@ -590,12 +677,12 @@ __all__ = [
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def patch(self, match: str, opts: MethodOptions = None):
+<pre><code class="python">def patch(self, match: str, opts: Optional[MethodOptions] = None) -&gt; Callable[[HttpHandler], None]:
     &#34;&#34;&#34;Define an HTTP route which will respond to HTTP PATCH requests.&#34;&#34;&#34;
     if opts is None:
         opts = MethodOptions()
 
-    def decorator(function: HttpMiddleware):
+    def decorator(function: HttpHandler) -&gt; None:
         r = self._route(match)
         r.patch(function, opts=opts)
 
@@ -603,7 +690,7 @@ __all__ = [
 </details>
 </dd>
 <dt id="nitric.resources.Api.post"><code class="name flex">
-<span>def <span class="ident">post</span></span>(<span>self, match: str, opts: <a title="nitric.resources.MethodOptions" href="#nitric.resources.MethodOptions">MethodOptions</a> = None)</span>
+<span>def <span class="ident">post</span></span>(<span>self, match: str, opts: Optional[MethodOptions] = None) ‑> Callable[[<a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.context.HttpContext" href="../context.html#nitric.context.HttpContext">HttpContext</a>]], NoneType]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Define an HTTP route which will respond to HTTP POST requests.</p></div>
@@ -611,12 +698,12 @@ __all__ = [
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def post(self, match: str, opts: MethodOptions = None):
+<pre><code class="python">def post(self, match: str, opts: Optional[MethodOptions] = None) -&gt; Callable[[HttpHandler], None]:
     &#34;&#34;&#34;Define an HTTP route which will respond to HTTP POST requests.&#34;&#34;&#34;
     if opts is None:
         opts = MethodOptions()
 
-    def decorator(function: HttpMiddleware):
+    def decorator(function: HttpHandler) -&gt; None:
         r = self._route(match)
         r.post(function, opts=opts)
 
@@ -624,7 +711,7 @@ __all__ = [
 </details>
 </dd>
 <dt id="nitric.resources.Api.put"><code class="name flex">
-<span>def <span class="ident">put</span></span>(<span>self, match: str, opts: <a title="nitric.resources.MethodOptions" href="#nitric.resources.MethodOptions">MethodOptions</a> = None)</span>
+<span>def <span class="ident">put</span></span>(<span>self, match: str, opts: Optional[MethodOptions] = None) ‑> Callable[[<a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.context.HttpContext" href="../context.html#nitric.context.HttpContext">HttpContext</a>]], NoneType]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Define an HTTP route which will respond to HTTP PUT requests.</p></div>
@@ -632,12 +719,12 @@ __all__ = [
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def put(self, match: str, opts: MethodOptions = None):
+<pre><code class="python">def put(self, match: str, opts: Optional[MethodOptions] = None) -&gt; Callable[[HttpHandler], None]:
     &#34;&#34;&#34;Define an HTTP route which will respond to HTTP PUT requests.&#34;&#34;&#34;
     if opts is None:
         opts = MethodOptions()
 
-    def decorator(function: HttpMiddleware):
+    def decorator(function: HttpHandler) -&gt; None:
         r = self._route(match)
         r.put(function, opts=opts)
 
@@ -662,50 +749,36 @@ __all__ = [
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="nitric.resources.base.BaseResource" href="base.html#nitric.resources.base.BaseResource">BaseResource</a></b></code>:
+<li><code><b><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></b></code>:
 <ul class="hlist">
-<li><code><a title="nitric.resources.base.BaseResource.make" href="base.html#nitric.resources.base.BaseResource.make">make</a></code></li>
+<li><code><a title="nitric.resources.resource.Resource.make" href="resource.html#nitric.resources.resource.Resource.make">make</a></code></li>
 </ul>
 </li>
 </ul>
 </dd>
 <dt id="nitric.resources.ApiDetails"><code class="flex name class">
 <span>class <span class="ident">ApiDetails</span></span>
-<span>(</span><span>id: str, provider: str, service: str, url: str)</span>
+<span>(</span><span>url: str)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Represents the APIs deployment details.</p></div>
+<div class="desc"><p>Represents a deployed API's details.</p>
+<p>url (str): the url of the API</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@dataclass
 class ApiDetails:
-    &#34;&#34;&#34;Represents the APIs deployment details.&#34;&#34;&#34;
+    &#34;&#34;&#34;
+    Represents a deployed API&#39;s details.
 
-    # the identifier of the resource
-    id: str
-    # The provider this resource is deployed with (e.g. aws)
-    provider: str
-    # The service this resource is deployed on (e.g. ApiGateway)
-    service: str
-    # The url of the API
+    url (str): the url of the API
+    &#34;&#34;&#34;
+
     url: str</code></pre>
 </details>
 <h3>Class variables</h3>
 <dl>
-<dt id="nitric.resources.ApiDetails.id"><code class="name">var <span class="ident">id</span> : str</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="nitric.resources.ApiDetails.provider"><code class="name">var <span class="ident">provider</span> : str</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="nitric.resources.ApiDetails.service"><code class="name">var <span class="ident">service</span> : str</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
 <dt id="nitric.resources.ApiDetails.url"><code class="name">var <span class="ident">url</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
@@ -714,7 +787,7 @@ class ApiDetails:
 </dd>
 <dt id="nitric.resources.ApiOptions"><code class="flex name class">
 <span>class <span class="ident">ApiOptions</span></span>
-<span>(</span><span>path: str = '', middleware: List[Middleware] = [], security_definitions: dict[str, SecurityDefinition] = {}, security: dict[str, List[str]] = {})</span>
+<span>(</span><span>path: str = '', middleware: Optional[Union[HttpMiddleware, List[HttpMiddleware]]] = None, security: Optional[List[ScopedOidcOptions]] = None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Represents options when creating an API, such as middleware to be applied to all HTTP request to the API.</p>
@@ -727,26 +800,27 @@ class ApiDetails:
     &#34;&#34;&#34;Represents options when creating an API, such as middleware to be applied to all HTTP request to the API.&#34;&#34;&#34;
 
     path: str
-    middleware: Union[HttpMiddleware, List[HttpMiddleware]]
-    security_definitions: dict[str, SecurityDefinition]
-    security: dict[str, List[str]]
+    middleware: Optional[Union[HttpMiddleware, List[HttpMiddleware]]]
+    security: Optional[List[ScopedOidcOptions]]
 
     def __init__(
         self,
         path: str = &#34;&#34;,
-        middleware: List[Middleware] = [],
-        security_definitions: dict[str, SecurityDefinition] = {},
-        security: dict[str, List[str]] = {},
+        middleware: Optional[Union[HttpMiddleware, List[HttpMiddleware]]] = None,
+        security: Optional[List[ScopedOidcOptions]] = None,
     ):
         &#34;&#34;&#34;Construct a new API options object.&#34;&#34;&#34;
+        if middleware is None:
+            middleware = []
+        if security is None:
+            security = []
         self.middleware = middleware
-        self.security_definitions = security_definitions
         self.security = security
         self.path = path</code></pre>
 </details>
 <h3>Class variables</h3>
 <dl>
-<dt id="nitric.resources.ApiOptions.middleware"><code class="name">var <span class="ident">middleware</span> : Union[Callable[[<a title="nitric.faas.HttpContext" href="../faas.html#nitric.faas.HttpContext">HttpContext</a>, Coroutine[Any, Any, Optional[<a title="nitric.faas.HttpContext" href="../faas.html#nitric.faas.HttpContext">HttpContext</a>]]], Coroutine[Any, Any, Optional[<a title="nitric.faas.HttpContext" href="../faas.html#nitric.faas.HttpContext">HttpContext</a>]]], List[Callable[[<a title="nitric.faas.HttpContext" href="../faas.html#nitric.faas.HttpContext">HttpContext</a>, Coroutine[Any, Any, Optional[<a title="nitric.faas.HttpContext" href="../faas.html#nitric.faas.HttpContext">HttpContext</a>]]], Coroutine[Any, Any, Optional[<a title="nitric.faas.HttpContext" href="../faas.html#nitric.faas.HttpContext">HttpContext</a>]]]]]</code></dt>
+<dt id="nitric.resources.ApiOptions.middleware"><code class="name">var <span class="ident">middleware</span> : Union[<a title="nitric.context.Middleware" href="../context.html#nitric.context.Middleware">Middleware</a>[<a title="nitric.context.HttpContext" href="../context.html#nitric.context.HttpContext">HttpContext</a>], List[<a title="nitric.context.Middleware" href="../context.html#nitric.context.Middleware">Middleware</a>[<a title="nitric.context.HttpContext" href="../context.html#nitric.context.HttpContext">HttpContext</a>]], NoneType]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -754,11 +828,7 @@ class ApiDetails:
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="nitric.resources.ApiOptions.security"><code class="name">var <span class="ident">security</span> : dict[str, typing.List[str]]</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="nitric.resources.ApiOptions.security_definitions"><code class="name">var <span class="ident">security_definitions</span> : dict[str, <a title="nitric.resources.apis.JwtSecurityDefinition" href="apis.html#nitric.resources.apis.JwtSecurityDefinition">JwtSecurityDefinition</a>]</code></dt>
+<dt id="nitric.resources.ApiOptions.security"><code class="name">var <span class="ident">security</span> : Optional[List[<a title="nitric.resources.apis.ScopedOidcOptions" href="apis.html#nitric.resources.apis.ScopedOidcOptions">ScopedOidcOptions</a>]]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -770,7 +840,7 @@ class ApiDetails:
 </code></dt>
 <dd>
 <div class="desc"><p>A bucket resource, used for storage and retrieval of blob/binary data.</p>
-<p>Create a bucket with the name provided or references it if it already exists.</p></div>
+<p>Construct a new resource.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -782,68 +852,63 @@ class ApiDetails:
     actions: List[Action]
     _server: FunctionServer
 
-    def __init__(self, name: str):
-        &#34;&#34;&#34;Create a bucket with the name provided or references it if it already exists.&#34;&#34;&#34;
-        super().__init__()
-        self.name = name
-
-    async def _register(self):
+    async def _register(self) -&gt; None:
         try:
             await self._resources_stub.declare(
-                resource_declare_request=ResourceDeclareRequest(resource=self._to_resource())
+                resource_declare_request=ResourceDeclareRequest(id=self._to_resource_id())
             )
         except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err)
+            raise exception_from_grpc_error(grpc_err) from grpc_err
 
-    def _perms_to_actions(self, *args: List[Union[BucketPermission, str]]) -&gt; List[Action]:
-        permission_actions_map = {
-            BucketPermission.reading: [Action.BucketFileGet, Action.BucketFileList],
-            BucketPermission.writing: [Action.BucketFilePut],
-            BucketPermission.deleting: [Action.BucketFileDelete],
+    def _perms_to_actions(self, *args: BucketPermission) -&gt; List[Action]:
+        permission_actions_map: dict[BucketPermission, List[Action]] = {
+            &#34;read&#34;: [Action.BucketFileGet, Action.BucketFileList],
+            &#34;write&#34;: [Action.BucketFilePut],
+            &#34;delete&#34;: [Action.BucketFileDelete],
         }
-        # convert strings to the enum value where needed
-        perms = [
-            permission if isinstance(permission, BucketPermission) else BucketPermission[permission.lower()]
-            for permission in args
-        ]
-        return [action for perm in perms for action in permission_actions_map[perm]]
 
-    def _to_resource(self) -&gt; Resource:
-        return Resource(name=self.name, type=ResourceType.Bucket)
+        return [action for perm in args for action in permission_actions_map[perm]]
 
-    def allow(self, *args: Union[BucketPermission, str]) -&gt; BucketRef:
+    def _to_resource_id(self) -&gt; ResourceIdentifier:
+        return ResourceIdentifier(name=self.name, type=ResourceType.Bucket)
+
+    def allow(
+        self,
+        perm: Union[LegacyBucketPermission, BucketPermission],
+        *args: Union[LegacyBucketPermission, BucketPermission],
+    ) -&gt; BucketRef:
         &#34;&#34;&#34;Request the required permissions for this resource.&#34;&#34;&#34;
-        self._register_policy(*args)
+        all_perms: List[BucketPermission] = [check_permission(perm)] + [check_permission(p) for p in args]
 
-        return Storage().bucket(self.name)
+        str_args = [str(permission) for permission in all_perms]
+        self._register_policy(*str_args)
 
-    def on(self, notification_type: str, notification_prefix_filter: str):
+        return BucketRef(self.name)
+
+    def on(
+        self, notification_type: str, notification_prefix_filter: str
+    ) -&gt; Callable[[BucketNotificationHandler], None]:
         &#34;&#34;&#34;Create and return a bucket notification decorator for this bucket.&#34;&#34;&#34;
-        print(&#34;this has been called&#34;)
 
-        def decorator(func: BucketNotificationMiddleware):
-            print(&#34;this has been called&#34;)
-            self._server = FunctionServer(
-                BucketNotificationWorkerOptions(
-                    bucket_name=self.name,
-                    notification_type=notification_type,
-                    notification_prefix_filter=notification_prefix_filter,
-                )
+        def decorator(func: BucketNotificationHandler) -&gt; None:
+            Listener(
+                bucket_name=self.name,
+                notification_type=notification_type,
+                notification_prefix_filter=notification_prefix_filter,
+                handler=func,
             )
-            self._server.bucket_notification(func)
-            return Nitric._register_worker(self._server)
 
         return decorator</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="nitric.resources.base.SecureResource" href="base.html#nitric.resources.base.SecureResource">SecureResource</a></li>
-<li><a title="nitric.resources.base.BaseResource" href="base.html#nitric.resources.base.BaseResource">BaseResource</a></li>
+<li><a title="nitric.resources.resource.SecureResource" href="resource.html#nitric.resources.resource.SecureResource">SecureResource</a></li>
+<li><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></li>
 <li>abc.ABC</li>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="nitric.resources.Bucket.actions"><code class="name">var <span class="ident">actions</span> : List[<a title="nitric.proto.nitric.resource.v1.Action" href="../proto/nitric/resource/v1/index.html#nitric.proto.nitric.resource.v1.Action">Action</a>]</code></dt>
+<dt id="nitric.resources.Bucket.actions"><code class="name">var <span class="ident">actions</span> : List[<a title="nitric.proto.resources.v1.Action" href="../proto/resources/v1/index.html#nitric.proto.resources.v1.Action">Action</a>]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -855,7 +920,7 @@ class ApiDetails:
 <h3>Methods</h3>
 <dl>
 <dt id="nitric.resources.Bucket.allow"><code class="name flex">
-<span>def <span class="ident">allow</span></span>(<span>self, *args: Union[BucketPermission, str]) ‑> <a title="nitric.api.storage.BucketRef" href="../api/storage.html#nitric.api.storage.BucketRef">BucketRef</a></span>
+<span>def <span class="ident">allow</span></span>(<span>self, perm: Union[LegacyBucketPermission, BucketPermission], *args: Union[LegacyBucketPermission, BucketPermission]) ‑> <a title="nitric.resources.buckets.BucketRef" href="buckets.html#nitric.resources.buckets.BucketRef">BucketRef</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Request the required permissions for this resource.</p></div>
@@ -863,15 +928,22 @@ class ApiDetails:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def allow(self, *args: Union[BucketPermission, str]) -&gt; BucketRef:
+<pre><code class="python">def allow(
+    self,
+    perm: Union[LegacyBucketPermission, BucketPermission],
+    *args: Union[LegacyBucketPermission, BucketPermission],
+) -&gt; BucketRef:
     &#34;&#34;&#34;Request the required permissions for this resource.&#34;&#34;&#34;
-    self._register_policy(*args)
+    all_perms: List[BucketPermission] = [check_permission(perm)] + [check_permission(p) for p in args]
 
-    return Storage().bucket(self.name)</code></pre>
+    str_args = [str(permission) for permission in all_perms]
+    self._register_policy(*str_args)
+
+    return BucketRef(self.name)</code></pre>
 </details>
 </dd>
 <dt id="nitric.resources.Bucket.on"><code class="name flex">
-<span>def <span class="ident">on</span></span>(<span>self, notification_type: str, notification_prefix_filter: str)</span>
+<span>def <span class="ident">on</span></span>(<span>self, notification_type: str, notification_prefix_filter: str) ‑> Callable[[<a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.resources.buckets.BucketNotificationContext" href="buckets.html#nitric.resources.buckets.BucketNotificationContext">BucketNotificationContext</a>]], NoneType]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Create and return a bucket notification decorator for this bucket.</p></div>
@@ -879,21 +951,18 @@ class ApiDetails:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def on(self, notification_type: str, notification_prefix_filter: str):
+<pre><code class="python">def on(
+    self, notification_type: str, notification_prefix_filter: str
+) -&gt; Callable[[BucketNotificationHandler], None]:
     &#34;&#34;&#34;Create and return a bucket notification decorator for this bucket.&#34;&#34;&#34;
-    print(&#34;this has been called&#34;)
 
-    def decorator(func: BucketNotificationMiddleware):
-        print(&#34;this has been called&#34;)
-        self._server = FunctionServer(
-            BucketNotificationWorkerOptions(
-                bucket_name=self.name,
-                notification_type=notification_type,
-                notification_prefix_filter=notification_prefix_filter,
-            )
+    def decorator(func: BucketNotificationHandler) -&gt; None:
+        Listener(
+            bucket_name=self.name,
+            notification_type=notification_type,
+            notification_prefix_filter=notification_prefix_filter,
+            handler=func,
         )
-        self._server.bucket_notification(func)
-        return Nitric._register_worker(self._server)
 
     return decorator</code></pre>
 </details>
@@ -901,99 +970,170 @@ class ApiDetails:
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="nitric.resources.base.SecureResource" href="base.html#nitric.resources.base.SecureResource">SecureResource</a></b></code>:
+<li><code><b><a title="nitric.resources.resource.SecureResource" href="resource.html#nitric.resources.resource.SecureResource">SecureResource</a></b></code>:
 <ul class="hlist">
-<li><code><a title="nitric.resources.base.SecureResource.make" href="base.html#nitric.resources.base.BaseResource.make">make</a></code></li>
+<li><code><a title="nitric.resources.resource.SecureResource.make" href="resource.html#nitric.resources.resource.Resource.make">make</a></code></li>
 </ul>
 </li>
 </ul>
 </dd>
-<dt id="nitric.resources.Collection"><code class="flex name class">
-<span>class <span class="ident">Collection</span></span>
-<span>(</span><span>name: str)</span>
+<dt id="nitric.resources.BucketNotificationContext"><code class="flex name class">
+<span>class <span class="ident">BucketNotificationContext</span></span>
+<span>(</span><span>request: BucketNotifyRequest, response: Optional[BucketNotifyResponse] = None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>A document collection resource.</p>
-<p>Construct a new document collection.</p></div>
+<div class="desc"><p>Represents the full request/response context for a bucket notification trigger.</p>
+<p>Construct a new BucketNotificationContext.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Collection(SecureResource):
-    &#34;&#34;&#34;A document collection resource.&#34;&#34;&#34;
+<pre><code class="python">class BucketNotificationContext:
+    &#34;&#34;&#34;Represents the full request/response context for a bucket notification trigger.&#34;&#34;&#34;
 
-    def __init__(self, name: str):
-        &#34;&#34;&#34;Construct a new document collection.&#34;&#34;&#34;
-        super().__init__()
-        self.name = name
+    def __init__(self, request: BucketNotifyRequest, response: Optional[BucketNotifyResponse] = None):
+        &#34;&#34;&#34;Construct a new BucketNotificationContext.&#34;&#34;&#34;
+        self.req = request
+        self.res = response if response else BucketNotifyResponse()</code></pre>
+</details>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="nitric.resources.buckets.FileNotificationContext" href="buckets.html#nitric.resources.buckets.FileNotificationContext">FileNotificationContext</a></li>
+</ul>
+</dd>
+<dt id="nitric.resources.FileNotificationContext"><code class="flex name class">
+<span>class <span class="ident">FileNotificationContext</span></span>
+<span>(</span><span>request: FileNotifyRequest, response: Optional[BucketNotifyResponse] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents the full request/response context for a bucket notification trigger.</p>
+<p>Construct a new FileNotificationContext.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class FileNotificationContext(BucketNotificationContext):
+    &#34;&#34;&#34;Represents the full request/response context for a bucket notification trigger.&#34;&#34;&#34;
 
-    async def _register(self):
-        try:
-            await self._resources_stub.declare(
-                resource_declare_request=ResourceDeclareRequest(resource=self._to_resource())
+    def __init__(self, request: FileNotifyRequest, response: Optional[BucketNotifyResponse] = None):
+        &#34;&#34;&#34;Construct a new FileNotificationContext.&#34;&#34;&#34;
+        super().__init__(request=request, response=response)
+        self.req = request
+
+    @staticmethod
+    def _from_client_message_with_bucket(msg: BlobEventRequest, bucket_ref) -&gt; FileNotificationContext:
+        &#34;&#34;&#34;Construct a new FileNotificationTrigger from a Bucket Notification trigger from the Nitric Membrane.&#34;&#34;&#34;
+        return FileNotificationContext(
+            request=FileNotifyRequest(
+                bucket_name=msg.bucket_name,
+                key=msg.blob_event.key,
+                bucket_ref=bucket_ref,
+                notification_type=msg.blob_event.type,
             )
-        except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err)
-
-    def _to_resource(self) -&gt; Resource:
-        return Resource(name=self.name, type=ResourceType.Collection)
-
-    def _perms_to_actions(self, *args: Union[CollectionPermission, str]) -&gt; List[Action]:
-        permission_actions_map = {
-            CollectionPermission.reading: [
-                Action.CollectionDocumentRead,
-                Action.CollectionQuery,
-                Action.CollectionList,
-            ],
-            CollectionPermission.writing: [Action.CollectionDocumentWrite, Action.CollectionList],
-            CollectionPermission.deleting: [Action.CollectionDocumentDelete, Action.CollectionList],
-        }
-        # convert strings to the enum value where needed
-        perms = [
-            permission if isinstance(permission, CollectionPermission) else CollectionPermission[permission.lower()]
-            for permission in args
-        ]
-
-        return [action for perm in perms for action in permission_actions_map[perm]]
-
-    def allow(self, *args: Union[CollectionPermission, str]) -&gt; CollectionRef:
-        &#34;&#34;&#34;Request the required permissions for this collection.&#34;&#34;&#34;
-        # Ensure registration of the resource is complete before requesting permissions.
-        self._register_policy(*args)
-
-        return Documents().collection(self.name)</code></pre>
+        )</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="nitric.resources.base.SecureResource" href="base.html#nitric.resources.base.SecureResource">SecureResource</a></li>
-<li><a title="nitric.resources.base.BaseResource" href="base.html#nitric.resources.base.BaseResource">BaseResource</a></li>
-<li>abc.ABC</li>
+<li><a title="nitric.resources.buckets.BucketNotificationContext" href="buckets.html#nitric.resources.buckets.BucketNotificationContext">BucketNotificationContext</a></li>
 </ul>
-<h3>Methods</h3>
-<dl>
-<dt id="nitric.resources.Collection.allow"><code class="name flex">
-<span>def <span class="ident">allow</span></span>(<span>self, *args: Union[CollectionPermission, str]) ‑> <a title="nitric.api.documents.CollectionRef" href="../api/documents.html#nitric.api.documents.CollectionRef">CollectionRef</a></span>
+</dd>
+<dt id="nitric.resources.Job"><code class="flex name class">
+<span>class <span class="ident">Job</span></span>
+<span>(</span><span>name: str)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Request the required permissions for this collection.</p></div>
+<div class="desc"><p>A Job Definition.</p>
+<p>Job definition constructor.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def allow(self, *args: Union[CollectionPermission, str]) -&gt; CollectionRef:
-    &#34;&#34;&#34;Request the required permissions for this collection.&#34;&#34;&#34;
-    # Ensure registration of the resource is complete before requesting permissions.
-    self._register_policy(*args)
+<pre><code class="python">class Job(SecureResource):
+    &#34;&#34;&#34;A Job Definition.&#34;&#34;&#34;
 
-    return Documents().collection(self.name)</code></pre>
+    name: str
+
+    def __init__(self, name: str):
+        &#34;&#34;&#34;Job definition constructor.&#34;&#34;&#34;
+        super().__init__(name)
+        self.name = name
+
+    async def _register(self) -&gt; None:
+        try:
+            await self._resources_stub.declare(
+                resource_declare_request=ResourceDeclareRequest(
+                    id=_to_resource_identifier(self),
+                    job=JobResource(),
+                )
+            )
+
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+    def _perms_to_actions(self, *args: JobPermission) -&gt; List[Action]:
+        _permMap: dict[JobPermission, List[Action]] = {&#34;submit&#34;: [Action.JobSubmit]}
+
+        return [action for perm in args for action in _permMap[perm]]
+
+    def allow(self, perm: JobPermission, *args: JobPermission) -&gt; JobRef:
+        &#34;&#34;&#34;Request the specified permissions to this resource.&#34;&#34;&#34;
+        str_args = [perm] + [str(permission) for permission in args]
+        self._register_policy(*str_args)
+
+        return JobRef(self.name)
+
+    def _to_resource_id(self) -&gt; ResourceIdentifier:
+        return ResourceIdentifier(name=self.name, type=ResourceType.Job)
+
+    def __call__(
+        self, cpus: Optional[float] = None, memory: Optional[int] = None, gpus: Optional[int] = None
+    ) -&gt; Callable[[JobHandle], None]:
+        &#34;&#34;&#34;Define the handler for this job definition.&#34;&#34;&#34;
+
+        def decorator(function: JobHandle) -&gt; None:
+            wrkr = JobHandler(self.name, function, cpus, memory, gpus)
+            Nitric._register_worker(wrkr)
+
+        return decorator</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="nitric.resources.resource.SecureResource" href="resource.html#nitric.resources.resource.SecureResource">SecureResource</a></li>
+<li><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.resources.Job.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.resources.Job.allow"><code class="name flex">
+<span>def <span class="ident">allow</span></span>(<span>self, perm: Literal['submit'], *args: Literal['submit']) ‑> nitric.resources.job.JobRef</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Request the specified permissions to this resource.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def allow(self, perm: JobPermission, *args: JobPermission) -&gt; JobRef:
+    &#34;&#34;&#34;Request the specified permissions to this resource.&#34;&#34;&#34;
+    str_args = [perm] + [str(permission) for permission in args]
+    self._register_policy(*str_args)
+
+    return JobRef(self.name)</code></pre>
 </details>
 </dd>
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="nitric.resources.base.SecureResource" href="base.html#nitric.resources.base.SecureResource">SecureResource</a></b></code>:
+<li><code><b><a title="nitric.resources.resource.SecureResource" href="resource.html#nitric.resources.resource.SecureResource">SecureResource</a></b></code>:
 <ul class="hlist">
-<li><code><a title="nitric.resources.base.SecureResource.make" href="base.html#nitric.resources.base.BaseResource.make">make</a></code></li>
+<li><code><a title="nitric.resources.resource.SecureResource.make" href="resource.html#nitric.resources.resource.Resource.make">make</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1034,31 +1174,191 @@ class JwtSecurityDefinition:
 </dd>
 </dl>
 </dd>
-<dt id="nitric.resources.MethodOptions"><code class="flex name class">
-<span>class <span class="ident">MethodOptions</span></span>
-<span>(</span><span>security: dict[str, List[str]] = None)</span>
+<dt id="nitric.resources.KeyValueStoreRef"><code class="flex name class">
+<span>class <span class="ident">KeyValueStoreRef</span></span>
+<span>(</span><span>name: str)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Represents options when defining a method handler.</p>
-<p>Construct a new HTTP method options object.</p></div>
+<div class="desc"><p>A reference to a deployed key value store, used to interact with the key value store at runtime.</p>
+<p>Construct a reference to a deployed key value store.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class MethodOptions:
-    &#34;&#34;&#34;Represents options when defining a method handler.&#34;&#34;&#34;
+<pre><code class="python">class KeyValueStoreRef:
+    &#34;&#34;&#34;A reference to a deployed key value store, used to interact with the key value store at runtime.&#34;&#34;&#34;
 
-    security: dict[str, List[str]]
+    _kv_stub: KvStoreStub
+    _channel: Channel
+    name: str
 
-    def __init__(self, security: dict[str, List[str]] = None):
-        &#34;&#34;&#34;Construct a new HTTP method options object.&#34;&#34;&#34;
-        self.security = security</code></pre>
+    def __init__(self, name: str):
+        &#34;&#34;&#34;Construct a reference to a deployed key value store.&#34;&#34;&#34;
+        self._channel: Channel = ChannelManager.get_channel()
+        self._kv_stub = KvStoreStub(channel=self._channel)
+        self.name = name
+
+    def __del__(self):
+        # close the channel when this client is destroyed
+        if self._channel is not None:
+            self._channel.close()
+
+    async def set(self, key: str, value: dict[str, Any]) -&gt; None:
+        &#34;&#34;&#34;Set a key and value in the key value store.&#34;&#34;&#34;
+        ref = ValueRef(store=self.name, key=key)
+
+        req = KvStoreSetValueRequest(ref=ref, content=struct_from_dict(value))
+
+        try:
+            await self._kv_stub.set_value(kv_store_set_value_request=req)
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+    async def get(self, key: str) -&gt; dict[str, Any]:
+        &#34;&#34;&#34;Return a value from the key value store.&#34;&#34;&#34;
+        ref = ValueRef(store=self.name, key=key)
+
+        req = KvStoreGetValueRequest(ref=ref)
+
+        try:
+            resp = await self._kv_stub.get_value(kv_store_get_value_request=req)
+
+            return dict_from_struct(resp.value.content)
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+    async def keys(self, prefix: Optional[str] = &#34;&#34;) -&gt; AsyncIterator[str]:
+        &#34;&#34;&#34;Return a list of keys from the key value store.&#34;&#34;&#34;
+        if prefix is None:
+            prefix = &#34;&#34;
+
+        req = KvStoreScanKeysRequest(
+            store=Store(name=self.name),
+            prefix=prefix,
+        )
+
+        try:
+            response_iterator = self._kv_stub.scan_keys(kv_store_scan_keys_request=req)
+            async for item in response_iterator:
+                yield item.key
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+        return
+
+    async def delete(self, key: str) -&gt; None:
+        &#34;&#34;&#34;Delete a key from the key value store.&#34;&#34;&#34;
+        ref = ValueRef(store=self.name, key=key)
+
+        req = KvStoreDeleteKeyRequest(ref=ref)
+
+        try:
+            await self._kv_stub.delete_key(kv_store_delete_key_request=req)
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err</code></pre>
 </details>
 <h3>Class variables</h3>
 <dl>
-<dt id="nitric.resources.MethodOptions.security"><code class="name">var <span class="ident">security</span> : dict[str, typing.List[str]]</code></dt>
+<dt id="nitric.resources.KeyValueStoreRef.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.resources.KeyValueStoreRef.delete"><code class="name flex">
+<span>async def <span class="ident">delete</span></span>(<span>self, key: str) ‑> NoneType</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Delete a key from the key value store.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def delete(self, key: str) -&gt; None:
+    &#34;&#34;&#34;Delete a key from the key value store.&#34;&#34;&#34;
+    ref = ValueRef(store=self.name, key=key)
+
+    req = KvStoreDeleteKeyRequest(ref=ref)
+
+    try:
+        await self._kv_stub.delete_key(kv_store_delete_key_request=req)
+    except GRPCError as grpc_err:
+        raise exception_from_grpc_error(grpc_err) from grpc_err</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.KeyValueStoreRef.get"><code class="name flex">
+<span>async def <span class="ident">get</span></span>(<span>self, key: str) ‑> dict[str, typing.Any]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return a value from the key value store.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def get(self, key: str) -&gt; dict[str, Any]:
+    &#34;&#34;&#34;Return a value from the key value store.&#34;&#34;&#34;
+    ref = ValueRef(store=self.name, key=key)
+
+    req = KvStoreGetValueRequest(ref=ref)
+
+    try:
+        resp = await self._kv_stub.get_value(kv_store_get_value_request=req)
+
+        return dict_from_struct(resp.value.content)
+    except GRPCError as grpc_err:
+        raise exception_from_grpc_error(grpc_err) from grpc_err</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.KeyValueStoreRef.keys"><code class="name flex">
+<span>async def <span class="ident">keys</span></span>(<span>self, prefix: Optional[str] = '') ‑> AsyncIterator[str]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return a list of keys from the key value store.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def keys(self, prefix: Optional[str] = &#34;&#34;) -&gt; AsyncIterator[str]:
+    &#34;&#34;&#34;Return a list of keys from the key value store.&#34;&#34;&#34;
+    if prefix is None:
+        prefix = &#34;&#34;
+
+    req = KvStoreScanKeysRequest(
+        store=Store(name=self.name),
+        prefix=prefix,
+    )
+
+    try:
+        response_iterator = self._kv_stub.scan_keys(kv_store_scan_keys_request=req)
+        async for item in response_iterator:
+            yield item.key
+    except GRPCError as grpc_err:
+        raise exception_from_grpc_error(grpc_err) from grpc_err
+
+    return</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.KeyValueStoreRef.set"><code class="name flex">
+<span>async def <span class="ident">set</span></span>(<span>self, key: str, value: dict[str, Any]) ‑> NoneType</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Set a key and value in the key value store.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def set(self, key: str, value: dict[str, Any]) -&gt; None:
+    &#34;&#34;&#34;Set a key and value in the key value store.&#34;&#34;&#34;
+    ref = ValueRef(store=self.name, key=key)
+
+    req = KvStoreSetValueRequest(ref=ref, content=struct_from_dict(value))
+
+    try:
+        await self._kv_stub.set_value(kv_store_set_value_request=req)
+    except GRPCError as grpc_err:
+        raise exception_from_grpc_error(grpc_err) from grpc_err</code></pre>
+</details>
 </dd>
 </dl>
 </dd>
@@ -1081,49 +1381,44 @@ class JwtSecurityDefinition:
 
     def __init__(self, name: str):
         &#34;&#34;&#34;Construct a new queue resource.&#34;&#34;&#34;
-        super().__init__()
-        self.name = name
+        super().__init__(name)
 
-    def _to_resource(self) -&gt; Resource:
-        return Resource(name=self.name, type=ResourceType.Queue)
+    def _to_resource_id(self) -&gt; ResourceIdentifier:
+        return ResourceIdentifier(name=self.name, type=ResourceType.Queue)
 
-    def _perms_to_actions(self, *args: Union[QueuePermission, str]) -&gt; List[Action]:
-        permission_actions_map = {
-            QueuePermission.sending: [Action.QueueSend, Action.QueueList, Action.QueueDetail],
-            QueuePermission.receiving: [Action.QueueReceive, Action.QueueList, Action.QueueDetail],
+    def _perms_to_actions(self, *args: QueuePermission) -&gt; List[Action]:
+        permission_actions_map: dict[QueuePermission, List[Action]] = {
+            &#34;enqueue&#34;: [Action.QueueEnqueue],
+            &#34;dequeue&#34;: [Action.QueueDequeue],
         }
-        # convert strings to the enum value where needed
-        perms = [
-            permission if isinstance(permission, QueuePermission) else QueuePermission[permission.lower()]
-            for permission in args
-        ]
 
-        return [action for perm in perms for action in permission_actions_map[perm]]
+        return [action for perm in args for action in permission_actions_map[perm]]
 
-    async def _register(self):
+    async def _register(self) -&gt; None:
         try:
             await self._resources_stub.declare(
-                resource_declare_request=ResourceDeclareRequest(resource=self._to_resource())
+                resource_declare_request=ResourceDeclareRequest(id=self._to_resource_id())
             )
         except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err)
+            raise exception_from_grpc_error(grpc_err) from grpc_err
 
-    def allow(self, *args: Union[QueuePermission, str]) -&gt; QueueRef:
+    def allow(self, perm: QueuePermission, *args: QueuePermission) -&gt; QueueRef:
         &#34;&#34;&#34;Request the required permissions for this queue.&#34;&#34;&#34;
         # Ensure registration of the resource is complete before requesting permissions.
-        self._register_policy(*args)
+        str_args = [str(perm)] + [str(permission) for permission in args]
+        self._register_policy(*str_args)
 
-        return Queues().queue(self.name)</code></pre>
+        return QueueRef(self.name)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="nitric.resources.base.SecureResource" href="base.html#nitric.resources.base.SecureResource">SecureResource</a></li>
-<li><a title="nitric.resources.base.BaseResource" href="base.html#nitric.resources.base.BaseResource">BaseResource</a></li>
+<li><a title="nitric.resources.resource.SecureResource" href="resource.html#nitric.resources.resource.SecureResource">SecureResource</a></li>
+<li><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></li>
 <li>abc.ABC</li>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="nitric.resources.Queue.actions"><code class="name">var <span class="ident">actions</span> : List[<a title="nitric.proto.nitric.resource.v1.Action" href="../proto/nitric/resource/v1/index.html#nitric.proto.nitric.resource.v1.Action">Action</a>]</code></dt>
+<dt id="nitric.resources.Queue.actions"><code class="name">var <span class="ident">actions</span> : List[<a title="nitric.proto.resources.v1.Action" href="../proto/resources/v1/index.html#nitric.proto.resources.v1.Action">Action</a>]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1135,7 +1430,7 @@ class JwtSecurityDefinition:
 <h3>Methods</h3>
 <dl>
 <dt id="nitric.resources.Queue.allow"><code class="name flex">
-<span>def <span class="ident">allow</span></span>(<span>self, *args: Union[QueuePermission, str]) ‑> <a title="nitric.api.queues.QueueRef" href="../api/queues.html#nitric.api.queues.QueueRef">QueueRef</a></span>
+<span>def <span class="ident">allow</span></span>(<span>self, perm: QueuePermission, *args: QueuePermission) ‑> <a title="nitric.resources.queues.QueueRef" href="queues.html#nitric.resources.queues.QueueRef">QueueRef</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Request the required permissions for this queue.</p></div>
@@ -1143,139 +1438,219 @@ class JwtSecurityDefinition:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def allow(self, *args: Union[QueuePermission, str]) -&gt; QueueRef:
+<pre><code class="python">def allow(self, perm: QueuePermission, *args: QueuePermission) -&gt; QueueRef:
     &#34;&#34;&#34;Request the required permissions for this queue.&#34;&#34;&#34;
     # Ensure registration of the resource is complete before requesting permissions.
-    self._register_policy(*args)
+    str_args = [str(perm)] + [str(permission) for permission in args]
+    self._register_policy(*str_args)
 
-    return Queues().queue(self.name)</code></pre>
+    return QueueRef(self.name)</code></pre>
 </details>
 </dd>
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="nitric.resources.base.SecureResource" href="base.html#nitric.resources.base.SecureResource">SecureResource</a></b></code>:
+<li><code><b><a title="nitric.resources.resource.SecureResource" href="resource.html#nitric.resources.resource.SecureResource">SecureResource</a></b></code>:
 <ul class="hlist">
-<li><code><a title="nitric.resources.base.SecureResource.make" href="base.html#nitric.resources.base.BaseResource.make">make</a></code></li>
+<li><code><a title="nitric.resources.resource.SecureResource.make" href="resource.html#nitric.resources.resource.Resource.make">make</a></code></li>
 </ul>
 </li>
 </ul>
 </dd>
-<dt id="nitric.resources.Schedule"><code class="flex name class">
-<span>class <span class="ident">Schedule</span></span>
+<dt id="nitric.resources.ScheduleServer"><code class="flex name class">
+<span>class <span class="ident">ScheduleServer</span></span>
 <span>(</span><span>description: str)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>A schedule for running functions on a cadence.</p>
-<p>Construct a new schedule.</p></div>
+<p>Create a schedule for running functions on a cadence.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Schedule:
+<pre><code class="python">class ScheduleServer(FunctionServer):
     &#34;&#34;&#34;A schedule for running functions on a cadence.&#34;&#34;&#34;
 
     description: str
-    server: FunctionServer
 
-    def start(self):
-        &#34;&#34;&#34;Start the function server that executes the scheduled middleware.&#34;&#34;&#34;
-        return self.server.start()
+    handler: IntervalHandler
+    _registration_request: RegistrationRequest
+    _responses: AsyncNotifierList[ClientMessage]
 
     def __init__(self, description: str):
-        &#34;&#34;&#34;Construct a new schedule.&#34;&#34;&#34;
+        &#34;&#34;&#34;Create a schedule for running functions on a cadence.&#34;&#34;&#34;
         self.description = description
+        self._responses = AsyncNotifierList()
 
-    def every(self, rate_description: str, *middleware: EventMiddleware):
+    def every(self, rate_description: str, handler: IntervalHandler) -&gt; None:
         &#34;&#34;&#34;
-        Register middleware to be run at the specified rate.
+        Register a function to be run at the specified rate.
 
         E.g. every(&#34;3 hours&#34;)
         &#34;&#34;&#34;
-        rate_description = rate_description.lower()
+        self._registration_request = RegistrationRequest(
+            schedule_name=self.description,
+            every=ScheduleEvery(rate=rate_description.lower()),
+        )
 
-        if not any([frequency in rate_description for frequency in Frequency.as_str_list()]):
-            # handle singular frequencies. e.g. every(&#39;day&#39;)
-            rate_description = f&#34;1 {rate_description}s&#34;  # &#39;day&#39; becomes &#39;1 days&#39;
+        self.handler = handler
+
+        Nitric._register_worker(self)  # type: ignore pylint: disable=protected-access
+
+    def cron(self, cron_expression: str, handler: IntervalHandler) -&gt; None:
+        &#34;&#34;&#34;
+        Register a function to be run at the specified cron schedule.
+
+        E.g. cron(&#34;3 * * * *&#34;)
+        &#34;&#34;&#34;
+        self._registration_request = RegistrationRequest(
+            schedule_name=self.description,
+            cron=ScheduleCron(expression=cron_expression),
+        )
+
+        self.handler = handler
+
+        Nitric._register_worker(self)  # type: ignore pylint: disable=protected-access
+
+    async def _schedule_request_iterator(self):
+        # Register with the server
+        yield ClientMessage(registration_request=self._registration_request)
+        # wait for any responses for the server and send them
+        async for response in self._responses:
+            yield response
+
+    async def start(self) -&gt; None:
+        &#34;&#34;&#34;Register this schedule and start listening for requests.&#34;&#34;&#34;
+        channel = ChannelManager.get_channel()
+        schedules_stub = SchedulesStub(channel=channel)
 
         try:
-            rate, freq_str = rate_description.split(&#34; &#34;)
-            freq = Frequency.from_str(freq_str)
-        except Exception:
-            raise Exception(f&#34;invalid rate expression, frequency must be one of {Frequency.as_str_list()}&#34;)
+            async for server_msg in schedules_stub.schedule(self._schedule_request_iterator()):
+                msg_type, _ = betterproto.which_one_of(server_msg, &#34;content&#34;)
 
-        if not rate.isdigit():
-            raise Exception(&#34;invalid rate expression, expression must begin with a positive integer&#34;)
-
-        opts = RateWorkerOptions(self.description, int(rate), freq)
-
-        self.server = FunctionServer(opts)
-        self.server.event(*middleware)
-        return Nitric._register_worker(self.server)</code></pre>
+                if msg_type == &#34;registration_response&#34;:
+                    continue
+                if msg_type == &#34;interval_request&#34;:
+                    ctx = IntervalContext(server_msg)
+                    try:
+                        await self.handler(ctx)
+                    except Exception as e:  # pylint: disable=broad-except
+                        logging.exception(&#34;An unhandled error occurred in a scheduled function: %s&#34;, e)
+                    resp = IntervalResponse()
+                    await self._responses.add_item(ClientMessage(id=server_msg.id, interval_response=resp))
+        except grpclib.exceptions.GRPCError as e:
+            print(f&#34;Stream terminated: {e.message}&#34;)
+        except grpclib.exceptions.StreamTerminatedError:
+            print(&#34;Stream from membrane closed.&#34;)
+        finally:
+            print(&#34;Closing client stream&#34;)
+            channel.close()</code></pre>
 </details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="nitric.context.FunctionServer" href="../context.html#nitric.context.FunctionServer">FunctionServer</a></li>
+<li>abc.ABC</li>
+</ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="nitric.resources.Schedule.description"><code class="name">var <span class="ident">description</span> : str</code></dt>
+<dt id="nitric.resources.ScheduleServer.description"><code class="name">var <span class="ident">description</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="nitric.resources.Schedule.server"><code class="name">var <span class="ident">server</span> : <a title="nitric.faas.FunctionServer" href="../faas.html#nitric.faas.FunctionServer">FunctionServer</a></code></dt>
+<dt id="nitric.resources.ScheduleServer.handler"><code class="name">var <span class="ident">handler</span> : <a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.context.IntervalContext" href="../context.html#nitric.context.IntervalContext">IntervalContext</a>]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="nitric.resources.Schedule.every"><code class="name flex">
-<span>def <span class="ident">every</span></span>(<span>self, rate_description: str, *middleware: EventMiddleware)</span>
+<dt id="nitric.resources.ScheduleServer.cron"><code class="name flex">
+<span>def <span class="ident">cron</span></span>(<span>self, cron_expression: str, handler: IntervalHandler) ‑> NoneType</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Register middleware to be run at the specified rate.</p>
+<div class="desc"><p>Register a function to be run at the specified cron schedule.</p>
+<p>E.g. cron("3 * * * *")</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cron(self, cron_expression: str, handler: IntervalHandler) -&gt; None:
+    &#34;&#34;&#34;
+    Register a function to be run at the specified cron schedule.
+
+    E.g. cron(&#34;3 * * * *&#34;)
+    &#34;&#34;&#34;
+    self._registration_request = RegistrationRequest(
+        schedule_name=self.description,
+        cron=ScheduleCron(expression=cron_expression),
+    )
+
+    self.handler = handler
+
+    Nitric._register_worker(self)  # type: ignore pylint: disable=protected-access</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.ScheduleServer.every"><code class="name flex">
+<span>def <span class="ident">every</span></span>(<span>self, rate_description: str, handler: IntervalHandler) ‑> NoneType</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Register a function to be run at the specified rate.</p>
 <p>E.g. every("3 hours")</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def every(self, rate_description: str, *middleware: EventMiddleware):
+<pre><code class="python">def every(self, rate_description: str, handler: IntervalHandler) -&gt; None:
     &#34;&#34;&#34;
-    Register middleware to be run at the specified rate.
+    Register a function to be run at the specified rate.
 
     E.g. every(&#34;3 hours&#34;)
     &#34;&#34;&#34;
-    rate_description = rate_description.lower()
+    self._registration_request = RegistrationRequest(
+        schedule_name=self.description,
+        every=ScheduleEvery(rate=rate_description.lower()),
+    )
 
-    if not any([frequency in rate_description for frequency in Frequency.as_str_list()]):
-        # handle singular frequencies. e.g. every(&#39;day&#39;)
-        rate_description = f&#34;1 {rate_description}s&#34;  # &#39;day&#39; becomes &#39;1 days&#39;
+    self.handler = handler
 
-    try:
-        rate, freq_str = rate_description.split(&#34; &#34;)
-        freq = Frequency.from_str(freq_str)
-    except Exception:
-        raise Exception(f&#34;invalid rate expression, frequency must be one of {Frequency.as_str_list()}&#34;)
-
-    if not rate.isdigit():
-        raise Exception(&#34;invalid rate expression, expression must begin with a positive integer&#34;)
-
-    opts = RateWorkerOptions(self.description, int(rate), freq)
-
-    self.server = FunctionServer(opts)
-    self.server.event(*middleware)
-    return Nitric._register_worker(self.server)</code></pre>
+    Nitric._register_worker(self)  # type: ignore pylint: disable=protected-access</code></pre>
 </details>
 </dd>
-<dt id="nitric.resources.Schedule.start"><code class="name flex">
-<span>def <span class="ident">start</span></span>(<span>self)</span>
+<dt id="nitric.resources.ScheduleServer.start"><code class="name flex">
+<span>async def <span class="ident">start</span></span>(<span>self) ‑> NoneType</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Start the function server that executes the scheduled middleware.</p></div>
+<div class="desc"><p>Register this schedule and start listening for requests.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def start(self):
-    &#34;&#34;&#34;Start the function server that executes the scheduled middleware.&#34;&#34;&#34;
-    return self.server.start()</code></pre>
+<pre><code class="python">async def start(self) -&gt; None:
+    &#34;&#34;&#34;Register this schedule and start listening for requests.&#34;&#34;&#34;
+    channel = ChannelManager.get_channel()
+    schedules_stub = SchedulesStub(channel=channel)
+
+    try:
+        async for server_msg in schedules_stub.schedule(self._schedule_request_iterator()):
+            msg_type, _ = betterproto.which_one_of(server_msg, &#34;content&#34;)
+
+            if msg_type == &#34;registration_response&#34;:
+                continue
+            if msg_type == &#34;interval_request&#34;:
+                ctx = IntervalContext(server_msg)
+                try:
+                    await self.handler(ctx)
+                except Exception as e:  # pylint: disable=broad-except
+                    logging.exception(&#34;An unhandled error occurred in a scheduled function: %s&#34;, e)
+                resp = IntervalResponse()
+                await self._responses.add_item(ClientMessage(id=server_msg.id, interval_response=resp))
+    except grpclib.exceptions.GRPCError as e:
+        print(f&#34;Stream terminated: {e.message}&#34;)
+    except grpclib.exceptions.StreamTerminatedError:
+        print(&#34;Stream from membrane closed.&#34;)
+    finally:
+        print(&#34;Closing client stream&#34;)
+        channel.close()</code></pre>
 </details>
 </dd>
 </dl>
@@ -1285,62 +1660,57 @@ class JwtSecurityDefinition:
 <span>(</span><span>name: str)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>A secret resource, used for storing and retrieving secret versions and values.</p>
+<div class="desc"><p>A secret resource, used for storing sensitive information.</p>
 <p>Construct a new secret resource reference.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Secret(SecureResource):
-    &#34;&#34;&#34;A secret resource, used for storing and retrieving secret versions and values.&#34;&#34;&#34;
+    &#34;&#34;&#34;A secret resource, used for storing sensitive information.&#34;&#34;&#34;
 
     name: str
     actions: List[Action]
 
     def __init__(self, name: str):
         &#34;&#34;&#34;Construct a new secret resource reference.&#34;&#34;&#34;
-        super().__init__()
-        self.name = name
+        super().__init__(name)
 
-    def _to_resource(self) -&gt; Resource:
-        return Resource(name=self.name, type=ResourceType.Secret)
+    def _to_resource_id(self) -&gt; ResourceIdentifier:
+        return ResourceIdentifier(name=self.name, type=ResourceType.Secret)
 
     async def _register(self):
         try:
             await self._resources_stub.declare(
-                resource_declare_request=ResourceDeclareRequest(resource=self._to_resource())
+                resource_declare_request=ResourceDeclareRequest(id=self._to_resource_id())
             )
         except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err)
+            raise exception_from_grpc_error(grpc_err) from grpc_err
 
-    def _perms_to_actions(self, *args: Union[SecretPermission, str]) -&gt; List[Action]:
-        permissions_actions_map = {
-            SecretPermission.accessing: [Action.SecretAccess],
-            SecretPermission.putting: [Action.SecretPut],
+    def _perms_to_actions(self, *args: SecretPermission) -&gt; List[Action]:
+        permissions_actions_map: dict[SecretPermission, List[Action]] = {
+            &#34;access&#34;: [Action.SecretAccess],
+            &#34;put&#34;: [Action.SecretPut],
         }
-        # convert strings to the enum value where needed
-        perms = [
-            permission if isinstance(permission, SecretPermission) else SecretPermission[permission.lower()]
-            for permission in args
-        ]
 
-        return [action for perm in perms for action in permissions_actions_map[perm]]
+        return [action for perm in args for action in permissions_actions_map[perm]]
 
-    def allow(self, *args: Union[SecretPermission, str]) -&gt; SecretContainerRef:
+    def allow(self, perm: SecretPermission, *args: SecretPermission) -&gt; SecretRef:
         &#34;&#34;&#34;Request the specified permissions to this resource.&#34;&#34;&#34;
-        self._register_policy(*args)
+        str_args = [str(perm)] + [str(permission) for permission in args]
+        self._register_policy(*str_args)
 
-        return Secrets().secret(self.name)</code></pre>
+        return SecretRef(self.name)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="nitric.resources.base.SecureResource" href="base.html#nitric.resources.base.SecureResource">SecureResource</a></li>
-<li><a title="nitric.resources.base.BaseResource" href="base.html#nitric.resources.base.BaseResource">BaseResource</a></li>
+<li><a title="nitric.resources.resource.SecureResource" href="resource.html#nitric.resources.resource.SecureResource">SecureResource</a></li>
+<li><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></li>
 <li>abc.ABC</li>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="nitric.resources.Secret.actions"><code class="name">var <span class="ident">actions</span> : List[<a title="nitric.proto.nitric.resource.v1.Action" href="../proto/nitric/resource/v1/index.html#nitric.proto.nitric.resource.v1.Action">Action</a>]</code></dt>
+<dt id="nitric.resources.Secret.actions"><code class="name">var <span class="ident">actions</span> : List[<a title="nitric.proto.resources.v1.Action" href="../proto/resources/v1/index.html#nitric.proto.resources.v1.Action">Action</a>]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1352,7 +1722,7 @@ class JwtSecurityDefinition:
 <h3>Methods</h3>
 <dl>
 <dt id="nitric.resources.Secret.allow"><code class="name flex">
-<span>def <span class="ident">allow</span></span>(<span>self, *args: Union[SecretPermission, str]) ‑> <a title="nitric.api.secrets.SecretContainerRef" href="../api/secrets.html#nitric.api.secrets.SecretContainerRef">SecretContainerRef</a></span>
+<span>def <span class="ident">allow</span></span>(<span>self, perm: SecretPermission, *args: SecretPermission) ‑> <a title="nitric.resources.secrets.SecretRef" href="secrets.html#nitric.resources.secrets.SecretRef">SecretRef</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Request the specified permissions to this resource.</p></div>
@@ -1360,19 +1730,111 @@ class JwtSecurityDefinition:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def allow(self, *args: Union[SecretPermission, str]) -&gt; SecretContainerRef:
+<pre><code class="python">def allow(self, perm: SecretPermission, *args: SecretPermission) -&gt; SecretRef:
     &#34;&#34;&#34;Request the specified permissions to this resource.&#34;&#34;&#34;
-    self._register_policy(*args)
+    str_args = [str(perm)] + [str(permission) for permission in args]
+    self._register_policy(*str_args)
 
-    return Secrets().secret(self.name)</code></pre>
+    return SecretRef(self.name)</code></pre>
 </details>
 </dd>
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="nitric.resources.base.SecureResource" href="base.html#nitric.resources.base.SecureResource">SecureResource</a></b></code>:
+<li><code><b><a title="nitric.resources.resource.SecureResource" href="resource.html#nitric.resources.resource.SecureResource">SecureResource</a></b></code>:
 <ul class="hlist">
-<li><code><a title="nitric.resources.base.SecureResource.make" href="base.html#nitric.resources.base.BaseResource.make">make</a></code></li>
+<li><code><a title="nitric.resources.resource.SecureResource.make" href="resource.html#nitric.resources.resource.Resource.make">make</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="nitric.resources.Sql"><code class="flex name class">
+<span>class <span class="ident">Sql</span></span>
+<span>(</span><span>name: str, migrations: Union[str, None] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A SQL Database.</p>
+<p>Construct a new SQL Database.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Sql(BaseResource):
+    &#34;&#34;&#34;A SQL Database.&#34;&#34;&#34;
+
+    _channel: Channel
+    _sql_stub: SqlStub
+    name: str
+    migrations: Union[str, None]
+
+    def __init__(self, name: str, migrations: Union[str, None] = None):
+        &#34;&#34;&#34;Construct a new SQL Database.&#34;&#34;&#34;
+        super().__init__(name)
+
+        self._channel: Union[Channel, None] = ChannelManager.get_channel()
+        self._sql_stub = SqlStub(channel=self._channel)
+        self.name = name
+        self.migrations = migrations
+
+    async def _register(self) -&gt; None:
+        try:
+            await self._resources_stub.declare(
+                resource_declare_request=ResourceDeclareRequest(
+                    id=ResourceIdentifier(name=self.name, type=ResourceType.SqlDatabase),
+                    sql_database=SqlDatabaseResource(
+                        migrations=SqlDatabaseMigrations(migrations_path=self.migrations if self.migrations else &#34;&#34;)
+                    ),
+                ),
+            )
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+    async def connection_string(self) -&gt; str:
+        &#34;&#34;&#34;Return the connection string for this SQL Database.&#34;&#34;&#34;
+        response = await self._sql_stub.connection_string(SqlConnectionStringRequest(database_name=self.name))
+
+        return response.connection_string</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.resources.Sql.migrations"><code class="name">var <span class="ident">migrations</span> : Optional[str]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.resources.Sql.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.resources.Sql.connection_string"><code class="name flex">
+<span>async def <span class="ident">connection_string</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return the connection string for this SQL Database.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def connection_string(self) -&gt; str:
+    &#34;&#34;&#34;Return the connection string for this SQL Database.&#34;&#34;&#34;
+    response = await self._sql_stub.connection_string(SqlConnectionStringRequest(database_name=self.name))
+
+    return response.connection_string</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></b></code>:
+<ul class="hlist">
+<li><code><a title="nitric.resources.resource.Resource.make" href="resource.html#nitric.resources.resource.Resource.make">make</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1383,7 +1845,7 @@ class JwtSecurityDefinition:
 </code></dt>
 <dd>
 <div class="desc"><p>A topic resource, used for asynchronous messaging between functions.</p>
-<p>Construct a new topic.</p></div>
+<p>Declare a new topic resourced.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1394,57 +1856,53 @@ class JwtSecurityDefinition:
     name: str
     actions: List[Action]
 
-    def __init__(self, name: str):
-        &#34;&#34;&#34;Construct a new topic.&#34;&#34;&#34;
-        super().__init__()
-        self.name = name
+    def __init__(self, name: str) -&gt; None:
+        &#34;&#34;&#34;Declare a new topic resourced.&#34;&#34;&#34;
+        super().__init__(name)
 
-    async def _register(self):
+    async def _register(self) -&gt; None:
         try:
             await self._resources_stub.declare(
-                resource_declare_request=ResourceDeclareRequest(resource=self._to_resource())
+                resource_declare_request=ResourceDeclareRequest(id=self._to_resource_id())
             )
         except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err)
+            raise exception_from_grpc_error(grpc_err) from grpc_err
 
-    def _to_resource(self) -&gt; Resource:
-        return Resource(name=self.name, type=ResourceType.Topic)
+    def _to_resource_id(self) -&gt; ResourceIdentifier:
+        return ResourceIdentifier(name=self.name, type=ResourceType.Topic)
 
-    def _perms_to_actions(self, *args: Union[TopicPermission, str]) -&gt; List[Action]:
-        _permMap = {TopicPermission.publishing: [Action.TopicEventPublish]}
-        # convert strings to the enum value where needed
-        perms = [
-            permission if isinstance(permission, TopicPermission) else TopicPermission[permission.lower()]
-            for permission in args
-        ]
+    def _perms_to_actions(self, *args: TopicPermission) -&gt; List[Action]:
+        _permMap: dict[TopicPermission, List[Action]] = {&#34;publish&#34;: [Action.TopicPublish]}
 
-        return [action for perm in perms for action in _permMap[perm]]
+        return [action for perm in args for action in _permMap[perm]]
 
-    def allow(self, *args: Union[TopicPermission, str]) -&gt; TopicRef:
+    def allow(self, perm: TopicPermission, *args: TopicPermission) -&gt; TopicRef:
         &#34;&#34;&#34;Request the specified permissions to this resource.&#34;&#34;&#34;
-        self._register_policy(*args)
+        str_args = [perm] + [str(permission) for permission in args]
+        self._register_policy(*str_args)
 
-        return Events().topic(self.name)
+        return TopicRef(self.name)
 
-    def subscribe(self):
+    def subscribe(self) -&gt; Callable[[EventHandler], None]:
         &#34;&#34;&#34;Create and return a subscription decorator for this topic.&#34;&#34;&#34;
 
-        def decorator(func: EventMiddleware):
-            self.server = FunctionServer(SubscriptionWorkerOptions(topic=self.name))
-            self.server.event(func)
-            Nitric._register_worker(self.server)
+        def decorator(func: EventHandler) -&gt; None:
+            Subscriber(
+                topic_name=self.name,
+                handler=func,
+            )
 
         return decorator</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="nitric.resources.base.SecureResource" href="base.html#nitric.resources.base.SecureResource">SecureResource</a></li>
-<li><a title="nitric.resources.base.BaseResource" href="base.html#nitric.resources.base.BaseResource">BaseResource</a></li>
+<li><a title="nitric.resources.resource.SecureResource" href="resource.html#nitric.resources.resource.SecureResource">SecureResource</a></li>
+<li><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></li>
 <li>abc.ABC</li>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="nitric.resources.Topic.actions"><code class="name">var <span class="ident">actions</span> : List[<a title="nitric.proto.nitric.resource.v1.Action" href="../proto/nitric/resource/v1/index.html#nitric.proto.nitric.resource.v1.Action">Action</a>]</code></dt>
+<dt id="nitric.resources.Topic.actions"><code class="name">var <span class="ident">actions</span> : List[<a title="nitric.proto.resources.v1.Action" href="../proto/resources/v1/index.html#nitric.proto.resources.v1.Action">Action</a>]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1456,7 +1914,7 @@ class JwtSecurityDefinition:
 <h3>Methods</h3>
 <dl>
 <dt id="nitric.resources.Topic.allow"><code class="name flex">
-<span>def <span class="ident">allow</span></span>(<span>self, *args: Union[TopicPermission, str]) ‑> <a title="nitric.api.events.TopicRef" href="../api/events.html#nitric.api.events.TopicRef">TopicRef</a></span>
+<span>def <span class="ident">allow</span></span>(<span>self, perm: TopicPermission, *args: TopicPermission) ‑> <a title="nitric.resources.topics.TopicRef" href="topics.html#nitric.resources.topics.TopicRef">TopicRef</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Request the specified permissions to this resource.</p></div>
@@ -1464,15 +1922,16 @@ class JwtSecurityDefinition:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def allow(self, *args: Union[TopicPermission, str]) -&gt; TopicRef:
+<pre><code class="python">def allow(self, perm: TopicPermission, *args: TopicPermission) -&gt; TopicRef:
     &#34;&#34;&#34;Request the specified permissions to this resource.&#34;&#34;&#34;
-    self._register_policy(*args)
+    str_args = [perm] + [str(permission) for permission in args]
+    self._register_policy(*str_args)
 
-    return Events().topic(self.name)</code></pre>
+    return TopicRef(self.name)</code></pre>
 </details>
 </dd>
 <dt id="nitric.resources.Topic.subscribe"><code class="name flex">
-<span>def <span class="ident">subscribe</span></span>(<span>self)</span>
+<span>def <span class="ident">subscribe</span></span>(<span>self) ‑> Callable[[<a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.context.MessageContext" href="../context.html#nitric.context.MessageContext">MessageContext</a>]], NoneType]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Create and return a subscription decorator for this topic.</p></div>
@@ -1480,13 +1939,14 @@ class JwtSecurityDefinition:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def subscribe(self):
+<pre><code class="python">def subscribe(self) -&gt; Callable[[EventHandler], None]:
     &#34;&#34;&#34;Create and return a subscription decorator for this topic.&#34;&#34;&#34;
 
-    def decorator(func: EventMiddleware):
-        self.server = FunctionServer(SubscriptionWorkerOptions(topic=self.name))
-        self.server.event(func)
-        Nitric._register_worker(self.server)
+    def decorator(func: EventHandler) -&gt; None:
+        Subscriber(
+            topic_name=self.name,
+            handler=func,
+        )
 
     return decorator</code></pre>
 </details>
@@ -1494,9 +1954,143 @@ class JwtSecurityDefinition:
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="nitric.resources.base.SecureResource" href="base.html#nitric.resources.base.SecureResource">SecureResource</a></b></code>:
+<li><code><b><a title="nitric.resources.resource.SecureResource" href="resource.html#nitric.resources.resource.SecureResource">SecureResource</a></b></code>:
 <ul class="hlist">
-<li><code><a title="nitric.resources.base.SecureResource.make" href="base.html#nitric.resources.base.BaseResource.make">make</a></code></li>
+<li><code><a title="nitric.resources.resource.SecureResource.make" href="resource.html#nitric.resources.resource.Resource.make">make</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="nitric.resources.Websocket"><code class="flex name class">
+<span>class <span class="ident">Websocket</span></span>
+<span>(</span><span>name: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A Websocket API.</p>
+<p>Construct a new Websocket API.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Websocket(BaseResource):
+    &#34;&#34;&#34;A Websocket API.&#34;&#34;&#34;
+
+    app: Nitric
+    _websocket: WebsocketRef
+    name: str
+
+    def __init__(self, name: str):
+        &#34;&#34;&#34;Construct a new Websocket API.&#34;&#34;&#34;
+        super().__init__(name)
+        self._websocket = WebsocketRef()
+
+    async def _register(self) -&gt; None:
+        try:
+            resource = _to_resource(self)
+            default_principle = ResourceIdentifier(type=ResourceType.Service)
+
+            await self._resources_stub.declare(
+                resource_declare_request=ResourceDeclareRequest(
+                    id=resource,
+                )
+            )
+
+            await self._resources_stub.declare(
+                resource_declare_request=ResourceDeclareRequest(
+                    id=ResourceIdentifier(type=ResourceType.Policy),
+                    policy=PolicyResource(
+                        actions=[Action.WebsocketManage], principals=[default_principle], resources=[resource]
+                    ),
+                )
+            )
+
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+    async def send(
+        self,
+        connection_id: str,
+        data: bytes,
+    ) -&gt; None:
+        &#34;&#34;&#34;Send a message to a connection on this socket.&#34;&#34;&#34;
+        await self._websocket.send(socket=self.name, connection_id=connection_id, data=data)
+
+    def on(self, event_type: WebsocketEventType) -&gt; Callable[[WebsocketHandler], None]:
+        &#34;&#34;&#34;Create and return a worker decorator for this socket.&#34;&#34;&#34;
+
+        def decorator(func: WebsocketHandler) -&gt; None:
+            WebsocketWorker(
+                socket_name=self.name,
+                event_type=event_type,
+                handler=func,
+            )
+
+        return decorator</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.resources.Websocket.app"><code class="name">var <span class="ident">app</span> : <a title="nitric.application.Nitric" href="../application.html#nitric.application.Nitric">Nitric</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.resources.Websocket.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.resources.Websocket.on"><code class="name flex">
+<span>def <span class="ident">on</span></span>(<span>self, event_type: WebsocketEventType) ‑> Callable[[<a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.context.WebsocketContext" href="../context.html#nitric.context.WebsocketContext">WebsocketContext</a>]], NoneType]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create and return a worker decorator for this socket.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def on(self, event_type: WebsocketEventType) -&gt; Callable[[WebsocketHandler], None]:
+    &#34;&#34;&#34;Create and return a worker decorator for this socket.&#34;&#34;&#34;
+
+    def decorator(func: WebsocketHandler) -&gt; None:
+        WebsocketWorker(
+            socket_name=self.name,
+            event_type=event_type,
+            handler=func,
+        )
+
+    return decorator</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.Websocket.send"><code class="name flex">
+<span>async def <span class="ident">send</span></span>(<span>self, connection_id: str, data: bytes) ‑> NoneType</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Send a message to a connection on this socket.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def send(
+    self,
+    connection_id: str,
+    data: bytes,
+) -&gt; None:
+    &#34;&#34;&#34;Send a message to a connection on this socket.&#34;&#34;&#34;
+    await self._websocket.send(socket=self.name, connection_id=connection_id, data=data)</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></b></code>:
+<ul class="hlist">
+<li><code><a title="nitric.resources.resource.Resource.make" href="resource.html#nitric.resources.resource.Resource.make">make</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1518,31 +2112,36 @@ class JwtSecurityDefinition:
 <li><h3><a href="#header-submodules">Sub-modules</a></h3>
 <ul>
 <li><code><a title="nitric.resources.apis" href="apis.html">nitric.resources.apis</a></code></li>
-<li><code><a title="nitric.resources.base" href="base.html">nitric.resources.base</a></code></li>
 <li><code><a title="nitric.resources.buckets" href="buckets.html">nitric.resources.buckets</a></code></li>
-<li><code><a title="nitric.resources.collections" href="collections.html">nitric.resources.collections</a></code></li>
 <li><code><a title="nitric.resources.queues" href="queues.html">nitric.resources.queues</a></code></li>
+<li><code><a title="nitric.resources.resource" href="resource.html">nitric.resources.resource</a></code></li>
 <li><code><a title="nitric.resources.schedules" href="schedules.html">nitric.resources.schedules</a></code></li>
 <li><code><a title="nitric.resources.secrets" href="secrets.html">nitric.resources.secrets</a></code></li>
+<li><code><a title="nitric.resources.spark" href="spark.html">nitric.resources.spark</a></code></li>
 <li><code><a title="nitric.resources.topics" href="topics.html">nitric.resources.topics</a></code></li>
+<li><code><a title="nitric.resources.websockets" href="websockets.html">nitric.resources.websockets</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="two-column">
 <li><code><a title="nitric.resources.api" href="#nitric.resources.api">api</a></code></li>
 <li><code><a title="nitric.resources.bucket" href="#nitric.resources.bucket">bucket</a></code></li>
-<li><code><a title="nitric.resources.collection" href="#nitric.resources.collection">collection</a></code></li>
+<li><code><a title="nitric.resources.job" href="#nitric.resources.job">job</a></code></li>
+<li><code><a title="nitric.resources.kv" href="#nitric.resources.kv">kv</a></code></li>
+<li><code><a title="nitric.resources.oidc_rule" href="#nitric.resources.oidc_rule">oidc_rule</a></code></li>
 <li><code><a title="nitric.resources.queue" href="#nitric.resources.queue">queue</a></code></li>
 <li><code><a title="nitric.resources.schedule" href="#nitric.resources.schedule">schedule</a></code></li>
 <li><code><a title="nitric.resources.secret" href="#nitric.resources.secret">secret</a></code></li>
+<li><code><a title="nitric.resources.sql" href="#nitric.resources.sql">sql</a></code></li>
 <li><code><a title="nitric.resources.topic" href="#nitric.resources.topic">topic</a></code></li>
+<li><code><a title="nitric.resources.websocket" href="#nitric.resources.websocket">websocket</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
 <h4><code><a title="nitric.resources.Api" href="#nitric.resources.Api">Api</a></code></h4>
-<ul class="">
+<ul class="two-column">
 <li><code><a title="nitric.resources.Api.all" href="#nitric.resources.Api.all">all</a></code></li>
 <li><code><a title="nitric.resources.Api.app" href="#nitric.resources.Api.app">app</a></code></li>
 <li><code><a title="nitric.resources.Api.delete" href="#nitric.resources.Api.delete">delete</a></code></li>
@@ -1557,16 +2156,12 @@ class JwtSecurityDefinition:
 <li><code><a title="nitric.resources.Api.put" href="#nitric.resources.Api.put">put</a></code></li>
 <li><code><a title="nitric.resources.Api.routes" href="#nitric.resources.Api.routes">routes</a></code></li>
 <li><code><a title="nitric.resources.Api.security" href="#nitric.resources.Api.security">security</a></code></li>
-<li><code><a title="nitric.resources.Api.security_definitions" href="#nitric.resources.Api.security_definitions">security_definitions</a></code></li>
 <li><code><a title="nitric.resources.Api.url" href="#nitric.resources.Api.url">url</a></code></li>
 </ul>
 </li>
 <li>
 <h4><code><a title="nitric.resources.ApiDetails" href="#nitric.resources.ApiDetails">ApiDetails</a></code></h4>
 <ul class="">
-<li><code><a title="nitric.resources.ApiDetails.id" href="#nitric.resources.ApiDetails.id">id</a></code></li>
-<li><code><a title="nitric.resources.ApiDetails.provider" href="#nitric.resources.ApiDetails.provider">provider</a></code></li>
-<li><code><a title="nitric.resources.ApiDetails.service" href="#nitric.resources.ApiDetails.service">service</a></code></li>
 <li><code><a title="nitric.resources.ApiDetails.url" href="#nitric.resources.ApiDetails.url">url</a></code></li>
 </ul>
 </li>
@@ -1576,7 +2171,6 @@ class JwtSecurityDefinition:
 <li><code><a title="nitric.resources.ApiOptions.middleware" href="#nitric.resources.ApiOptions.middleware">middleware</a></code></li>
 <li><code><a title="nitric.resources.ApiOptions.path" href="#nitric.resources.ApiOptions.path">path</a></code></li>
 <li><code><a title="nitric.resources.ApiOptions.security" href="#nitric.resources.ApiOptions.security">security</a></code></li>
-<li><code><a title="nitric.resources.ApiOptions.security_definitions" href="#nitric.resources.ApiOptions.security_definitions">security_definitions</a></code></li>
 </ul>
 </li>
 <li>
@@ -1589,9 +2183,16 @@ class JwtSecurityDefinition:
 </ul>
 </li>
 <li>
-<h4><code><a title="nitric.resources.Collection" href="#nitric.resources.Collection">Collection</a></code></h4>
+<h4><code><a title="nitric.resources.BucketNotificationContext" href="#nitric.resources.BucketNotificationContext">BucketNotificationContext</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.resources.FileNotificationContext" href="#nitric.resources.FileNotificationContext">FileNotificationContext</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.resources.Job" href="#nitric.resources.Job">Job</a></code></h4>
 <ul class="">
-<li><code><a title="nitric.resources.Collection.allow" href="#nitric.resources.Collection.allow">allow</a></code></li>
+<li><code><a title="nitric.resources.Job.allow" href="#nitric.resources.Job.allow">allow</a></code></li>
+<li><code><a title="nitric.resources.Job.name" href="#nitric.resources.Job.name">name</a></code></li>
 </ul>
 </li>
 <li>
@@ -1602,9 +2203,13 @@ class JwtSecurityDefinition:
 </ul>
 </li>
 <li>
-<h4><code><a title="nitric.resources.MethodOptions" href="#nitric.resources.MethodOptions">MethodOptions</a></code></h4>
+<h4><code><a title="nitric.resources.KeyValueStoreRef" href="#nitric.resources.KeyValueStoreRef">KeyValueStoreRef</a></code></h4>
 <ul class="">
-<li><code><a title="nitric.resources.MethodOptions.security" href="#nitric.resources.MethodOptions.security">security</a></code></li>
+<li><code><a title="nitric.resources.KeyValueStoreRef.delete" href="#nitric.resources.KeyValueStoreRef.delete">delete</a></code></li>
+<li><code><a title="nitric.resources.KeyValueStoreRef.get" href="#nitric.resources.KeyValueStoreRef.get">get</a></code></li>
+<li><code><a title="nitric.resources.KeyValueStoreRef.keys" href="#nitric.resources.KeyValueStoreRef.keys">keys</a></code></li>
+<li><code><a title="nitric.resources.KeyValueStoreRef.name" href="#nitric.resources.KeyValueStoreRef.name">name</a></code></li>
+<li><code><a title="nitric.resources.KeyValueStoreRef.set" href="#nitric.resources.KeyValueStoreRef.set">set</a></code></li>
 </ul>
 </li>
 <li>
@@ -1616,12 +2221,13 @@ class JwtSecurityDefinition:
 </ul>
 </li>
 <li>
-<h4><code><a title="nitric.resources.Schedule" href="#nitric.resources.Schedule">Schedule</a></code></h4>
+<h4><code><a title="nitric.resources.ScheduleServer" href="#nitric.resources.ScheduleServer">ScheduleServer</a></code></h4>
 <ul class="">
-<li><code><a title="nitric.resources.Schedule.description" href="#nitric.resources.Schedule.description">description</a></code></li>
-<li><code><a title="nitric.resources.Schedule.every" href="#nitric.resources.Schedule.every">every</a></code></li>
-<li><code><a title="nitric.resources.Schedule.server" href="#nitric.resources.Schedule.server">server</a></code></li>
-<li><code><a title="nitric.resources.Schedule.start" href="#nitric.resources.Schedule.start">start</a></code></li>
+<li><code><a title="nitric.resources.ScheduleServer.cron" href="#nitric.resources.ScheduleServer.cron">cron</a></code></li>
+<li><code><a title="nitric.resources.ScheduleServer.description" href="#nitric.resources.ScheduleServer.description">description</a></code></li>
+<li><code><a title="nitric.resources.ScheduleServer.every" href="#nitric.resources.ScheduleServer.every">every</a></code></li>
+<li><code><a title="nitric.resources.ScheduleServer.handler" href="#nitric.resources.ScheduleServer.handler">handler</a></code></li>
+<li><code><a title="nitric.resources.ScheduleServer.start" href="#nitric.resources.ScheduleServer.start">start</a></code></li>
 </ul>
 </li>
 <li>
@@ -1633,12 +2239,29 @@ class JwtSecurityDefinition:
 </ul>
 </li>
 <li>
+<h4><code><a title="nitric.resources.Sql" href="#nitric.resources.Sql">Sql</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.resources.Sql.connection_string" href="#nitric.resources.Sql.connection_string">connection_string</a></code></li>
+<li><code><a title="nitric.resources.Sql.migrations" href="#nitric.resources.Sql.migrations">migrations</a></code></li>
+<li><code><a title="nitric.resources.Sql.name" href="#nitric.resources.Sql.name">name</a></code></li>
+</ul>
+</li>
+<li>
 <h4><code><a title="nitric.resources.Topic" href="#nitric.resources.Topic">Topic</a></code></h4>
 <ul class="">
 <li><code><a title="nitric.resources.Topic.actions" href="#nitric.resources.Topic.actions">actions</a></code></li>
 <li><code><a title="nitric.resources.Topic.allow" href="#nitric.resources.Topic.allow">allow</a></code></li>
 <li><code><a title="nitric.resources.Topic.name" href="#nitric.resources.Topic.name">name</a></code></li>
 <li><code><a title="nitric.resources.Topic.subscribe" href="#nitric.resources.Topic.subscribe">subscribe</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.resources.Websocket" href="#nitric.resources.Websocket">Websocket</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.resources.Websocket.app" href="#nitric.resources.Websocket.app">app</a></code></li>
+<li><code><a title="nitric.resources.Websocket.name" href="#nitric.resources.Websocket.name">name</a></code></li>
+<li><code><a title="nitric.resources.Websocket.on" href="#nitric.resources.Websocket.on">on</a></code></li>
+<li><code><a title="nitric.resources.Websocket.send" href="#nitric.resources.Websocket.send">send</a></code></li>
 </ul>
 </li>
 </ul>

@@ -1,0 +1,1413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>nitric.context API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>nitric.context</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">#
+# Copyright (c) 2021 Nitric Technologies Pty Ltd.
+#
+# This file is part of Nitric Python 3 SDK.
+# See https://github.com/nitrictech/python-sdk for further info.
+#
+# Licensed under the Apache License, Version 2.0 (the &#34;License&#34;);
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an &#34;AS IS&#34; BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+from __future__ import annotations
+
+import functools
+import inspect
+import json
+from abc import ABC, abstractmethod
+from enum import Enum
+from typing import Any, Dict, Generic, List, Optional, Protocol, TypeVar, Union
+
+from opentelemetry import propagate
+
+from nitric.proto.schedules.v1 import ServerMessage as ScheduleServerMessage
+from nitric.proto.topics.v1 import ClientMessage as TopicClientMessage
+from nitric.proto.topics.v1 import MessageResponse as TopicResponse
+from nitric.proto.topics.v1 import ServerMessage as TopicServerMessage
+from nitric.proto.batch.v1 import (
+    ServerMessage as BatchServerMessage,
+    ClientMessage as BatchClientMessage,
+    JobResponse as BatchJobResponse,
+)
+from nitric.utils import dict_from_struct
+
+Record = Dict[str, Union[str, List[str]]]
+PROPAGATOR = propagate.get_global_textmap()
+
+
+class HttpMethod(Enum):
+    &#34;&#34;&#34;Valid query expression operators.&#34;&#34;&#34;
+
+    GET = &#34;GET&#34;
+    POST = &#34;POST&#34;
+    PUT = &#34;PUT&#34;
+    DELETE = &#34;DELETE&#34;
+    PATCH = &#34;PATCH&#34;
+    OPTIONS = &#34;OPTIONS&#34;
+
+    def __str__(self):
+        return str(self.value)
+
+
+class TriggerContext(Protocol):
+    &#34;&#34;&#34;Represents an abstract request/response context for any trigger.&#34;&#34;&#34;
+
+    @staticmethod
+    def _from_request(server_message) -&gt; TriggerContext:
+        &#34;&#34;&#34;Convert a server message request into this trigger context.&#34;&#34;&#34;
+        pass
+
+    def to_response(self):
+        &#34;&#34;&#34;Convert this trigger context into a server message response.&#34;&#34;&#34;
+        pass
+
+
+# ====== HTTP ======
+
+
+class HttpRequest:
+    &#34;&#34;&#34;Represents a translated Http Request forwarded from the Nitric Membrane.&#34;&#34;&#34;
+
+    def __init__(
+        self,
+        data: bytes,
+        method: str,
+        path: str,
+        params: Dict[str, str],
+        query: Record,
+        headers: Record,
+    ):
+        &#34;&#34;&#34;Construct a new HttpRequest.&#34;&#34;&#34;
+        self.data = data
+        self.method = method
+        self.path = path
+        self.params = params
+        self.query = query
+        self.headers = headers
+
+    @property
+    def json(self) -&gt; Optional[Any]:
+        &#34;&#34;&#34;Get the body of the request as JSON, returns None if request body is not JSON.&#34;&#34;&#34;
+        try:
+            return json.loads(self.body)
+        except json.JSONDecodeError:
+            return None
+        except TypeError:
+            return None
+
+    @property
+    def body(self):
+        &#34;&#34;&#34;Get the body of the request as text.&#34;&#34;&#34;
+        return self.data.decode(&#34;utf-8&#34;)
+
+
+class HttpResponse:
+    &#34;&#34;&#34;Represents an HTTP Response to be generated by the Nitric Membrane in response to an HTTP Request Trigger.&#34;&#34;&#34;
+
+    def __init__(self, status: int = 200, headers: Optional[Record] = None, body: Optional[bytes] = None):
+        &#34;&#34;&#34;Construct a new HttpResponse.&#34;&#34;&#34;
+        self.status = status
+        self.headers = headers if headers else {}
+        self._body = body if body else bytes()
+
+    @property
+    def body(self):
+        &#34;&#34;&#34;Return the HTTP response body.&#34;&#34;&#34;
+        return self._body
+
+    @body.setter
+    def body(self, value: Union[str, bytes, Any]):
+        if isinstance(value, str):
+            self._body = value.encode(&#34;utf-8&#34;)
+        elif isinstance(value, bytes):
+            self._body = value
+        else:
+            self._body = json.dumps(value).encode(&#34;utf-8&#34;)
+            self.headers[&#34;Content-Type&#34;] = [&#34;application/json&#34;]
+
+
+class HttpContext:
+    &#34;&#34;&#34;Represents the full request/response context for an Http based trigger.&#34;&#34;&#34;
+
+    def __init__(self, request: HttpRequest, response: Optional[HttpResponse] = None):
+        &#34;&#34;&#34;Construct a new HttpContext.&#34;&#34;&#34;
+        self.req = request
+        self.res = response if response else HttpResponse()
+
+    @staticmethod
+    def _ensure_value_is_list(value: Union[str, List[str]]) -&gt; List[str]:
+        return list(value) if isinstance(value, list) else [value]
+
+
+class MessageRequest:
+    &#34;&#34;&#34;Represents a translated Event, from a Subscribed Topic, forwarded from the Nitric Membrane.&#34;&#34;&#34;
+
+    data: dict[str, Any]
+    topic: str
+
+    def __init__(self, data: dict[str, Any], topic: str):
+        &#34;&#34;&#34;Construct a new EventRequest.&#34;&#34;&#34;
+        self.data = data
+        self.topic = topic
+
+
+class MessageResponse:
+    &#34;&#34;&#34;Represents the response to a trigger from an Event as a result of a Topic subscription.&#34;&#34;&#34;
+
+    def __init__(self, success: bool = True):
+        &#34;&#34;&#34;Construct a new EventResponse.&#34;&#34;&#34;
+        self.success = success
+
+
+class MessageContext:
+    &#34;&#34;&#34;Represents the full request/response context for an Event based trigger.&#34;&#34;&#34;
+
+    def __init__(self, request: MessageRequest, response: Optional[MessageResponse] = None):
+        &#34;&#34;&#34;Construct a new EventContext.&#34;&#34;&#34;
+        self.req = request
+        self.res = response if response else MessageResponse()
+
+    @staticmethod
+    def _from_request(msg: TopicServerMessage) -&gt; MessageContext:
+        &#34;&#34;&#34;Construct a new EventContext from a Topic trigger from the Nitric Membrane.&#34;&#34;&#34;
+        return MessageContext(
+            request=MessageRequest(
+                data=dict_from_struct(msg.message_request.message.struct_payload),
+                topic=msg.message_request.topic_name,
+            )
+        )
+
+    def to_response(self) -&gt; TopicClientMessage:
+        &#34;&#34;&#34;Construct a EventContext for the Nitric Membrane from this context object.&#34;&#34;&#34;
+        return TopicClientMessage(message_response=TopicResponse(success=self.res.success))
+
+
+# == WEBSOCKET ==
+
+
+class WebsocketRequest:
+    &#34;&#34;&#34;Represents an incoming websocket event.&#34;&#34;&#34;
+
+    def __init__(self, connection_id: str):
+        &#34;&#34;&#34;Construct a new WebsocketRequest.&#34;&#34;&#34;
+        self.connection_id = connection_id
+
+
+class WebsocketConnectionRequest(WebsocketRequest):
+    &#34;&#34;&#34;Represents an incoming websocket connection.&#34;&#34;&#34;
+
+    query: Dict[str, str | List[str]]
+
+    def __init__(self, connection_id: str, query: Dict[str, str | List[str]]):
+        &#34;&#34;&#34;Construct a new WebsocketConnectionRequest.&#34;&#34;&#34;
+        super().__init__(connection_id=connection_id)
+        self.query = query
+
+
+class WebsocketMessageRequest(WebsocketRequest):
+    &#34;&#34;&#34;Represents an incoming websocket message.&#34;&#34;&#34;
+
+    data: bytes
+
+    def __init__(self, connection_id: str, data: bytes):
+        &#34;&#34;&#34;Construct a new WebsocketMessageRequest.&#34;&#34;&#34;
+        super().__init__(connection_id=connection_id)
+        self.data = data
+
+
+class WebsocketResponse:
+    &#34;&#34;&#34;Represents a response to a websocket event.&#34;&#34;&#34;
+
+    def __init__(self):
+        &#34;&#34;&#34;Construct a new WebsocketResponse.&#34;&#34;&#34;
+
+
+class WebsocketConnectionResponse(WebsocketResponse):
+    &#34;&#34;&#34;Represents a response to a websocket connection event.&#34;&#34;&#34;
+
+    reject: bool
+
+    def __init__(self, reject: bool = False):
+        &#34;&#34;&#34;Construct a new WebsocketConnectionResponse.&#34;&#34;&#34;
+        self.reject = reject
+
+
+AnyWebsocketRequest = Union[WebsocketRequest, WebsocketConnectionRequest, WebsocketMessageRequest]
+AnyWebsocketResponse = Union[WebsocketResponse, WebsocketConnectionResponse]
+
+
+class WebsocketContext:
+    &#34;&#34;&#34;Represents the full request/response context for a Websocket based trigger.&#34;&#34;&#34;
+
+    def __init__(self, request: AnyWebsocketRequest, response: Optional[AnyWebsocketResponse] = None):
+        &#34;&#34;&#34;Construct a new WebsocketContext.&#34;&#34;&#34;
+        self.req = request
+        if response:
+            self.res = response
+        elif isinstance(request, WebsocketConnectionRequest):
+            self.res = WebsocketConnectionResponse()
+        else:
+            self.res = WebsocketResponse()
+
+
+# == Schedules ==
+
+
+class IntervalRequest:
+    &#34;&#34;&#34;Represents a translated Event, from a Schedule, forwarded from the Nitric Membrane.&#34;&#34;&#34;
+
+    def __init__(self, schedule_name: str):
+        &#34;&#34;&#34;Construct a new IntervalRequest.&#34;&#34;&#34;
+        self.schedule_name = schedule_name
+
+
+class IntervalResponse:
+    &#34;&#34;&#34;Represents the response to a trigger from an Interval as a result of a Schedule.&#34;&#34;&#34;
+
+    _request_id: str
+
+    def __init__(self, request_id: str):
+        &#34;&#34;&#34;Construct a new IntervalResponse.&#34;&#34;&#34;
+        self._request_id = request_id
+
+
+class IntervalContext:
+    &#34;&#34;&#34;Represents the full request/response context for a scheduled trigger.&#34;&#34;&#34;
+
+    def __init__(self, msg: ScheduleServerMessage):
+        &#34;&#34;&#34;Construct a new EventContext.&#34;&#34;&#34;
+        self.req = IntervalRequest(schedule_name=msg.interval_request.schedule_name)
+        self.res = IntervalResponse(msg.id)
+
+
+C = TypeVar(&#34;C&#34;)
+
+
+class Middleware(Protocol, Generic[C]):
+    &#34;&#34;&#34;A middleware function.&#34;&#34;&#34;
+
+    async def __call__(self, ctx: C, nxt: Optional[Middleware[C]] = None) -&gt; C:
+        &#34;&#34;&#34;Process trigger context.&#34;&#34;&#34;
+        ...
+
+
+class Handler(Protocol, Generic[C]):
+    &#34;&#34;&#34;A handler function.&#34;&#34;&#34;
+
+    async def __call__(self, ctx: C) -&gt; C | None:
+        &#34;&#34;&#34;Process trigger context.&#34;&#34;&#34;
+        ...
+
+
+HttpMiddleware = Middleware[HttpContext]
+EventMiddleware = Middleware[MessageContext]
+IntervalMiddleware = Middleware[IntervalContext]
+WebsocketMiddleware = Middleware[WebsocketContext]
+
+HttpHandler = Handler[HttpContext]
+EventHandler = Handler[MessageContext]
+IntervalHandler = Handler[IntervalContext]
+WebsocketHandler = Handler[WebsocketContext]
+
+
+def _convert_to_middleware(handler: Handler[C] | Middleware[C]) -&gt; Middleware[C]:
+    &#34;&#34;&#34;Convert a handler to a middleware, if it&#39;s already a middleware it&#39;s returned unchanged.&#34;&#34;&#34;
+    if not _is_handler(handler):
+        # it&#39;s not a middleware, don&#39;t convert it.
+        return handler  # type: ignore
+
+    async def middleware(ctx: C, nxt: Middleware[C]) -&gt; C:
+        context = await handler(ctx)  # type: ignore
+        return await nxt(context) if nxt else context  # type: ignore
+
+    return middleware  # type: ignore
+
+
+def _is_handler(unknown: Middleware[C] | Handler[C]) -&gt; bool:
+    &#34;&#34;&#34;Return True if the provided function is a handler (1 positional arg).&#34;&#34;&#34;
+    signature = inspect.signature(unknown)
+    params = signature.parameters
+    positional = [name for name, param in params.items() if param.default == inspect.Parameter.empty]
+    return len(positional) == 1
+
+
+def compose_middleware(*middlewares: Middleware[C] | Handler[C]) -&gt; Middleware[C]:
+    &#34;&#34;&#34;
+    Compose multiple middleware functions into a single middleware function.
+
+    The resulting middleware will effectively be a chain of the provided middleware,
+    where each calls the next in the chain when they&#39;re successful.
+    &#34;&#34;&#34;
+    middlewares = [_convert_to_middleware(middleware) for middleware in middlewares]  # type: ignore
+
+    async def composed(ctx: C, nxt: Optional[Middleware[C]] = None) -&gt; C:
+        last_middleware = nxt
+
+        def reduce_chain(acc_next: Middleware[C], cur: Middleware[C]) -&gt; Middleware[C]:
+            async def chained_middleware(ctx: C, nxt: Optional[Middleware[C]] = None) -&gt; C:
+                result = (await nxt(ctx)) if nxt is not None else ctx  # type: ignore
+                # type ignored because mypy appears to misidentify the correct return type
+                output_context = await cur(result, acc_next)  # type: ignore
+                if not output_context:
+                    return result  # type: ignore
+                return output_context  # type: ignore
+
+            return chained_middleware
+
+        middleware_chain = functools.reduce(reduce_chain, reversed(middlewares), last_middleware)  # type: ignore
+        # type ignored because mypy appears to misidentify the correct return type
+        return await middleware_chain(ctx)  # type: ignore
+
+    return composed
+
+
+class JobRequest:
+    &#34;&#34;&#34;Represents a job task forwarded from the Nitric Runtime Server.&#34;&#34;&#34;
+
+    data: dict[str, Any]
+
+    def __init__(self, data: dict[str, Any]):
+        &#34;&#34;&#34;Construct a new JobRequest.&#34;&#34;&#34;
+        self.data = data
+
+
+class JobResponse:
+    &#34;&#34;&#34;Represents the response to a job task, indicating the result.&#34;&#34;&#34;
+
+    def __init__(self, success: bool = True):
+        &#34;&#34;&#34;Construct a new EventResponse.&#34;&#34;&#34;
+        self.success = success
+
+
+class JobContext:
+    &#34;&#34;&#34;Represents the full request/response context for a Job task trigger.&#34;&#34;&#34;
+
+    def __init__(self, request: JobRequest, response: Optional[JobResponse] = None):
+        &#34;&#34;&#34;Construct a new JobContext.&#34;&#34;&#34;
+        self.req = request
+        self.res = response if response else JobResponse()
+
+    @staticmethod
+    def _from_request(msg: BatchServerMessage) -&gt; &#34;JobContext&#34;:
+        &#34;&#34;&#34;Construct a new JobContext from a Job trigger from the Nitric Server.&#34;&#34;&#34;
+        return JobContext(request=JobRequest(data=dict_from_struct(msg.job_request.data.struct)))
+
+    def to_response(self) -&gt; BatchClientMessage:
+        &#34;&#34;&#34;Construct a JobContext for the Nitric Server from this context object.&#34;&#34;&#34;
+        return BatchClientMessage(job_response=BatchJobResponse(success=self.res.success))
+
+
+class FunctionServer(ABC):
+    &#34;&#34;&#34;Represents a worker that should be started at runtime.&#34;&#34;&#34;
+
+    @abstractmethod
+    async def start(self) -&gt; None:
+        &#34;&#34;&#34;Start the worker.&#34;&#34;&#34;</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="nitric.context.compose_middleware"><code class="name flex">
+<span>def <span class="ident">compose_middleware</span></span>(<span>*middlewares: <a title="nitric.context.Middleware" href="#nitric.context.Middleware">Middleware</a>[C] | <a title="nitric.context.Handler" href="#nitric.context.Handler">Handler</a>[C]) ‑> <a title="nitric.context.Middleware" href="#nitric.context.Middleware">Middleware</a>[~C]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Compose multiple middleware functions into a single middleware function.</p>
+<p>The resulting middleware will effectively be a chain of the provided middleware,
+where each calls the next in the chain when they're successful.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def compose_middleware(*middlewares: Middleware[C] | Handler[C]) -&gt; Middleware[C]:
+    &#34;&#34;&#34;
+    Compose multiple middleware functions into a single middleware function.
+
+    The resulting middleware will effectively be a chain of the provided middleware,
+    where each calls the next in the chain when they&#39;re successful.
+    &#34;&#34;&#34;
+    middlewares = [_convert_to_middleware(middleware) for middleware in middlewares]  # type: ignore
+
+    async def composed(ctx: C, nxt: Optional[Middleware[C]] = None) -&gt; C:
+        last_middleware = nxt
+
+        def reduce_chain(acc_next: Middleware[C], cur: Middleware[C]) -&gt; Middleware[C]:
+            async def chained_middleware(ctx: C, nxt: Optional[Middleware[C]] = None) -&gt; C:
+                result = (await nxt(ctx)) if nxt is not None else ctx  # type: ignore
+                # type ignored because mypy appears to misidentify the correct return type
+                output_context = await cur(result, acc_next)  # type: ignore
+                if not output_context:
+                    return result  # type: ignore
+                return output_context  # type: ignore
+
+            return chained_middleware
+
+        middleware_chain = functools.reduce(reduce_chain, reversed(middlewares), last_middleware)  # type: ignore
+        # type ignored because mypy appears to misidentify the correct return type
+        return await middleware_chain(ctx)  # type: ignore
+
+    return composed</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="nitric.context.FunctionServer"><code class="flex name class">
+<span>class <span class="ident">FunctionServer</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents a worker that should be started at runtime.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class FunctionServer(ABC):
+    &#34;&#34;&#34;Represents a worker that should be started at runtime.&#34;&#34;&#34;
+
+    @abstractmethod
+    async def start(self) -&gt; None:
+        &#34;&#34;&#34;Start the worker.&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>abc.ABC</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="nitric.resources.apis.ApiRouteWorker" href="resources/apis.html#nitric.resources.apis.ApiRouteWorker">ApiRouteWorker</a></li>
+<li><a title="nitric.resources.buckets.Listener" href="resources/buckets.html#nitric.resources.buckets.Listener">Listener</a></li>
+<li>nitric.resources.job.JobHandler</li>
+<li><a title="nitric.resources.schedules.ScheduleServer" href="resources/schedules.html#nitric.resources.schedules.ScheduleServer">ScheduleServer</a></li>
+<li><a title="nitric.resources.topics.Subscriber" href="resources/topics.html#nitric.resources.topics.Subscriber">Subscriber</a></li>
+<li><a title="nitric.resources.websockets.WebsocketWorker" href="resources/websockets.html#nitric.resources.websockets.WebsocketWorker">WebsocketWorker</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.context.FunctionServer.start"><code class="name flex">
+<span>async def <span class="ident">start</span></span>(<span>self) ‑> NoneType</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Start the worker.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@abstractmethod
+async def start(self) -&gt; None:
+    &#34;&#34;&#34;Start the worker.&#34;&#34;&#34;</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.context.Handler"><code class="flex name class">
+<span>class <span class="ident">Handler</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A handler function.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Handler(Protocol, Generic[C]):
+    &#34;&#34;&#34;A handler function.&#34;&#34;&#34;
+
+    async def __call__(self, ctx: C) -&gt; C | None:
+        &#34;&#34;&#34;Process trigger context.&#34;&#34;&#34;
+        ...</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>typing.Protocol</li>
+<li>typing.Generic</li>
+</ul>
+</dd>
+<dt id="nitric.context.HttpContext"><code class="flex name class">
+<span>class <span class="ident">HttpContext</span></span>
+<span>(</span><span>request: <a title="nitric.context.HttpRequest" href="#nitric.context.HttpRequest">HttpRequest</a>, response: Optional[<a title="nitric.context.HttpResponse" href="#nitric.context.HttpResponse">HttpResponse</a>] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents the full request/response context for an Http based trigger.</p>
+<p>Construct a new HttpContext.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class HttpContext:
+    &#34;&#34;&#34;Represents the full request/response context for an Http based trigger.&#34;&#34;&#34;
+
+    def __init__(self, request: HttpRequest, response: Optional[HttpResponse] = None):
+        &#34;&#34;&#34;Construct a new HttpContext.&#34;&#34;&#34;
+        self.req = request
+        self.res = response if response else HttpResponse()
+
+    @staticmethod
+    def _ensure_value_is_list(value: Union[str, List[str]]) -&gt; List[str]:
+        return list(value) if isinstance(value, list) else [value]</code></pre>
+</details>
+</dd>
+<dt id="nitric.context.HttpMethod"><code class="flex name class">
+<span>class <span class="ident">HttpMethod</span></span>
+<span>(</span><span>*args, **kwds)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Valid query expression operators.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class HttpMethod(Enum):
+    &#34;&#34;&#34;Valid query expression operators.&#34;&#34;&#34;
+
+    GET = &#34;GET&#34;
+    POST = &#34;POST&#34;
+    PUT = &#34;PUT&#34;
+    DELETE = &#34;DELETE&#34;
+    PATCH = &#34;PATCH&#34;
+    OPTIONS = &#34;OPTIONS&#34;
+
+    def __str__(self):
+        return str(self.value)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.context.HttpMethod.DELETE"><code class="name">var <span class="ident">DELETE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.context.HttpMethod.GET"><code class="name">var <span class="ident">GET</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.context.HttpMethod.OPTIONS"><code class="name">var <span class="ident">OPTIONS</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.context.HttpMethod.PATCH"><code class="name">var <span class="ident">PATCH</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.context.HttpMethod.POST"><code class="name">var <span class="ident">POST</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.context.HttpMethod.PUT"><code class="name">var <span class="ident">PUT</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.context.HttpRequest"><code class="flex name class">
+<span>class <span class="ident">HttpRequest</span></span>
+<span>(</span><span>data: bytes, method: str, path: str, params: Dict[str, str], query: Record, headers: Record)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents a translated Http Request forwarded from the Nitric Membrane.</p>
+<p>Construct a new HttpRequest.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class HttpRequest:
+    &#34;&#34;&#34;Represents a translated Http Request forwarded from the Nitric Membrane.&#34;&#34;&#34;
+
+    def __init__(
+        self,
+        data: bytes,
+        method: str,
+        path: str,
+        params: Dict[str, str],
+        query: Record,
+        headers: Record,
+    ):
+        &#34;&#34;&#34;Construct a new HttpRequest.&#34;&#34;&#34;
+        self.data = data
+        self.method = method
+        self.path = path
+        self.params = params
+        self.query = query
+        self.headers = headers
+
+    @property
+    def json(self) -&gt; Optional[Any]:
+        &#34;&#34;&#34;Get the body of the request as JSON, returns None if request body is not JSON.&#34;&#34;&#34;
+        try:
+            return json.loads(self.body)
+        except json.JSONDecodeError:
+            return None
+        except TypeError:
+            return None
+
+    @property
+    def body(self):
+        &#34;&#34;&#34;Get the body of the request as text.&#34;&#34;&#34;
+        return self.data.decode(&#34;utf-8&#34;)</code></pre>
+</details>
+<h3>Instance variables</h3>
+<dl>
+<dt id="nitric.context.HttpRequest.body"><code class="name">var <span class="ident">body</span></code></dt>
+<dd>
+<div class="desc"><p>Get the body of the request as text.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def body(self):
+    &#34;&#34;&#34;Get the body of the request as text.&#34;&#34;&#34;
+    return self.data.decode(&#34;utf-8&#34;)</code></pre>
+</details>
+</dd>
+<dt id="nitric.context.HttpRequest.json"><code class="name">var <span class="ident">json</span> : Optional[Any]</code></dt>
+<dd>
+<div class="desc"><p>Get the body of the request as JSON, returns None if request body is not JSON.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def json(self) -&gt; Optional[Any]:
+    &#34;&#34;&#34;Get the body of the request as JSON, returns None if request body is not JSON.&#34;&#34;&#34;
+    try:
+        return json.loads(self.body)
+    except json.JSONDecodeError:
+        return None
+    except TypeError:
+        return None</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.context.HttpResponse"><code class="flex name class">
+<span>class <span class="ident">HttpResponse</span></span>
+<span>(</span><span>status: int = 200, headers: Optional[Record] = None, body: Optional[bytes] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents an HTTP Response to be generated by the Nitric Membrane in response to an HTTP Request Trigger.</p>
+<p>Construct a new HttpResponse.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class HttpResponse:
+    &#34;&#34;&#34;Represents an HTTP Response to be generated by the Nitric Membrane in response to an HTTP Request Trigger.&#34;&#34;&#34;
+
+    def __init__(self, status: int = 200, headers: Optional[Record] = None, body: Optional[bytes] = None):
+        &#34;&#34;&#34;Construct a new HttpResponse.&#34;&#34;&#34;
+        self.status = status
+        self.headers = headers if headers else {}
+        self._body = body if body else bytes()
+
+    @property
+    def body(self):
+        &#34;&#34;&#34;Return the HTTP response body.&#34;&#34;&#34;
+        return self._body
+
+    @body.setter
+    def body(self, value: Union[str, bytes, Any]):
+        if isinstance(value, str):
+            self._body = value.encode(&#34;utf-8&#34;)
+        elif isinstance(value, bytes):
+            self._body = value
+        else:
+            self._body = json.dumps(value).encode(&#34;utf-8&#34;)
+            self.headers[&#34;Content-Type&#34;] = [&#34;application/json&#34;]</code></pre>
+</details>
+<h3>Instance variables</h3>
+<dl>
+<dt id="nitric.context.HttpResponse.body"><code class="name">var <span class="ident">body</span></code></dt>
+<dd>
+<div class="desc"><p>Return the HTTP response body.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def body(self):
+    &#34;&#34;&#34;Return the HTTP response body.&#34;&#34;&#34;
+    return self._body</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.context.IntervalContext"><code class="flex name class">
+<span>class <span class="ident">IntervalContext</span></span>
+<span>(</span><span>msg: ScheduleServerMessage)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents the full request/response context for a scheduled trigger.</p>
+<p>Construct a new EventContext.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class IntervalContext:
+    &#34;&#34;&#34;Represents the full request/response context for a scheduled trigger.&#34;&#34;&#34;
+
+    def __init__(self, msg: ScheduleServerMessage):
+        &#34;&#34;&#34;Construct a new EventContext.&#34;&#34;&#34;
+        self.req = IntervalRequest(schedule_name=msg.interval_request.schedule_name)
+        self.res = IntervalResponse(msg.id)</code></pre>
+</details>
+</dd>
+<dt id="nitric.context.IntervalRequest"><code class="flex name class">
+<span>class <span class="ident">IntervalRequest</span></span>
+<span>(</span><span>schedule_name: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents a translated Event, from a Schedule, forwarded from the Nitric Membrane.</p>
+<p>Construct a new IntervalRequest.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class IntervalRequest:
+    &#34;&#34;&#34;Represents a translated Event, from a Schedule, forwarded from the Nitric Membrane.&#34;&#34;&#34;
+
+    def __init__(self, schedule_name: str):
+        &#34;&#34;&#34;Construct a new IntervalRequest.&#34;&#34;&#34;
+        self.schedule_name = schedule_name</code></pre>
+</details>
+</dd>
+<dt id="nitric.context.IntervalResponse"><code class="flex name class">
+<span>class <span class="ident">IntervalResponse</span></span>
+<span>(</span><span>request_id: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents the response to a trigger from an Interval as a result of a Schedule.</p>
+<p>Construct a new IntervalResponse.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class IntervalResponse:
+    &#34;&#34;&#34;Represents the response to a trigger from an Interval as a result of a Schedule.&#34;&#34;&#34;
+
+    _request_id: str
+
+    def __init__(self, request_id: str):
+        &#34;&#34;&#34;Construct a new IntervalResponse.&#34;&#34;&#34;
+        self._request_id = request_id</code></pre>
+</details>
+</dd>
+<dt id="nitric.context.JobContext"><code class="flex name class">
+<span>class <span class="ident">JobContext</span></span>
+<span>(</span><span>request: <a title="nitric.context.JobRequest" href="#nitric.context.JobRequest">JobRequest</a>, response: Optional[<a title="nitric.context.JobResponse" href="#nitric.context.JobResponse">JobResponse</a>] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents the full request/response context for a Job task trigger.</p>
+<p>Construct a new JobContext.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class JobContext:
+    &#34;&#34;&#34;Represents the full request/response context for a Job task trigger.&#34;&#34;&#34;
+
+    def __init__(self, request: JobRequest, response: Optional[JobResponse] = None):
+        &#34;&#34;&#34;Construct a new JobContext.&#34;&#34;&#34;
+        self.req = request
+        self.res = response if response else JobResponse()
+
+    @staticmethod
+    def _from_request(msg: BatchServerMessage) -&gt; &#34;JobContext&#34;:
+        &#34;&#34;&#34;Construct a new JobContext from a Job trigger from the Nitric Server.&#34;&#34;&#34;
+        return JobContext(request=JobRequest(data=dict_from_struct(msg.job_request.data.struct)))
+
+    def to_response(self) -&gt; BatchClientMessage:
+        &#34;&#34;&#34;Construct a JobContext for the Nitric Server from this context object.&#34;&#34;&#34;
+        return BatchClientMessage(job_response=BatchJobResponse(success=self.res.success))</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.context.JobContext.to_response"><code class="name flex">
+<span>def <span class="ident">to_response</span></span>(<span>self) ‑> <a title="nitric.proto.batch.v1.ClientMessage" href="proto/batch/v1/index.html#nitric.proto.batch.v1.ClientMessage">ClientMessage</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Construct a JobContext for the Nitric Server from this context object.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_response(self) -&gt; BatchClientMessage:
+    &#34;&#34;&#34;Construct a JobContext for the Nitric Server from this context object.&#34;&#34;&#34;
+    return BatchClientMessage(job_response=BatchJobResponse(success=self.res.success))</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.context.JobRequest"><code class="flex name class">
+<span>class <span class="ident">JobRequest</span></span>
+<span>(</span><span>data: dict[str, Any])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents a job task forwarded from the Nitric Runtime Server.</p>
+<p>Construct a new JobRequest.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class JobRequest:
+    &#34;&#34;&#34;Represents a job task forwarded from the Nitric Runtime Server.&#34;&#34;&#34;
+
+    data: dict[str, Any]
+
+    def __init__(self, data: dict[str, Any]):
+        &#34;&#34;&#34;Construct a new JobRequest.&#34;&#34;&#34;
+        self.data = data</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.context.JobRequest.data"><code class="name">var <span class="ident">data</span> : dict[str, typing.Any]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.context.JobResponse"><code class="flex name class">
+<span>class <span class="ident">JobResponse</span></span>
+<span>(</span><span>success: bool = True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents the response to a job task, indicating the result.</p>
+<p>Construct a new EventResponse.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class JobResponse:
+    &#34;&#34;&#34;Represents the response to a job task, indicating the result.&#34;&#34;&#34;
+
+    def __init__(self, success: bool = True):
+        &#34;&#34;&#34;Construct a new EventResponse.&#34;&#34;&#34;
+        self.success = success</code></pre>
+</details>
+</dd>
+<dt id="nitric.context.MessageContext"><code class="flex name class">
+<span>class <span class="ident">MessageContext</span></span>
+<span>(</span><span>request: <a title="nitric.context.MessageRequest" href="#nitric.context.MessageRequest">MessageRequest</a>, response: Optional[<a title="nitric.context.MessageResponse" href="#nitric.context.MessageResponse">MessageResponse</a>] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents the full request/response context for an Event based trigger.</p>
+<p>Construct a new EventContext.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MessageContext:
+    &#34;&#34;&#34;Represents the full request/response context for an Event based trigger.&#34;&#34;&#34;
+
+    def __init__(self, request: MessageRequest, response: Optional[MessageResponse] = None):
+        &#34;&#34;&#34;Construct a new EventContext.&#34;&#34;&#34;
+        self.req = request
+        self.res = response if response else MessageResponse()
+
+    @staticmethod
+    def _from_request(msg: TopicServerMessage) -&gt; MessageContext:
+        &#34;&#34;&#34;Construct a new EventContext from a Topic trigger from the Nitric Membrane.&#34;&#34;&#34;
+        return MessageContext(
+            request=MessageRequest(
+                data=dict_from_struct(msg.message_request.message.struct_payload),
+                topic=msg.message_request.topic_name,
+            )
+        )
+
+    def to_response(self) -&gt; TopicClientMessage:
+        &#34;&#34;&#34;Construct a EventContext for the Nitric Membrane from this context object.&#34;&#34;&#34;
+        return TopicClientMessage(message_response=TopicResponse(success=self.res.success))</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.context.MessageContext.to_response"><code class="name flex">
+<span>def <span class="ident">to_response</span></span>(<span>self) ‑> <a title="nitric.proto.topics.v1.ClientMessage" href="proto/topics/v1/index.html#nitric.proto.topics.v1.ClientMessage">ClientMessage</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Construct a EventContext for the Nitric Membrane from this context object.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_response(self) -&gt; TopicClientMessage:
+    &#34;&#34;&#34;Construct a EventContext for the Nitric Membrane from this context object.&#34;&#34;&#34;
+    return TopicClientMessage(message_response=TopicResponse(success=self.res.success))</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.context.MessageRequest"><code class="flex name class">
+<span>class <span class="ident">MessageRequest</span></span>
+<span>(</span><span>data: dict[str, Any], topic: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents a translated Event, from a Subscribed Topic, forwarded from the Nitric Membrane.</p>
+<p>Construct a new EventRequest.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MessageRequest:
+    &#34;&#34;&#34;Represents a translated Event, from a Subscribed Topic, forwarded from the Nitric Membrane.&#34;&#34;&#34;
+
+    data: dict[str, Any]
+    topic: str
+
+    def __init__(self, data: dict[str, Any], topic: str):
+        &#34;&#34;&#34;Construct a new EventRequest.&#34;&#34;&#34;
+        self.data = data
+        self.topic = topic</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.context.MessageRequest.data"><code class="name">var <span class="ident">data</span> : dict[str, typing.Any]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.context.MessageRequest.topic"><code class="name">var <span class="ident">topic</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.context.MessageResponse"><code class="flex name class">
+<span>class <span class="ident">MessageResponse</span></span>
+<span>(</span><span>success: bool = True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents the response to a trigger from an Event as a result of a Topic subscription.</p>
+<p>Construct a new EventResponse.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MessageResponse:
+    &#34;&#34;&#34;Represents the response to a trigger from an Event as a result of a Topic subscription.&#34;&#34;&#34;
+
+    def __init__(self, success: bool = True):
+        &#34;&#34;&#34;Construct a new EventResponse.&#34;&#34;&#34;
+        self.success = success</code></pre>
+</details>
+</dd>
+<dt id="nitric.context.Middleware"><code class="flex name class">
+<span>class <span class="ident">Middleware</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A middleware function.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Middleware(Protocol, Generic[C]):
+    &#34;&#34;&#34;A middleware function.&#34;&#34;&#34;
+
+    async def __call__(self, ctx: C, nxt: Optional[Middleware[C]] = None) -&gt; C:
+        &#34;&#34;&#34;Process trigger context.&#34;&#34;&#34;
+        ...</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>typing.Protocol</li>
+<li>typing.Generic</li>
+</ul>
+</dd>
+<dt id="nitric.context.TriggerContext"><code class="flex name class">
+<span>class <span class="ident">TriggerContext</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents an abstract request/response context for any trigger.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class TriggerContext(Protocol):
+    &#34;&#34;&#34;Represents an abstract request/response context for any trigger.&#34;&#34;&#34;
+
+    @staticmethod
+    def _from_request(server_message) -&gt; TriggerContext:
+        &#34;&#34;&#34;Convert a server message request into this trigger context.&#34;&#34;&#34;
+        pass
+
+    def to_response(self):
+        &#34;&#34;&#34;Convert this trigger context into a server message response.&#34;&#34;&#34;
+        pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>typing.Protocol</li>
+<li>typing.Generic</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.context.TriggerContext.to_response"><code class="name flex">
+<span>def <span class="ident">to_response</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert this trigger context into a server message response.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_response(self):
+    &#34;&#34;&#34;Convert this trigger context into a server message response.&#34;&#34;&#34;
+    pass</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.context.WebsocketConnectionRequest"><code class="flex name class">
+<span>class <span class="ident">WebsocketConnectionRequest</span></span>
+<span>(</span><span>connection_id: str, query: Dict[str, str | List[str]])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents an incoming websocket connection.</p>
+<p>Construct a new WebsocketConnectionRequest.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class WebsocketConnectionRequest(WebsocketRequest):
+    &#34;&#34;&#34;Represents an incoming websocket connection.&#34;&#34;&#34;
+
+    query: Dict[str, str | List[str]]
+
+    def __init__(self, connection_id: str, query: Dict[str, str | List[str]]):
+        &#34;&#34;&#34;Construct a new WebsocketConnectionRequest.&#34;&#34;&#34;
+        super().__init__(connection_id=connection_id)
+        self.query = query</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="nitric.context.WebsocketRequest" href="#nitric.context.WebsocketRequest">WebsocketRequest</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.context.WebsocketConnectionRequest.query"><code class="name">var <span class="ident">query</span> : Dict[str, Union[str, List[str]]]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.context.WebsocketConnectionResponse"><code class="flex name class">
+<span>class <span class="ident">WebsocketConnectionResponse</span></span>
+<span>(</span><span>reject: bool = False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents a response to a websocket connection event.</p>
+<p>Construct a new WebsocketConnectionResponse.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class WebsocketConnectionResponse(WebsocketResponse):
+    &#34;&#34;&#34;Represents a response to a websocket connection event.&#34;&#34;&#34;
+
+    reject: bool
+
+    def __init__(self, reject: bool = False):
+        &#34;&#34;&#34;Construct a new WebsocketConnectionResponse.&#34;&#34;&#34;
+        self.reject = reject</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="nitric.context.WebsocketResponse" href="#nitric.context.WebsocketResponse">WebsocketResponse</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.context.WebsocketConnectionResponse.reject"><code class="name">var <span class="ident">reject</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.context.WebsocketContext"><code class="flex name class">
+<span>class <span class="ident">WebsocketContext</span></span>
+<span>(</span><span>request: AnyWebsocketRequest, response: Optional[AnyWebsocketResponse] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents the full request/response context for a Websocket based trigger.</p>
+<p>Construct a new WebsocketContext.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class WebsocketContext:
+    &#34;&#34;&#34;Represents the full request/response context for a Websocket based trigger.&#34;&#34;&#34;
+
+    def __init__(self, request: AnyWebsocketRequest, response: Optional[AnyWebsocketResponse] = None):
+        &#34;&#34;&#34;Construct a new WebsocketContext.&#34;&#34;&#34;
+        self.req = request
+        if response:
+            self.res = response
+        elif isinstance(request, WebsocketConnectionRequest):
+            self.res = WebsocketConnectionResponse()
+        else:
+            self.res = WebsocketResponse()</code></pre>
+</details>
+</dd>
+<dt id="nitric.context.WebsocketMessageRequest"><code class="flex name class">
+<span>class <span class="ident">WebsocketMessageRequest</span></span>
+<span>(</span><span>connection_id: str, data: bytes)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents an incoming websocket message.</p>
+<p>Construct a new WebsocketMessageRequest.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class WebsocketMessageRequest(WebsocketRequest):
+    &#34;&#34;&#34;Represents an incoming websocket message.&#34;&#34;&#34;
+
+    data: bytes
+
+    def __init__(self, connection_id: str, data: bytes):
+        &#34;&#34;&#34;Construct a new WebsocketMessageRequest.&#34;&#34;&#34;
+        super().__init__(connection_id=connection_id)
+        self.data = data</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="nitric.context.WebsocketRequest" href="#nitric.context.WebsocketRequest">WebsocketRequest</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.context.WebsocketMessageRequest.data"><code class="name">var <span class="ident">data</span> : bytes</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.context.WebsocketRequest"><code class="flex name class">
+<span>class <span class="ident">WebsocketRequest</span></span>
+<span>(</span><span>connection_id: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents an incoming websocket event.</p>
+<p>Construct a new WebsocketRequest.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class WebsocketRequest:
+    &#34;&#34;&#34;Represents an incoming websocket event.&#34;&#34;&#34;
+
+    def __init__(self, connection_id: str):
+        &#34;&#34;&#34;Construct a new WebsocketRequest.&#34;&#34;&#34;
+        self.connection_id = connection_id</code></pre>
+</details>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="nitric.context.WebsocketConnectionRequest" href="#nitric.context.WebsocketConnectionRequest">WebsocketConnectionRequest</a></li>
+<li><a title="nitric.context.WebsocketMessageRequest" href="#nitric.context.WebsocketMessageRequest">WebsocketMessageRequest</a></li>
+</ul>
+</dd>
+<dt id="nitric.context.WebsocketResponse"><code class="flex name class">
+<span>class <span class="ident">WebsocketResponse</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents a response to a websocket event.</p>
+<p>Construct a new WebsocketResponse.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class WebsocketResponse:
+    &#34;&#34;&#34;Represents a response to a websocket event.&#34;&#34;&#34;
+
+    def __init__(self):
+        &#34;&#34;&#34;Construct a new WebsocketResponse.&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="nitric.context.WebsocketConnectionResponse" href="#nitric.context.WebsocketConnectionResponse">WebsocketConnectionResponse</a></li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="nitric" href="index.html">nitric</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="nitric.context.compose_middleware" href="#nitric.context.compose_middleware">compose_middleware</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="nitric.context.FunctionServer" href="#nitric.context.FunctionServer">FunctionServer</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.context.FunctionServer.start" href="#nitric.context.FunctionServer.start">start</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.context.Handler" href="#nitric.context.Handler">Handler</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.context.HttpContext" href="#nitric.context.HttpContext">HttpContext</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.context.HttpMethod" href="#nitric.context.HttpMethod">HttpMethod</a></code></h4>
+<ul class="two-column">
+<li><code><a title="nitric.context.HttpMethod.DELETE" href="#nitric.context.HttpMethod.DELETE">DELETE</a></code></li>
+<li><code><a title="nitric.context.HttpMethod.GET" href="#nitric.context.HttpMethod.GET">GET</a></code></li>
+<li><code><a title="nitric.context.HttpMethod.OPTIONS" href="#nitric.context.HttpMethod.OPTIONS">OPTIONS</a></code></li>
+<li><code><a title="nitric.context.HttpMethod.PATCH" href="#nitric.context.HttpMethod.PATCH">PATCH</a></code></li>
+<li><code><a title="nitric.context.HttpMethod.POST" href="#nitric.context.HttpMethod.POST">POST</a></code></li>
+<li><code><a title="nitric.context.HttpMethod.PUT" href="#nitric.context.HttpMethod.PUT">PUT</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.context.HttpRequest" href="#nitric.context.HttpRequest">HttpRequest</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.context.HttpRequest.body" href="#nitric.context.HttpRequest.body">body</a></code></li>
+<li><code><a title="nitric.context.HttpRequest.json" href="#nitric.context.HttpRequest.json">json</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.context.HttpResponse" href="#nitric.context.HttpResponse">HttpResponse</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.context.HttpResponse.body" href="#nitric.context.HttpResponse.body">body</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.context.IntervalContext" href="#nitric.context.IntervalContext">IntervalContext</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.context.IntervalRequest" href="#nitric.context.IntervalRequest">IntervalRequest</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.context.IntervalResponse" href="#nitric.context.IntervalResponse">IntervalResponse</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.context.JobContext" href="#nitric.context.JobContext">JobContext</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.context.JobContext.to_response" href="#nitric.context.JobContext.to_response">to_response</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.context.JobRequest" href="#nitric.context.JobRequest">JobRequest</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.context.JobRequest.data" href="#nitric.context.JobRequest.data">data</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.context.JobResponse" href="#nitric.context.JobResponse">JobResponse</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.context.MessageContext" href="#nitric.context.MessageContext">MessageContext</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.context.MessageContext.to_response" href="#nitric.context.MessageContext.to_response">to_response</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.context.MessageRequest" href="#nitric.context.MessageRequest">MessageRequest</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.context.MessageRequest.data" href="#nitric.context.MessageRequest.data">data</a></code></li>
+<li><code><a title="nitric.context.MessageRequest.topic" href="#nitric.context.MessageRequest.topic">topic</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.context.MessageResponse" href="#nitric.context.MessageResponse">MessageResponse</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.context.Middleware" href="#nitric.context.Middleware">Middleware</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.context.TriggerContext" href="#nitric.context.TriggerContext">TriggerContext</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.context.TriggerContext.to_response" href="#nitric.context.TriggerContext.to_response">to_response</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.context.WebsocketConnectionRequest" href="#nitric.context.WebsocketConnectionRequest">WebsocketConnectionRequest</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.context.WebsocketConnectionRequest.query" href="#nitric.context.WebsocketConnectionRequest.query">query</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.context.WebsocketConnectionResponse" href="#nitric.context.WebsocketConnectionResponse">WebsocketConnectionResponse</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.context.WebsocketConnectionResponse.reject" href="#nitric.context.WebsocketConnectionResponse.reject">reject</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.context.WebsocketContext" href="#nitric.context.WebsocketContext">WebsocketContext</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.context.WebsocketMessageRequest" href="#nitric.context.WebsocketMessageRequest">WebsocketMessageRequest</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.context.WebsocketMessageRequest.data" href="#nitric.context.WebsocketMessageRequest.data">data</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.context.WebsocketRequest" href="#nitric.context.WebsocketRequest">WebsocketRequest</a></code></h4>
+</li>
+<li>
+<h4><code><a title="nitric.context.WebsocketResponse" href="#nitric.context.WebsocketResponse">WebsocketResponse</a></code></h4>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

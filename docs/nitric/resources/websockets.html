@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>nitric.resources.websockets API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>nitric.resources.websockets</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">#
+# Copyright (c) 2021 Nitric Technologies Pty Ltd.
+#
+# This file is part of Nitric Python 3 SDK.
+# See https://github.com/nitrictech/python-sdk for further info.
+#
+# Licensed under the Apache License, Version 2.0 (the &#34;License&#34;);
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an &#34;AS IS&#34; BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+from __future__ import annotations
+
+import logging
+from typing import Callable, Literal
+
+import betterproto
+import grpclib
+from grpclib import GRPCError
+from grpclib.client import Channel
+
+from nitric.application import Nitric
+from nitric.bidi import AsyncNotifierList
+from nitric.context import (
+    FunctionServer,
+    Record,
+    WebsocketConnectionRequest,
+    WebsocketConnectionResponse,
+    WebsocketContext,
+    WebsocketHandler,
+    WebsocketMessageRequest,
+    WebsocketRequest,
+)
+from nitric.exception import exception_from_grpc_error
+from nitric.proto.resources.v1 import Action, PolicyResource, ResourceDeclareRequest, ResourceIdentifier, ResourceType
+from nitric.proto.websockets.v1 import ClientMessage, RegistrationRequest
+from nitric.proto.websockets.v1 import WebsocketConnectionResponse as ProtoWebsocketConnectionResponse
+from nitric.proto.websockets.v1 import (
+    WebsocketEventRequest,
+    WebsocketEventResponse,
+    WebsocketEventType,
+    WebsocketHandlerStub,
+    WebsocketSendRequest,
+    WebsocketStub,
+)
+from nitric.resources.resource import Resource as BaseResource
+from nitric.channel import ChannelManager
+
+
+class WebsocketRef:
+    &#34;&#34;&#34;A reference to a deployed websocket, used to interact with the websocket at runtime.&#34;&#34;&#34;
+
+    def __init__(self) -&gt; None:
+        &#34;&#34;&#34;Construct a Nitric Websocket Client.&#34;&#34;&#34;
+        self._channel: Channel = ChannelManager.get_channel()
+        self._websocket_stub = WebsocketStub(channel=self._channel)
+
+    async def send(self, socket: str, connection_id: str, data: bytes):
+        &#34;&#34;&#34;Send data to a connection on a socket.&#34;&#34;&#34;
+        try:
+            await self._websocket_stub.send_message(
+                websocket_send_request=WebsocketSendRequest(socket_name=socket, connection_id=connection_id, data=data)
+            )
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+
+def _to_grpc_event_type(event_type: Literal[&#34;connect&#34;, &#34;disconnect&#34;, &#34;message&#34;]) -&gt; WebsocketEventType:
+    if event_type == &#34;connect&#34;:
+        return WebsocketEventType.Connect
+    elif event_type == &#34;disconnect&#34;:
+        return WebsocketEventType.Disconnect
+    elif event_type == &#34;message&#34;:
+        return WebsocketEventType.Message
+    else:
+        raise ValueError(f&#34;Event type {event_type} is unsupported&#34;)
+
+
+def _to_resource(b: Websocket) -&gt; ResourceIdentifier:
+    return ResourceIdentifier(name=b.name, type=ResourceType.Websocket)
+
+
+class Websocket(BaseResource):
+    &#34;&#34;&#34;A Websocket API.&#34;&#34;&#34;
+
+    app: Nitric
+    _websocket: WebsocketRef
+    name: str
+
+    def __init__(self, name: str):
+        &#34;&#34;&#34;Construct a new Websocket API.&#34;&#34;&#34;
+        super().__init__(name)
+        self._websocket = WebsocketRef()
+
+    async def _register(self) -&gt; None:
+        try:
+            resource = _to_resource(self)
+            default_principle = ResourceIdentifier(type=ResourceType.Service)
+
+            await self._resources_stub.declare(
+                resource_declare_request=ResourceDeclareRequest(
+                    id=resource,
+                )
+            )
+
+            await self._resources_stub.declare(
+                resource_declare_request=ResourceDeclareRequest(
+                    id=ResourceIdentifier(type=ResourceType.Policy),
+                    policy=PolicyResource(
+                        actions=[Action.WebsocketManage], principals=[default_principle], resources=[resource]
+                    ),
+                )
+            )
+
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+    async def send(
+        self,
+        connection_id: str,
+        data: bytes,
+    ) -&gt; None:
+        &#34;&#34;&#34;Send a message to a connection on this socket.&#34;&#34;&#34;
+        await self._websocket.send(socket=self.name, connection_id=connection_id, data=data)
+
+    def on(self, event_type: WebsocketEventType) -&gt; Callable[[WebsocketHandler], None]:
+        &#34;&#34;&#34;Create and return a worker decorator for this socket.&#34;&#34;&#34;
+
+        def decorator(func: WebsocketHandler) -&gt; None:
+            WebsocketWorker(
+                socket_name=self.name,
+                event_type=event_type,
+                handler=func,
+            )
+
+        return decorator
+
+
+def websocket(name: str) -&gt; Websocket:
+    &#34;&#34;&#34;
+    Create and registers a websocket.
+
+    If a websocket has already been registered with the same name, the original reference will be reused.
+    &#34;&#34;&#34;
+    return Nitric._create_resource(Websocket, name)  # type: ignore pylint: disable=protected-access
+
+
+def _websocket_context_from_proto(msg: WebsocketEventRequest) -&gt; WebsocketContext:
+    &#34;&#34;&#34;Construct a new WebsocketContext from a websocket trigger from the Nitric Server.&#34;&#34;&#34;
+    query: Record = {k: v.value for (k, v) in msg.connection.query_params.items()}
+
+    req = WebsocketRequest(
+        connection_id=msg.connection_id,
+    )
+    evt_type, _ = betterproto.which_one_of(msg, &#34;websocket_event&#34;)
+    if evt_type == &#34;connection&#34;:
+        req = WebsocketConnectionRequest(
+            connection_id=msg.connection_id,
+            query=query,
+        )
+    if evt_type == &#34;message&#34;:
+        req = WebsocketMessageRequest(connection_id=msg.connection_id, data=msg.message.body)
+
+    return WebsocketContext(request=req)
+
+
+def _websocket_context_to_proto_response(ctx: WebsocketContext) -&gt; WebsocketEventResponse:
+    resp = WebsocketEventResponse()
+    if isinstance(ctx.res, WebsocketConnectionResponse):
+        resp.connection_response = ProtoWebsocketConnectionResponse(reject=ctx.res.reject)
+    return resp
+
+
+class WebsocketWorker(FunctionServer):
+    &#34;&#34;&#34;A handler for websocket events.&#34;&#34;&#34;
+
+    _handler: WebsocketHandler
+    _registration_request: RegistrationRequest
+    _responses: AsyncNotifierList[ClientMessage]
+
+    def __init__(
+        self, socket_name: str, event_type: Literal[&#34;connect&#34;, &#34;disconnect&#34;, &#34;message&#34;], handler: WebsocketHandler
+    ):
+        &#34;&#34;&#34;Construct a new WebsocketHandler.&#34;&#34;&#34;
+        self._handler = handler
+        self._responses = AsyncNotifierList()
+        self._registration_request = RegistrationRequest(
+            socket_name=socket_name, event_type=_to_grpc_event_type(event_type)
+        )
+
+        Nitric._register_worker(self)
+
+    async def _ws_request_iterator(self):
+        # Register with the server
+        yield ClientMessage(registration_request=self._registration_request)
+        # wait for any responses for the server and send them
+        async for response in self._responses:
+            yield response
+
+    async def start(self) -&gt; None:
+        &#34;&#34;&#34;Register this websocket handler and listen for messages.&#34;&#34;&#34;
+        channel = ChannelManager.get_channel()
+        server = WebsocketHandlerStub(channel=channel)
+
+        try:
+            async for server_msg in server.handle_events(self._ws_request_iterator()):
+                msg_type, _ = betterproto.which_one_of(server_msg, &#34;content&#34;)
+
+                if msg_type == &#34;registration_response&#34;:
+                    continue
+                if msg_type == &#34;websocket_event_request&#34;:
+                    ctx = _websocket_context_from_proto(server_msg.websocket_event_request)
+
+                    response: ClientMessage
+                    try:
+                        result = await self._handler(ctx)
+                        ctx = result if result else ctx
+                        response = ClientMessage(id=server_msg.id, websocket_event_response=WebsocketEventResponse())
+                        if isinstance(ctx.res, WebsocketConnectionResponse):
+                            response.websocket_event_response.connection_response.reject = ctx.res.reject
+                    except Exception as e:  # pylint: disable=broad-except
+                        logging.exception(&#34;An unhandled error occurred in a websocket event handler: %s&#34;, e)
+                        response = ClientMessage(id=server_msg.id, websocket_event_response=WebsocketEventResponse())
+                        if isinstance(ctx.req, WebsocketConnectionRequest):
+                            response.websocket_event_response.connection_response.reject = True
+                    await self._responses.add_item(response)
+        except grpclib.exceptions.GRPCError as e:
+            print(f&#34;Stream terminated: {e.message}&#34;)
+        except grpclib.exceptions.StreamTerminatedError:
+            print(&#34;Stream from membrane closed.&#34;)
+        finally:
+            print(&#34;Closing client stream&#34;)
+            channel.close()</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="nitric.resources.websockets.websocket"><code class="name flex">
+<span>def <span class="ident">websocket</span></span>(<span>name: str) ‑> <a title="nitric.resources.websockets.Websocket" href="#nitric.resources.websockets.Websocket">Websocket</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create and registers a websocket.</p>
+<p>If a websocket has already been registered with the same name, the original reference will be reused.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def websocket(name: str) -&gt; Websocket:
+    &#34;&#34;&#34;
+    Create and registers a websocket.
+
+    If a websocket has already been registered with the same name, the original reference will be reused.
+    &#34;&#34;&#34;
+    return Nitric._create_resource(Websocket, name)  # type: ignore pylint: disable=protected-access</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="nitric.resources.websockets.Websocket"><code class="flex name class">
+<span>class <span class="ident">Websocket</span></span>
+<span>(</span><span>name: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A Websocket API.</p>
+<p>Construct a new Websocket API.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Websocket(BaseResource):
+    &#34;&#34;&#34;A Websocket API.&#34;&#34;&#34;
+
+    app: Nitric
+    _websocket: WebsocketRef
+    name: str
+
+    def __init__(self, name: str):
+        &#34;&#34;&#34;Construct a new Websocket API.&#34;&#34;&#34;
+        super().__init__(name)
+        self._websocket = WebsocketRef()
+
+    async def _register(self) -&gt; None:
+        try:
+            resource = _to_resource(self)
+            default_principle = ResourceIdentifier(type=ResourceType.Service)
+
+            await self._resources_stub.declare(
+                resource_declare_request=ResourceDeclareRequest(
+                    id=resource,
+                )
+            )
+
+            await self._resources_stub.declare(
+                resource_declare_request=ResourceDeclareRequest(
+                    id=ResourceIdentifier(type=ResourceType.Policy),
+                    policy=PolicyResource(
+                        actions=[Action.WebsocketManage], principals=[default_principle], resources=[resource]
+                    ),
+                )
+            )
+
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+    async def send(
+        self,
+        connection_id: str,
+        data: bytes,
+    ) -&gt; None:
+        &#34;&#34;&#34;Send a message to a connection on this socket.&#34;&#34;&#34;
+        await self._websocket.send(socket=self.name, connection_id=connection_id, data=data)
+
+    def on(self, event_type: WebsocketEventType) -&gt; Callable[[WebsocketHandler], None]:
+        &#34;&#34;&#34;Create and return a worker decorator for this socket.&#34;&#34;&#34;
+
+        def decorator(func: WebsocketHandler) -&gt; None:
+            WebsocketWorker(
+                socket_name=self.name,
+                event_type=event_type,
+                handler=func,
+            )
+
+        return decorator</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.resources.websockets.Websocket.app"><code class="name">var <span class="ident">app</span> : <a title="nitric.application.Nitric" href="../application.html#nitric.application.Nitric">Nitric</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.resources.websockets.Websocket.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.resources.websockets.Websocket.on"><code class="name flex">
+<span>def <span class="ident">on</span></span>(<span>self, event_type: WebsocketEventType) ‑> Callable[[<a title="nitric.context.Handler" href="../context.html#nitric.context.Handler">Handler</a>[<a title="nitric.context.WebsocketContext" href="../context.html#nitric.context.WebsocketContext">WebsocketContext</a>]], NoneType]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create and return a worker decorator for this socket.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def on(self, event_type: WebsocketEventType) -&gt; Callable[[WebsocketHandler], None]:
+    &#34;&#34;&#34;Create and return a worker decorator for this socket.&#34;&#34;&#34;
+
+    def decorator(func: WebsocketHandler) -&gt; None:
+        WebsocketWorker(
+            socket_name=self.name,
+            event_type=event_type,
+            handler=func,
+        )
+
+    return decorator</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.websockets.Websocket.send"><code class="name flex">
+<span>async def <span class="ident">send</span></span>(<span>self, connection_id: str, data: bytes) ‑> NoneType</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Send a message to a connection on this socket.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def send(
+    self,
+    connection_id: str,
+    data: bytes,
+) -&gt; None:
+    &#34;&#34;&#34;Send a message to a connection on this socket.&#34;&#34;&#34;
+    await self._websocket.send(socket=self.name, connection_id=connection_id, data=data)</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></b></code>:
+<ul class="hlist">
+<li><code><a title="nitric.resources.resource.Resource.make" href="resource.html#nitric.resources.resource.Resource.make">make</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="nitric.resources.websockets.WebsocketRef"><code class="flex name class">
+<span>class <span class="ident">WebsocketRef</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>A reference to a deployed websocket, used to interact with the websocket at runtime.</p>
+<p>Construct a Nitric Websocket Client.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class WebsocketRef:
+    &#34;&#34;&#34;A reference to a deployed websocket, used to interact with the websocket at runtime.&#34;&#34;&#34;
+
+    def __init__(self) -&gt; None:
+        &#34;&#34;&#34;Construct a Nitric Websocket Client.&#34;&#34;&#34;
+        self._channel: Channel = ChannelManager.get_channel()
+        self._websocket_stub = WebsocketStub(channel=self._channel)
+
+    async def send(self, socket: str, connection_id: str, data: bytes):
+        &#34;&#34;&#34;Send data to a connection on a socket.&#34;&#34;&#34;
+        try:
+            await self._websocket_stub.send_message(
+                websocket_send_request=WebsocketSendRequest(socket_name=socket, connection_id=connection_id, data=data)
+            )
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.resources.websockets.WebsocketRef.send"><code class="name flex">
+<span>async def <span class="ident">send</span></span>(<span>self, socket: str, connection_id: str, data: bytes)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Send data to a connection on a socket.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def send(self, socket: str, connection_id: str, data: bytes):
+    &#34;&#34;&#34;Send data to a connection on a socket.&#34;&#34;&#34;
+    try:
+        await self._websocket_stub.send_message(
+            websocket_send_request=WebsocketSendRequest(socket_name=socket, connection_id=connection_id, data=data)
+        )
+    except GRPCError as grpc_err:
+        raise exception_from_grpc_error(grpc_err) from grpc_err</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="nitric.resources.websockets.WebsocketWorker"><code class="flex name class">
+<span>class <span class="ident">WebsocketWorker</span></span>
+<span>(</span><span>socket_name: str, event_type: "Literal['connect', 'disconnect', 'message']", handler: WebsocketHandler)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A handler for websocket events.</p>
+<p>Construct a new WebsocketHandler.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class WebsocketWorker(FunctionServer):
+    &#34;&#34;&#34;A handler for websocket events.&#34;&#34;&#34;
+
+    _handler: WebsocketHandler
+    _registration_request: RegistrationRequest
+    _responses: AsyncNotifierList[ClientMessage]
+
+    def __init__(
+        self, socket_name: str, event_type: Literal[&#34;connect&#34;, &#34;disconnect&#34;, &#34;message&#34;], handler: WebsocketHandler
+    ):
+        &#34;&#34;&#34;Construct a new WebsocketHandler.&#34;&#34;&#34;
+        self._handler = handler
+        self._responses = AsyncNotifierList()
+        self._registration_request = RegistrationRequest(
+            socket_name=socket_name, event_type=_to_grpc_event_type(event_type)
+        )
+
+        Nitric._register_worker(self)
+
+    async def _ws_request_iterator(self):
+        # Register with the server
+        yield ClientMessage(registration_request=self._registration_request)
+        # wait for any responses for the server and send them
+        async for response in self._responses:
+            yield response
+
+    async def start(self) -&gt; None:
+        &#34;&#34;&#34;Register this websocket handler and listen for messages.&#34;&#34;&#34;
+        channel = ChannelManager.get_channel()
+        server = WebsocketHandlerStub(channel=channel)
+
+        try:
+            async for server_msg in server.handle_events(self._ws_request_iterator()):
+                msg_type, _ = betterproto.which_one_of(server_msg, &#34;content&#34;)
+
+                if msg_type == &#34;registration_response&#34;:
+                    continue
+                if msg_type == &#34;websocket_event_request&#34;:
+                    ctx = _websocket_context_from_proto(server_msg.websocket_event_request)
+
+                    response: ClientMessage
+                    try:
+                        result = await self._handler(ctx)
+                        ctx = result if result else ctx
+                        response = ClientMessage(id=server_msg.id, websocket_event_response=WebsocketEventResponse())
+                        if isinstance(ctx.res, WebsocketConnectionResponse):
+                            response.websocket_event_response.connection_response.reject = ctx.res.reject
+                    except Exception as e:  # pylint: disable=broad-except
+                        logging.exception(&#34;An unhandled error occurred in a websocket event handler: %s&#34;, e)
+                        response = ClientMessage(id=server_msg.id, websocket_event_response=WebsocketEventResponse())
+                        if isinstance(ctx.req, WebsocketConnectionRequest):
+                            response.websocket_event_response.connection_response.reject = True
+                    await self._responses.add_item(response)
+        except grpclib.exceptions.GRPCError as e:
+            print(f&#34;Stream terminated: {e.message}&#34;)
+        except grpclib.exceptions.StreamTerminatedError:
+            print(&#34;Stream from membrane closed.&#34;)
+        finally:
+            print(&#34;Closing client stream&#34;)
+            channel.close()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="nitric.context.FunctionServer" href="../context.html#nitric.context.FunctionServer">FunctionServer</a></li>
+<li>abc.ABC</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.resources.websockets.WebsocketWorker.start"><code class="name flex">
+<span>async def <span class="ident">start</span></span>(<span>self) ‑> NoneType</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Register this websocket handler and listen for messages.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def start(self) -&gt; None:
+    &#34;&#34;&#34;Register this websocket handler and listen for messages.&#34;&#34;&#34;
+    channel = ChannelManager.get_channel()
+    server = WebsocketHandlerStub(channel=channel)
+
+    try:
+        async for server_msg in server.handle_events(self._ws_request_iterator()):
+            msg_type, _ = betterproto.which_one_of(server_msg, &#34;content&#34;)
+
+            if msg_type == &#34;registration_response&#34;:
+                continue
+            if msg_type == &#34;websocket_event_request&#34;:
+                ctx = _websocket_context_from_proto(server_msg.websocket_event_request)
+
+                response: ClientMessage
+                try:
+                    result = await self._handler(ctx)
+                    ctx = result if result else ctx
+                    response = ClientMessage(id=server_msg.id, websocket_event_response=WebsocketEventResponse())
+                    if isinstance(ctx.res, WebsocketConnectionResponse):
+                        response.websocket_event_response.connection_response.reject = ctx.res.reject
+                except Exception as e:  # pylint: disable=broad-except
+                    logging.exception(&#34;An unhandled error occurred in a websocket event handler: %s&#34;, e)
+                    response = ClientMessage(id=server_msg.id, websocket_event_response=WebsocketEventResponse())
+                    if isinstance(ctx.req, WebsocketConnectionRequest):
+                        response.websocket_event_response.connection_response.reject = True
+                await self._responses.add_item(response)
+    except grpclib.exceptions.GRPCError as e:
+        print(f&#34;Stream terminated: {e.message}&#34;)
+    except grpclib.exceptions.StreamTerminatedError:
+        print(&#34;Stream from membrane closed.&#34;)
+    finally:
+        print(&#34;Closing client stream&#34;)
+        channel.close()</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="nitric.resources" href="index.html">nitric.resources</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="nitric.resources.websockets.websocket" href="#nitric.resources.websockets.websocket">websocket</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="nitric.resources.websockets.Websocket" href="#nitric.resources.websockets.Websocket">Websocket</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.resources.websockets.Websocket.app" href="#nitric.resources.websockets.Websocket.app">app</a></code></li>
+<li><code><a title="nitric.resources.websockets.Websocket.name" href="#nitric.resources.websockets.Websocket.name">name</a></code></li>
+<li><code><a title="nitric.resources.websockets.Websocket.on" href="#nitric.resources.websockets.Websocket.on">on</a></code></li>
+<li><code><a title="nitric.resources.websockets.Websocket.send" href="#nitric.resources.websockets.Websocket.send">send</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.resources.websockets.WebsocketRef" href="#nitric.resources.websockets.WebsocketRef">WebsocketRef</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.resources.websockets.WebsocketRef.send" href="#nitric.resources.websockets.WebsocketRef.send">send</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="nitric.resources.websockets.WebsocketWorker" href="#nitric.resources.websockets.WebsocketWorker">WebsocketWorker</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.resources.websockets.WebsocketWorker.start" href="#nitric.resources.websockets.WebsocketWorker.start">start</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>
