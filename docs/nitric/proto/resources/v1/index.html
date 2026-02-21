@@ -411,7 +411,7 @@ from this. Bases :class:<code>enum.IntEnum</code>.</p></div>
 <span>(</span><span>issuer: str = &lt;object object&gt;, audiences: List[str] = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>ApiOpenIdConnectionDefinition(issuer: str = <object object at 0x733dc69ac250>, audiences: List[str] = <object object at 0x733dc69ac250>)</p></div>
+<div class="desc"><p>ApiOpenIdConnectionDefinition(issuer: str = <object object at 0x73e29b4b4250>, audiences: List[str] = <object object at 0x73e29b4b4250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -443,7 +443,7 @@ class ApiOpenIdConnectionDefinition(betterproto.Message):
 <span>(</span><span>security: Dict[str, ForwardRef('<a title="nitric.proto.resources.v1.ApiScopes" href="#nitric.proto.resources.v1.ApiScopes">ApiScopes</a>')] = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>ApiResource(security: Dict[str, ForwardRef('ApiScopes')] = <object object at 0x733dc69ac250>)</p></div>
+<div class="desc"><p>ApiResource(security: Dict[str, ForwardRef('ApiScopes')] = <object object at 0x73e29b4b4250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -477,7 +477,7 @@ ApiSecurityDefinitionResource(s)</p></div>
 <span>(</span><span>scopes: List[str] = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>ApiScopes(scopes: List[str] = <object object at 0x733dc69ac250>)</p></div>
+<div class="desc"><p>ApiScopes(scopes: List[str] = <object object at 0x73e29b4b4250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -504,7 +504,7 @@ class ApiScopes(betterproto.Message):
 <span>(</span><span>api_name: str = &lt;object object&gt;, oidc: <a title="nitric.proto.resources.v1.ApiOpenIdConnectionDefinition" href="#nitric.proto.resources.v1.ApiOpenIdConnectionDefinition">ApiOpenIdConnectionDefinition</a> = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>ApiSecurityDefinitionResource(api_name: str = <object object at 0x733dc69ac250>, oidc: 'ApiOpenIdConnectionDefinition' = <object object at 0x733dc69ac250>)</p></div>
+<div class="desc"><p>ApiSecurityDefinitionResource(api_name: str = <object object at 0x73e29b4b4250>, oidc: 'ApiOpenIdConnectionDefinition' = <object object at 0x73e29b4b4250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -595,7 +595,7 @@ class KeyValueStoreResource(betterproto.Message):
 <span>(</span><span>principals: List[ForwardRef('<a title="nitric.proto.resources.v1.ResourceIdentifier" href="#nitric.proto.resources.v1.ResourceIdentifier">ResourceIdentifier</a>')] = &lt;object object&gt;, actions: List[ForwardRef('<a title="nitric.proto.resources.v1.Action" href="#nitric.proto.resources.v1.Action">Action</a>')] = &lt;object object&gt;, resources: List[ForwardRef('<a title="nitric.proto.resources.v1.ResourceIdentifier" href="#nitric.proto.resources.v1.ResourceIdentifier">ResourceIdentifier</a>')] = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>PolicyResource(principals: List[ForwardRef('ResourceIdentifier')] = <object object at 0x733dc69ac250>, actions: List[ForwardRef('Action')] = <object object at 0x733dc69ac250>, resources: List[ForwardRef('ResourceIdentifier')] = <object object at 0x733dc69ac250>)</p></div>
+<div class="desc"><p>PolicyResource(principals: List[ForwardRef('ResourceIdentifier')] = <object object at 0x73e29b4b4250>, actions: List[ForwardRef('Action')] = <object object at 0x73e29b4b4250>, resources: List[ForwardRef('ResourceIdentifier')] = <object object at 0x73e29b4b4250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -651,7 +651,7 @@ class QueueResource(betterproto.Message):
 <span>(</span><span>id: <a title="nitric.proto.resources.v1.ResourceIdentifier" href="#nitric.proto.resources.v1.ResourceIdentifier">ResourceIdentifier</a> = &lt;object object&gt;, policy: <a title="nitric.proto.resources.v1.PolicyResource" href="#nitric.proto.resources.v1.PolicyResource">PolicyResource</a> = &lt;object object&gt;, bucket: <a title="nitric.proto.resources.v1.BucketResource" href="#nitric.proto.resources.v1.BucketResource">BucketResource</a> = &lt;object object&gt;, topic: <a title="nitric.proto.resources.v1.TopicResource" href="#nitric.proto.resources.v1.TopicResource">TopicResource</a> = &lt;object object&gt;, key_value_store: <a title="nitric.proto.resources.v1.KeyValueStoreResource" href="#nitric.proto.resources.v1.KeyValueStoreResource">KeyValueStoreResource</a> = &lt;object object&gt;, secret: <a title="nitric.proto.resources.v1.SecretResource" href="#nitric.proto.resources.v1.SecretResource">SecretResource</a> = &lt;object object&gt;, api: <a title="nitric.proto.resources.v1.ApiResource" href="#nitric.proto.resources.v1.ApiResource">ApiResource</a> = &lt;object object&gt;, api_security_definition: <a title="nitric.proto.resources.v1.ApiSecurityDefinitionResource" href="#nitric.proto.resources.v1.ApiSecurityDefinitionResource">ApiSecurityDefinitionResource</a> = &lt;object object&gt;, queue: <a title="nitric.proto.resources.v1.QueueResource" href="#nitric.proto.resources.v1.QueueResource">QueueResource</a> = &lt;object object&gt;, sql_database: <a title="nitric.proto.resources.v1.SqlDatabaseResource" href="#nitric.proto.resources.v1.SqlDatabaseResource">SqlDatabaseResource</a> = &lt;object object&gt;, job: <a title="nitric.proto.resources.v1.JobResource" href="#nitric.proto.resources.v1.JobResource">JobResource</a> = &lt;object object&gt;, spark: <a title="nitric.proto.resources.v1.SparkResource" href="#nitric.proto.resources.v1.SparkResource">SparkResource</a> = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>ResourceDeclareRequest(id: 'ResourceIdentifier' = <object object at 0x733dc69ac250>, policy: 'PolicyResource' = <object object at 0x733dc69ac250>, bucket: 'BucketResource' = <object object at 0x733dc69ac250>, topic: 'TopicResource' = <object object at 0x733dc69ac250>, key_value_store: 'KeyValueStoreResource' = <object object at 0x733dc69ac250>, secret: 'SecretResource' = <object object at 0x733dc69ac250>, api: 'ApiResource' = <object object at 0x733dc69ac250>, api_security_definition: 'ApiSecurityDefinitionResource' = <object object at 0x733dc69ac250>, queue: 'QueueResource' = <object object at 0x733dc69ac250>, sql_database: 'SqlDatabaseResource' = <object object at 0x733dc69ac250>, job: 'JobResource' = <object object at 0x733dc69ac250>, spark: 'SparkResource' = <object object at 0x733dc69ac250>)</p></div>
+<div class="desc"><p>ResourceDeclareRequest(id: 'ResourceIdentifier' = <object object at 0x73e29b4b4250>, policy: 'PolicyResource' = <object object at 0x73e29b4b4250>, bucket: 'BucketResource' = <object object at 0x73e29b4b4250>, topic: 'TopicResource' = <object object at 0x73e29b4b4250>, key_value_store: 'KeyValueStoreResource' = <object object at 0x73e29b4b4250>, secret: 'SecretResource' = <object object at 0x73e29b4b4250>, api: 'ApiResource' = <object object at 0x73e29b4b4250>, api_security_definition: 'ApiSecurityDefinitionResource' = <object object at 0x73e29b4b4250>, queue: 'QueueResource' = <object object at 0x73e29b4b4250>, sql_database: 'SqlDatabaseResource' = <object object at 0x73e29b4b4250>, job: 'JobResource' = <object object at 0x73e29b4b4250>, spark: 'SparkResource' = <object object at 0x73e29b4b4250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1071,7 +1071,7 @@ class SparkResource(betterproto.Message):
 <span>(</span><span>migrations_path: str = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>SqlDatabaseMigrations(migrations_path: str = <object object at 0x733dc69ac250>)</p></div>
+<div class="desc"><p>SqlDatabaseMigrations(migrations_path: str = <object object at 0x73e29b4b4250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1109,7 +1109,7 @@ location)</p></div>
 <span>(</span><span>migrations: <a title="nitric.proto.resources.v1.SqlDatabaseMigrations" href="#nitric.proto.resources.v1.SqlDatabaseMigrations">SqlDatabaseMigrations</a> = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>SqlDatabaseResource(migrations: 'SqlDatabaseMigrations' = <object object at 0x733dc69ac250>)</p></div>
+<div class="desc"><p>SqlDatabaseResource(migrations: 'SqlDatabaseMigrations' = <object object at 0x73e29b4b4250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>

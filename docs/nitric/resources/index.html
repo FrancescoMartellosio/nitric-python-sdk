@@ -52,6 +52,7 @@ from nitric.resources.buckets import Bucket, bucket, BucketNotificationContext, 
 from nitric.resources.kv import KeyValueStoreRef, kv
 from nitric.resources.schedules import ScheduleServer, schedule
 from nitric.resources.secrets import Secret, secret
+from nitric.resources.spark import Spark, spark
 from nitric.resources.topics import Topic, topic
 from nitric.resources.websockets import Websocket, websocket
 from nitric.resources.queues import Queue, queue
@@ -79,6 +80,8 @@ __all__ = [
     &#34;schedule&#34;,
     &#34;secret&#34;,
     &#34;Secret&#34;,
+    &#34;spark&#34;,
+    &#34;Spark&#34;,
     &#34;sql&#34;,
     &#34;Sql&#34;,
     &#34;topic&#34;,
@@ -112,10 +115,6 @@ __all__ = [
 <div class="desc"></div>
 </dd>
 <dt><code class="name"><a title="nitric.resources.secrets" href="secrets.html">nitric.resources.secrets</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt><code class="name"><a title="nitric.resources.spark" href="spark.html">nitric.resources.spark</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -270,6 +269,20 @@ __all__ = [
     If a secret has already been registered with the same name, the original reference will be reused.
     &#34;&#34;&#34;
     return Nitric._create_resource(Secret, name)  # type: ignore pylint: disable=protected-access</code></pre>
+</details>
+</dd>
+<dt id="nitric.resources.spark"><code class="name flex">
+<span>def <span class="ident">spark</span></span>(<span>name: str) ‑> nitric.resources.spark.Spark</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Entry point for defining a Spark resource in a Nitric application.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def spark(name: str) -&gt; Spark:
+    &#34;&#34;&#34;Entry point for defining a Spark resource in a Nitric application.&#34;&#34;&#34;
+    return Nitric._create_resource(Spark, name)</code></pre>
 </details>
 </dd>
 <dt id="nitric.resources.sql"><code class="name flex">
@@ -1748,6 +1761,52 @@ class JwtSecurityDefinition:
 </li>
 </ul>
 </dd>
+<dt id="nitric.resources.Spark"><code class="flex name class">
+<span>class <span class="ident">Spark</span></span>
+<span>(</span><span>name: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A Spark resource used for deployment.</p>
+<p>Construct a new resource.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Spark(Resource):
+    &#34;&#34;&#34;A Spark resource used for deployment.&#34;&#34;&#34;
+
+    async def _register(self) -&gt; None:
+        &#34;&#34;&#34;Register the Spark resource with the Nitric Resource Server.&#34;&#34;&#34;
+        try:
+            # This is the call that triggers the deployment logic in the provider
+            await self._resources_stub.declare(
+                resource_declare_request=ResourceDeclareRequest(
+                    id=self._to_resource_id(),
+                    # This must match the field name in your ResourceDeclareRequest proto
+                    spark=SparkResource(),
+                )
+            )
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+    def _to_resource_id(self) -&gt; ResourceIdentifier:
+        # ResourceType.Spark must exist in your generated proto enum
+        return ResourceIdentifier(name=self.name, type=ResourceType.Spark)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></li>
+<li>abc.ABC</li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></b></code>:
+<ul class="hlist">
+<li><code><a title="nitric.resources.resource.Resource.make" href="resource.html#nitric.resources.resource.Resource.make">make</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
 <dt id="nitric.resources.Sql"><code class="flex name class">
 <span>class <span class="ident">Sql</span></span>
 <span>(</span><span>name: str, migrations: Union[str, None] = None)</span>
@@ -2117,7 +2176,6 @@ class JwtSecurityDefinition:
 <li><code><a title="nitric.resources.resource" href="resource.html">nitric.resources.resource</a></code></li>
 <li><code><a title="nitric.resources.schedules" href="schedules.html">nitric.resources.schedules</a></code></li>
 <li><code><a title="nitric.resources.secrets" href="secrets.html">nitric.resources.secrets</a></code></li>
-<li><code><a title="nitric.resources.spark" href="spark.html">nitric.resources.spark</a></code></li>
 <li><code><a title="nitric.resources.topics" href="topics.html">nitric.resources.topics</a></code></li>
 <li><code><a title="nitric.resources.websockets" href="websockets.html">nitric.resources.websockets</a></code></li>
 </ul>
@@ -2132,6 +2190,7 @@ class JwtSecurityDefinition:
 <li><code><a title="nitric.resources.queue" href="#nitric.resources.queue">queue</a></code></li>
 <li><code><a title="nitric.resources.schedule" href="#nitric.resources.schedule">schedule</a></code></li>
 <li><code><a title="nitric.resources.secret" href="#nitric.resources.secret">secret</a></code></li>
+<li><code><a title="nitric.resources.spark" href="#nitric.resources.spark">spark</a></code></li>
 <li><code><a title="nitric.resources.sql" href="#nitric.resources.sql">sql</a></code></li>
 <li><code><a title="nitric.resources.topic" href="#nitric.resources.topic">topic</a></code></li>
 <li><code><a title="nitric.resources.websocket" href="#nitric.resources.websocket">websocket</a></code></li>
@@ -2237,6 +2296,9 @@ class JwtSecurityDefinition:
 <li><code><a title="nitric.resources.Secret.allow" href="#nitric.resources.Secret.allow">allow</a></code></li>
 <li><code><a title="nitric.resources.Secret.name" href="#nitric.resources.Secret.name">name</a></code></li>
 </ul>
+</li>
+<li>
+<h4><code><a title="nitric.resources.Spark" href="#nitric.resources.Spark">Spark</a></code></h4>
 </li>
 <li>
 <h4><code><a title="nitric.resources.Sql" href="#nitric.resources.Sql">Sql</a></code></h4>

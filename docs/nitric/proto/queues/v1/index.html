@@ -280,7 +280,7 @@ class QueuesBase(ServiceBase):
 <span>(</span><span>lease_id: str = &lt;object object&gt;, message: <a title="nitric.proto.queues.v1.QueueMessage" href="#nitric.proto.queues.v1.QueueMessage">QueueMessage</a> = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>DequeuedMessage(lease_id: str = <object object at 0x733dc69ac250>, message: 'QueueMessage' = <object object at 0x733dc69ac250>)</p></div>
+<div class="desc"><p>DequeuedMessage(lease_id: str = <object object at 0x73e29b4b4250>, message: 'QueueMessage' = <object object at 0x73e29b4b4250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -312,7 +312,7 @@ class DequeuedMessage(betterproto.Message):
 <span>(</span><span>message: <a title="nitric.proto.queues.v1.QueueMessage" href="#nitric.proto.queues.v1.QueueMessage">QueueMessage</a> = &lt;object object&gt;, details: str = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>FailedEnqueueMessage(message: 'QueueMessage' = <object object at 0x733dc69ac250>, details: str = <object object at 0x733dc69ac250>)</p></div>
+<div class="desc"><p>FailedEnqueueMessage(message: 'QueueMessage' = <object object at 0x73e29b4b4250>, details: str = <object object at 0x73e29b4b4250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -347,7 +347,7 @@ class FailedEnqueueMessage(betterproto.Message):
 <span>(</span><span>queue_name: str = &lt;object object&gt;, lease_id: str = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>QueueCompleteRequest(queue_name: str = <object object at 0x733dc69ac250>, lease_id: str = <object object at 0x733dc69ac250>)</p></div>
+<div class="desc"><p>QueueCompleteRequest(queue_name: str = <object object at 0x73e29b4b4250>, lease_id: str = <object object at 0x73e29b4b4250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -406,7 +406,7 @@ class QueueCompleteResponse(betterproto.Message):
 <span>(</span><span>queue_name: str = &lt;object object&gt;, depth: int = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>QueueDequeueRequest(queue_name: str = <object object at 0x733dc69ac250>, depth: int = <object object at 0x733dc69ac250>)</p></div>
+<div class="desc"><p>QueueDequeueRequest(queue_name: str = <object object at 0x73e29b4b4250>, depth: int = <object object at 0x73e29b4b4250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -449,7 +449,7 @@ provider specific queue identifier.</p></div>
 <span>(</span><span>messages: List[ForwardRef('<a title="nitric.proto.queues.v1.DequeuedMessage" href="#nitric.proto.queues.v1.DequeuedMessage">DequeuedMessage</a>')] = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>QueueDequeueResponse(messages: List[ForwardRef('DequeuedMessage')] = <object object at 0x733dc69ac250>)</p></div>
+<div class="desc"><p>QueueDequeueResponse(messages: List[ForwardRef('DequeuedMessage')] = <object object at 0x73e29b4b4250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -477,7 +477,7 @@ class QueueDequeueResponse(betterproto.Message):
 <span>(</span><span>queue_name: str = &lt;object object&gt;, messages: List[ForwardRef('<a title="nitric.proto.queues.v1.QueueMessage" href="#nitric.proto.queues.v1.QueueMessage">QueueMessage</a>')] = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>QueueEnqueueRequest(queue_name: str = <object object at 0x733dc69ac250>, messages: List[ForwardRef('QueueMessage')] = <object object at 0x733dc69ac250>)</p></div>
+<div class="desc"><p>QueueEnqueueRequest(queue_name: str = <object object at 0x73e29b4b4250>, messages: List[ForwardRef('QueueMessage')] = <object object at 0x73e29b4b4250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
