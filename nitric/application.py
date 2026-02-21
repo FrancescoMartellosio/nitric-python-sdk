@@ -44,6 +44,7 @@ class Nitric:
         "sql": {},
         "job": {},
         "jobdefinition": {},
+        "spark": {},
     }
 
     @classmethod
