@@ -22,7 +22,7 @@ from enum import Enum
 from typing import Callable, List, TypeVar, Optional
 
 # The environment variable key that will be used to determine the current Nitric lifecycle/executing environment
-NITRIC_ENVIRONMENT = 'NITRIC_ENVIRONMENT'
+NITRIC_ENVIRONMENT = "NITRIC_ENVIRONMENT"
 
 
 # Possible nitric execution environments
@@ -30,13 +30,13 @@ class LifecycleStage(Enum):
     """Represents the different stages of the Nitric application lifecycle."""
 
     # Local development run (using nitric run/start)
-    LOCAL_RUN = 'run'
+    LOCAL_RUN = "run"
 
     # Local development requirements building/collection (using nitric up)
-    BUILD = 'build'
+    BUILD = "build"
 
     # When the code is running in a deployed environment
-    CLOUD = 'cloud'
+    CLOUD = "cloud"
 
 
 def get_current_lifecycle() -> LifecycleStage:
@@ -74,7 +74,7 @@ def is_in_lifecycle(stages: List[LifecycleStage]) -> bool:
     return current_stage in stages
 
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def when_in_lifecycles(stages: List[LifecycleStage], callback: Callable[[], T]) -> Optional[T]:

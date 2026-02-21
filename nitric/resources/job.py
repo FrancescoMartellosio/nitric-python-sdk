@@ -48,7 +48,6 @@ from nitric.bidi import AsyncNotifierList
 from nitric.utils import struct_from_dict
 import grpclib
 
-
 JobPermission = Literal["submit"]
 JobHandle = Handler[JobContext]
 
