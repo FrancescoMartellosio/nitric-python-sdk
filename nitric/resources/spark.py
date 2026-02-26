@@ -25,7 +25,7 @@ from nitric.proto.resources.v1 import (
     ResourceDeclareRequest,
     ResourceIdentifier,
     ResourceType,
-    SparkResource,  # The specific message from your proto
+    SparkResource,
 )
 from nitric.resources.resource import Resource
 
@@ -33,25 +33,44 @@ from nitric.resources.resource import Resource
 class Spark(Resource):
     """A Spark resource used for deployment."""
 
+    def __init__(self, name: str, workers_per_host: int, memory_gb: int, cpus_per_worker: int):
+        """
+        Construct a new Spark cluster resource.
+
+        :param name: The name of the spark cluster
+        :param workers_per_host: Number of workers per host
+        :param memory_gb: Memory per worker in GB
+        :param cpus_per_worker: CPU count per worker
+        """
+        super().__init__(name, ResourceType.Spark)
+        self.workers_per_host = workers_per_host
+        self.memory_gb = memory_gb
+        self.cpus_per_worker = cpus_per_worker
+
     async def _register(self) -> None:
         """Register the Spark resource with the Nitric Resource Server."""
         try:
-            # This is the call that triggers the deployment logic in the provider
+            # Map the local Python variables to the gRPC SparkResource message
             await self._resources_stub.declare(
                 resource_declare_request=ResourceDeclareRequest(
                     id=self._to_resource_id(),
-                    # This must match the field name in your ResourceDeclareRequest proto
-                    spark=SparkResource(),
+                    spark=SparkResource(
+                        workers_per_host=self.workers_per_host,
+                        memory_gb=self.memory_gb,
+                        cpus_per_worker=self.cpus_per_worker,
+                    ),
                 )
             )
         except GRPCError as grpc_err:
             raise exception_from_grpc_error(grpc_err) from grpc_err
 
     def _to_resource_id(self) -> ResourceIdentifier:
-        # ResourceType.Spark must exist in your generated proto enum
         return ResourceIdentifier(name=self.name, type=ResourceType.Spark)
 
 
-def spark(name: str) -> Spark:
+# Updated entry point to accept the new configuration parameters
+def spark(name: str, workers_per_host: int = 1, memory_gb: int = 1, cpus_per_worker: int = 1) -> Spark:
     """Entry point for defining a Spark resource in a Nitric application."""
-    return Nitric._create_resource(Spark, name)
+    return Nitric._create_resource(
+        Spark, name, workers_per_host=workers_per_host, memory_gb=memory_gb, cpus_per_worker=cpus_per_worker
+    )
