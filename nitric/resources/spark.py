@@ -33,7 +33,7 @@ from nitric.resources.resource import Resource
 class Spark(Resource):
     """A Spark resource used for deployment."""
 
-    def __init__(self, name: str, workers_per_host: int, memory_gb: int, cpus_per_worker: int):
+    def __init__(self, name: str, workers_per_host: int = 1, memory_gb: int = 1, cpus_per_worker: int = 1):
         """
         Construct a new Spark cluster resource.
 
@@ -42,7 +42,9 @@ class Spark(Resource):
         :param memory_gb: Memory per worker in GB
         :param cpus_per_worker: CPU count per worker
         """
-        super().__init__(name, ResourceType.Spark)
+        super().__init__(name)
+
+        # Store our custom properties on the class instance
         self.workers_per_host = workers_per_host
         self.memory_gb = memory_gb
         self.cpus_per_worker = cpus_per_worker
@@ -50,7 +52,7 @@ class Spark(Resource):
     async def _register(self) -> None:
         """Register the Spark resource with the Nitric Resource Server."""
         try:
-            # Map the local Python variables to the gRPC SparkResource message
+            # Map our instance properties to the gRPC SparkResource
             await self._resources_stub.declare(
                 resource_declare_request=ResourceDeclareRequest(
                     id=self._to_resource_id(),
@@ -68,9 +70,9 @@ class Spark(Resource):
         return ResourceIdentifier(name=self.name, type=ResourceType.Spark)
 
 
-# Updated entry point to accept the new configuration parameters
 def spark(name: str, workers_per_host: int = 1, memory_gb: int = 1, cpus_per_worker: int = 1) -> Spark:
     """Entry point for defining a Spark resource in a Nitric application."""
+    # Pass our new config arguments as kwargs so application.py caches them properly
     return Nitric._create_resource(
         Spark, name, workers_per_host=workers_per_host, memory_gb=memory_gb, cpus_per_worker=cpus_per_worker
     )
