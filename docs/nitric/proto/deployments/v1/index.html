@@ -313,7 +313,9 @@ class Secret(betterproto.Message):
 
 @dataclass(eq=False, repr=False)
 class Spark(betterproto.Message):
-    pass
+    workers_per_host: int = betterproto.uint32_field(1)
+    memory_gb: int = betterproto.uint32_field(2)
+    cpus_per_worker: int = betterproto.uint32_field(3)
 
 
 @dataclass(eq=False, repr=False)
@@ -562,7 +564,7 @@ class DeploymentBase(ServiceBase):
 <span>(</span><span>openapi: str = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Api(openapi: str = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>Api(openapi: str = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -594,7 +596,7 @@ that hint of services that should be targeted as part of the deployment</p></div
 <span>(</span><span>image: <a title="nitric.proto.deployments.v1.ImageSource" href="#nitric.proto.deployments.v1.ImageSource">ImageSource</a> = &lt;object object&gt;, type: str = &lt;object object&gt;, env: Dict[str, str] = &lt;object object&gt;, jobs: List[ForwardRef('<a title="nitric.proto.deployments.v1.Job" href="#nitric.proto.deployments.v1.Job">Job</a>')] = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Batch(image: 'ImageSource' = <object object at 0x73e29b4b4250>, type: str = <object object at 0x73e29b4b4250>, env: Dict[str, str] = <object object at 0x73e29b4b4250>, jobs: List[ForwardRef('Job')] = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>Batch(image: 'ImageSource' = <object object at 0x777e4e1b0250>, type: str = <object object at 0x777e4e1b0250>, env: Dict[str, str] = <object object at 0x777e4e1b0250>, jobs: List[ForwardRef('Job')] = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -651,7 +653,7 @@ satisfied in any way</p></div>
 <span>(</span><span>listeners: List[ForwardRef('<a title="nitric.proto.deployments.v1.BucketListener" href="#nitric.proto.deployments.v1.BucketListener">BucketListener</a>')] = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Bucket(listeners: List[ForwardRef('BucketListener')] = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>Bucket(listeners: List[ForwardRef('BucketListener')] = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -678,7 +680,7 @@ class Bucket(betterproto.Message):
 <span>(</span><span>config: __storage_v1__.RegistrationRequest = &lt;object object&gt;, service: str = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>BucketListener(config: '<strong>storage_v1</strong>.RegistrationRequest' = <object object at 0x73e29b4b4250>, service: str = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>BucketListener(config: '<strong>storage_v1</strong>.RegistrationRequest' = <object object at 0x777e4e1b0250>, service: str = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -811,7 +813,7 @@ class BucketListener(betterproto.Message):
 <span>(</span><span>message: str = &lt;object object&gt;, result: <a title="nitric.proto.deployments.v1.DownResult" href="#nitric.proto.deployments.v1.DownResult">DownResult</a> = &lt;object object&gt;, update: <a title="nitric.proto.deployments.v1.ResourceUpdate" href="#nitric.proto.deployments.v1.ResourceUpdate">ResourceUpdate</a> = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>DeploymentDownEvent(message: str = <object object at 0x73e29b4b4250>, result: 'DownResult' = <object object at 0x73e29b4b4250>, update: 'ResourceUpdate' = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>DeploymentDownEvent(message: str = <object object at 0x777e4e1b0250>, result: 'DownResult' = <object object at 0x777e4e1b0250>, update: 'ResourceUpdate' = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -848,7 +850,7 @@ class DeploymentDownEvent(betterproto.Message):
 <span>(</span><span>attributes: betterproto_lib_google_protobuf.Struct = &lt;object object&gt;, interactive: bool = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>DeploymentDownRequest(attributes: 'betterproto_lib_google_protobuf.Struct' = <object object at 0x73e29b4b4250>, interactive: bool = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>DeploymentDownRequest(attributes: 'betterproto_lib_google_protobuf.Struct' = <object object at 0x777e4e1b0250>, interactive: bool = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1005,7 +1007,7 @@ clients.</p></div>
 <span>(</span><span>message: str = &lt;object object&gt;, update: <a title="nitric.proto.deployments.v1.ResourceUpdate" href="#nitric.proto.deployments.v1.ResourceUpdate">ResourceUpdate</a> = &lt;object object&gt;, result: <a title="nitric.proto.deployments.v1.UpResult" href="#nitric.proto.deployments.v1.UpResult">UpResult</a> = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>DeploymentUpEvent(message: str = <object object at 0x73e29b4b4250>, update: 'ResourceUpdate' = <object object at 0x73e29b4b4250>, result: 'UpResult' = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>DeploymentUpEvent(message: str = <object object at 0x777e4e1b0250>, update: 'ResourceUpdate' = <object object at 0x777e4e1b0250>, result: 'UpResult' = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1042,7 +1044,7 @@ class DeploymentUpEvent(betterproto.Message):
 <span>(</span><span>spec: <a title="nitric.proto.deployments.v1.Spec" href="#nitric.proto.deployments.v1.Spec">Spec</a> = &lt;object object&gt;, attributes: betterproto_lib_google_protobuf.Struct = &lt;object object&gt;, interactive: bool = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>DeploymentUpRequest(spec: 'Spec' = <object object at 0x73e29b4b4250>, attributes: 'betterproto_lib_google_protobuf.Struct' = <object object at 0x73e29b4b4250>, interactive: bool = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>DeploymentUpRequest(spec: 'Spec' = <object object at 0x777e4e1b0250>, attributes: 'betterproto_lib_google_protobuf.Struct' = <object object at 0x777e4e1b0250>, interactive: bool = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1144,7 +1146,7 @@ class Http(betterproto.Message):
 <span>(</span><span>service: str = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>HttpTarget(service: str = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>HttpTarget(service: str = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1206,7 +1208,7 @@ provide auth information</p></div>
 <span>(</span><span>name: str = &lt;object object&gt;, requirements: __batch_v1__.JobResourceRequirements = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Job(name: str = <object object at 0x73e29b4b4250>, requirements: '<strong>batch_v1</strong>.JobResourceRequirements' = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>Job(name: str = <object object at 0x777e4e1b0250>, requirements: '<strong>batch_v1</strong>.JobResourceRequirements' = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1322,7 +1324,7 @@ class Queue(betterproto.Message):
 <span>(</span><span>id: __resources_v1__.ResourceIdentifier = &lt;object object&gt;, service: <a title="nitric.proto.deployments.v1.Service" href="#nitric.proto.deployments.v1.Service">Service</a> = &lt;object object&gt;, bucket: <a title="nitric.proto.deployments.v1.Bucket" href="#nitric.proto.deployments.v1.Bucket">Bucket</a> = &lt;object object&gt;, topic: <a title="nitric.proto.deployments.v1.Topic" href="#nitric.proto.deployments.v1.Topic">Topic</a> = &lt;object object&gt;, api: <a title="nitric.proto.deployments.v1.Api" href="#nitric.proto.deployments.v1.Api">Api</a> = &lt;object object&gt;, policy: <a title="nitric.proto.deployments.v1.Policy" href="#nitric.proto.deployments.v1.Policy">Policy</a> = &lt;object object&gt;, schedule: <a title="nitric.proto.deployments.v1.Schedule" href="#nitric.proto.deployments.v1.Schedule">Schedule</a> = &lt;object object&gt;, key_value_store: <a title="nitric.proto.deployments.v1.KeyValueStore" href="#nitric.proto.deployments.v1.KeyValueStore">KeyValueStore</a> = &lt;object object&gt;, secret: <a title="nitric.proto.deployments.v1.Secret" href="#nitric.proto.deployments.v1.Secret">Secret</a> = &lt;object object&gt;, websocket: <a title="nitric.proto.deployments.v1.Websocket" href="#nitric.proto.deployments.v1.Websocket">Websocket</a> = &lt;object object&gt;, http: <a title="nitric.proto.deployments.v1.Http" href="#nitric.proto.deployments.v1.Http">Http</a> = &lt;object object&gt;, queue: <a title="nitric.proto.deployments.v1.Queue" href="#nitric.proto.deployments.v1.Queue">Queue</a> = &lt;object object&gt;, sql_database: <a title="nitric.proto.deployments.v1.SqlDatabase" href="#nitric.proto.deployments.v1.SqlDatabase">SqlDatabase</a> = &lt;object object&gt;, batch: <a title="nitric.proto.deployments.v1.Batch" href="#nitric.proto.deployments.v1.Batch">Batch</a> = &lt;object object&gt;, website: <a title="nitric.proto.deployments.v1.Website" href="#nitric.proto.deployments.v1.Website">Website</a> = &lt;object object&gt;, spark: <a title="nitric.proto.deployments.v1.Spark" href="#nitric.proto.deployments.v1.Spark">Spark</a> = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Resource(id: '<strong>resources_v1</strong>.ResourceIdentifier' = <object object at 0x73e29b4b4250>, service: 'Service' = <object object at 0x73e29b4b4250>, bucket: 'Bucket' = <object object at 0x73e29b4b4250>, topic: 'Topic' = <object object at 0x73e29b4b4250>, api: 'Api' = <object object at 0x73e29b4b4250>, policy: 'Policy' = <object object at 0x73e29b4b4250>, schedule: 'Schedule' = <object object at 0x73e29b4b4250>, key_value_store: 'KeyValueStore' = <object object at 0x73e29b4b4250>, secret: 'Secret' = <object object at 0x73e29b4b4250>, websocket: 'Websocket' = <object object at 0x73e29b4b4250>, http: 'Http' = <object object at 0x73e29b4b4250>, queue: 'Queue' = <object object at 0x73e29b4b4250>, sql_database: 'SqlDatabase' = <object object at 0x73e29b4b4250>, batch: 'Batch' = <object object at 0x73e29b4b4250>, website: 'Website' = <object object at 0x73e29b4b4250>, spark: 'Spark' = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>Resource(id: '<strong>resources_v1</strong>.ResourceIdentifier' = <object object at 0x777e4e1b0250>, service: 'Service' = <object object at 0x777e4e1b0250>, bucket: 'Bucket' = <object object at 0x777e4e1b0250>, topic: 'Topic' = <object object at 0x777e4e1b0250>, api: 'Api' = <object object at 0x777e4e1b0250>, policy: 'Policy' = <object object at 0x777e4e1b0250>, schedule: 'Schedule' = <object object at 0x777e4e1b0250>, key_value_store: 'KeyValueStore' = <object object at 0x777e4e1b0250>, secret: 'Secret' = <object object at 0x777e4e1b0250>, websocket: 'Websocket' = <object object at 0x777e4e1b0250>, http: 'Http' = <object object at 0x777e4e1b0250>, queue: 'Queue' = <object object at 0x777e4e1b0250>, sql_database: 'SqlDatabase' = <object object at 0x777e4e1b0250>, batch: 'Batch' = <object object at 0x777e4e1b0250>, website: 'Website' = <object object at 0x777e4e1b0250>, spark: 'Spark' = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1539,7 +1541,7 @@ provision a resource</p></div>
 <span>(</span><span>id: __resources_v1__.ResourceIdentifier = &lt;object object&gt;, action: <a title="nitric.proto.deployments.v1.ResourceDeploymentAction" href="#nitric.proto.deployments.v1.ResourceDeploymentAction">ResourceDeploymentAction</a> = &lt;object object&gt;, status: <a title="nitric.proto.deployments.v1.ResourceDeploymentStatus" href="#nitric.proto.deployments.v1.ResourceDeploymentStatus">ResourceDeploymentStatus</a> = &lt;object object&gt;, sub_resource: str = &lt;object object&gt;, message: str = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>ResourceUpdate(id: '<strong>resources_v1</strong>.ResourceIdentifier' = <object object at 0x73e29b4b4250>, action: 'ResourceDeploymentAction' = <object object at 0x73e29b4b4250>, status: 'ResourceDeploymentStatus' = <object object at 0x73e29b4b4250>, sub_resource: str = <object object at 0x73e29b4b4250>, message: str = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>ResourceUpdate(id: '<strong>resources_v1</strong>.ResourceIdentifier' = <object object at 0x777e4e1b0250>, action: 'ResourceDeploymentAction' = <object object at 0x777e4e1b0250>, status: 'ResourceDeploymentStatus' = <object object at 0x777e4e1b0250>, sub_resource: str = <object object at 0x777e4e1b0250>, message: str = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1608,7 +1610,7 @@ e.g. an Azure StorageAccount</p></div>
 <span>(</span><span>target: <a title="nitric.proto.deployments.v1.ScheduleTarget" href="#nitric.proto.deployments.v1.ScheduleTarget">ScheduleTarget</a> = &lt;object object&gt;, every: <a title="nitric.proto.deployments.v1.ScheduleEvery" href="#nitric.proto.deployments.v1.ScheduleEvery">ScheduleEvery</a> = &lt;object object&gt;, cron: <a title="nitric.proto.deployments.v1.ScheduleCron" href="#nitric.proto.deployments.v1.ScheduleCron">ScheduleCron</a> = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Schedule(target: 'ScheduleTarget' = <object object at 0x73e29b4b4250>, every: 'ScheduleEvery' = <object object at 0x73e29b4b4250>, cron: 'ScheduleCron' = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>Schedule(target: 'ScheduleTarget' = <object object at 0x777e4e1b0250>, every: 'ScheduleEvery' = <object object at 0x777e4e1b0250>, cron: 'ScheduleCron' = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1645,7 +1647,7 @@ class Schedule(betterproto.Message):
 <span>(</span><span>expression: str = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>ScheduleCron(expression: str = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>ScheduleCron(expression: str = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1673,7 +1675,7 @@ class ScheduleCron(betterproto.Message):
 <span>(</span><span>rate: str = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>ScheduleEvery(rate: str = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>ScheduleEvery(rate: str = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1705,7 +1707,7 @@ class ScheduleEvery(betterproto.Message):
 <span>(</span><span>service: str = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>ScheduleTarget(service: str = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>ScheduleTarget(service: str = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1829,29 +1831,47 @@ satisfied in any way</p></div>
 </dd>
 <dt id="nitric.proto.deployments.v1.Spark"><code class="flex name class">
 <span>class <span class="ident">Spark</span></span>
+<span>(</span><span>workers_per_host: int = &lt;object object&gt;, memory_gb: int = &lt;object object&gt;, cpus_per_worker: int = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Spark()</p></div>
+<div class="desc"><p>Spark(workers_per_host: int = <object object at 0x777e4e1b0250>, memory_gb: int = <object object at 0x777e4e1b0250>, cpus_per_worker: int = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@dataclass(eq=False, repr=False)
 class Spark(betterproto.Message):
-    pass</code></pre>
+    workers_per_host: int = betterproto.uint32_field(1)
+    memory_gb: int = betterproto.uint32_field(2)
+    cpus_per_worker: int = betterproto.uint32_field(3)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li>betterproto.Message</li>
 <li>abc.ABC</li>
 </ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="nitric.proto.deployments.v1.Spark.cpus_per_worker"><code class="name">var <span class="ident">cpus_per_worker</span> : int</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Spark.memory_gb"><code class="name">var <span class="ident">memory_gb</span> : int</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="nitric.proto.deployments.v1.Spark.workers_per_host"><code class="name">var <span class="ident">workers_per_host</span> : int</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
 </dd>
 <dt id="nitric.proto.deployments.v1.Spec"><code class="flex name class">
 <span>class <span class="ident">Spec</span></span>
 <span>(</span><span>resources: List[ForwardRef('<a title="nitric.proto.deployments.v1.Resource" href="#nitric.proto.deployments.v1.Resource">Resource</a>')] = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Spec(resources: List[ForwardRef('Resource')] = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>Spec(resources: List[ForwardRef('Resource')] = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1879,7 +1899,7 @@ class Spec(betterproto.Message):
 <span>(</span><span>image_uri: str = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>SqlDatabase(image_uri: str = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>SqlDatabase(image_uri: str = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1911,7 +1931,7 @@ database</p></div>
 <span>(</span><span>service: str = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>SubscriptionTarget(service: str = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>SubscriptionTarget(service: str = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1939,7 +1959,7 @@ class SubscriptionTarget(betterproto.Message):
 <span>(</span><span>subscriptions: List[ForwardRef('<a title="nitric.proto.deployments.v1.SubscriptionTarget" href="#nitric.proto.deployments.v1.SubscriptionTarget">SubscriptionTarget</a>')] = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Topic(subscriptions: List[ForwardRef('SubscriptionTarget')] = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>Topic(subscriptions: List[ForwardRef('SubscriptionTarget')] = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1966,7 +1986,7 @@ class Topic(betterproto.Message):
 <span>(</span><span>target: <a title="nitric.proto.deployments.v1.SubscriptionTarget" href="#nitric.proto.deployments.v1.SubscriptionTarget">SubscriptionTarget</a> = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>TopicSubscription(target: 'SubscriptionTarget' = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>TopicSubscription(target: 'SubscriptionTarget' = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2030,7 +2050,7 @@ class UpResult(betterproto.Message):
 <span>(</span><span>index_document: str = &lt;object object&gt;, error_document: str = &lt;object object&gt;, base_path: str = &lt;object object&gt;, local_directory: str = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Website(index_document: str = <object object at 0x73e29b4b4250>, error_document: str = <object object at 0x73e29b4b4250>, base_path: str = <object object at 0x73e29b4b4250>, local_directory: str = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>Website(index_document: str = <object object at 0x777e4e1b0250>, error_document: str = <object object at 0x777e4e1b0250>, base_path: str = <object object at 0x777e4e1b0250>, local_directory: str = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2123,7 +2143,7 @@ class Websocket(betterproto.Message):
 <span>(</span><span>service: str = &lt;object object&gt;)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>WebsocketTarget(service: str = <object object at 0x73e29b4b4250>)</p></div>
+<div class="desc"><p>WebsocketTarget(service: str = <object object at 0x777e4e1b0250>)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2369,6 +2389,11 @@ class WebsocketTarget(betterproto.Message):
 </li>
 <li>
 <h4><code><a title="nitric.proto.deployments.v1.Spark" href="#nitric.proto.deployments.v1.Spark">Spark</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.proto.deployments.v1.Spark.cpus_per_worker" href="#nitric.proto.deployments.v1.Spark.cpus_per_worker">cpus_per_worker</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Spark.memory_gb" href="#nitric.proto.deployments.v1.Spark.memory_gb">memory_gb</a></code></li>
+<li><code><a title="nitric.proto.deployments.v1.Spark.workers_per_host" href="#nitric.proto.deployments.v1.Spark.workers_per_host">workers_per_host</a></code></li>
+</ul>
 </li>
 <li>
 <h4><code><a title="nitric.proto.deployments.v1.Spec" href="#nitric.proto.deployments.v1.Spec">Spec</a></code></h4>

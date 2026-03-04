@@ -272,17 +272,34 @@ __all__ = [
 </details>
 </dd>
 <dt id="nitric.resources.spark"><code class="name flex">
-<span>def <span class="ident">spark</span></span>(<span>name: str) ‑> nitric.resources.spark.Spark</span>
+<span>def <span class="ident">spark</span></span>(<span>name: str, workers_per_host: int = 1, memory_gb: int = 1, cpus_per_worker: int = 1) ‑> nitric.resources.spark.Spark</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Entry point for defining a Spark resource in a Nitric application.</p></div>
+<div class="desc"><p>Entry point for defining a Spark resource in a Nitric application.</p>
+<p>:param name: The name of the spark cluster
+:param workers_per_host: Number of workers per host
+:param memory_gb: Memory per worker in GB
+:param cpus_per_worker: CPU count per worker</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def spark(name: str) -&gt; Spark:
-    &#34;&#34;&#34;Entry point for defining a Spark resource in a Nitric application.&#34;&#34;&#34;
-    return Nitric._create_resource(Spark, name)</code></pre>
+<pre><code class="python">def spark(name: str, workers_per_host: int = 1, memory_gb: int = 1, cpus_per_worker: int = 1) -&gt; Spark:
+    &#34;&#34;&#34;
+    Entry point for defining a Spark resource in a Nitric application.
+
+    :param name: The name of the spark cluster
+    :param workers_per_host: Number of workers per host
+    :param memory_gb: Memory per worker in GB
+    :param cpus_per_worker: CPU count per worker
+    &#34;&#34;&#34;
+    return Nitric._create_resource(
+        Spark,
+        name,
+        workers_per_host=workers_per_host,
+        memory_gb=memory_gb,
+        cpus_per_worker=cpus_per_worker,
+    )</code></pre>
 </details>
 </dd>
 <dt id="nitric.resources.sql"><code class="name flex">
@@ -1763,11 +1780,15 @@ class JwtSecurityDefinition:
 </dd>
 <dt id="nitric.resources.Spark"><code class="flex name class">
 <span>class <span class="ident">Spark</span></span>
-<span>(</span><span>name: str)</span>
+<span>(</span><span>name: str, workers_per_host: int = 1, memory_gb: int = 1, cpus_per_worker: int = 1)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>A Spark resource used for deployment.</p>
-<p>Construct a new resource.</p></div>
+<p>Initialize a new Spark cluster resource.</p>
+<p>:param name: The name of the spark cluster
+:param workers_per_host: Number of workers per host
+:param memory_gb: Memory per worker in GB
+:param cpus_per_worker: CPU count per worker</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1775,29 +1796,85 @@ class JwtSecurityDefinition:
 <pre><code class="python">class Spark(Resource):
     &#34;&#34;&#34;A Spark resource used for deployment.&#34;&#34;&#34;
 
+    def __init__(
+        self,
+        name: str,
+        workers_per_host: int = 1,
+        memory_gb: int = 1,
+        cpus_per_worker: int = 1,
+    ):
+        &#34;&#34;&#34;
+        Initialize a new Spark cluster resource.
+
+        :param name: The name of the spark cluster
+        :param workers_per_host: Number of workers per host
+        :param memory_gb: Memory per worker in GB
+        :param cpus_per_worker: CPU count per worker
+        &#34;&#34;&#34;
+        super().__init__(name)
+        self.workers_per_host = workers_per_host
+        self.memory_gb = memory_gb
+        self.cpus_per_worker = cpus_per_worker
+
     async def _register(self) -&gt; None:
         &#34;&#34;&#34;Register the Spark resource with the Nitric Resource Server.&#34;&#34;&#34;
         try:
-            # This is the call that triggers the deployment logic in the provider
             await self._resources_stub.declare(
                 resource_declare_request=ResourceDeclareRequest(
                     id=self._to_resource_id(),
-                    # This must match the field name in your ResourceDeclareRequest proto
-                    spark=SparkResource(),
+                    spark=SparkResource(
+                        workers_per_host=self.workers_per_host,
+                        memory_gb=self.memory_gb,
+                        cpus_per_worker=self.cpus_per_worker,
+                    ),
                 )
             )
         except GRPCError as grpc_err:
             raise exception_from_grpc_error(grpc_err) from grpc_err
 
     def _to_resource_id(self) -&gt; ResourceIdentifier:
-        # ResourceType.Spark must exist in your generated proto enum
-        return ResourceIdentifier(name=self.name, type=ResourceType.Spark)</code></pre>
+        &#34;&#34;&#34;
+        Return the resource identifier for this Spark resource.
+
+        Internal use only.
+        &#34;&#34;&#34;
+        return ResourceIdentifier(name=self.name, type=ResourceType.Spark)
+
+    def allow(self) -&gt; SparkRef:
+        &#34;&#34;&#34;
+        Return a SparkRef to allow submitting jobs to this cluster.
+
+        This reference can be used to invoke runtime methods like submit.
+        &#34;&#34;&#34;
+        return SparkRef(self.name)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></li>
 <li>abc.ABC</li>
 </ul>
+<h3>Methods</h3>
+<dl>
+<dt id="nitric.resources.Spark.allow"><code class="name flex">
+<span>def <span class="ident">allow</span></span>(<span>self) ‑> nitric.resources.spark.SparkRef</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return a SparkRef to allow submitting jobs to this cluster.</p>
+<p>This reference can be used to invoke runtime methods like submit.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def allow(self) -&gt; SparkRef:
+    &#34;&#34;&#34;
+    Return a SparkRef to allow submitting jobs to this cluster.
+
+    This reference can be used to invoke runtime methods like submit.
+    &#34;&#34;&#34;
+    return SparkRef(self.name)</code></pre>
+</details>
+</dd>
+</dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
 <li><code><b><a title="nitric.resources.resource.Resource" href="resource.html#nitric.resources.resource.Resource">Resource</a></b></code>:
@@ -2299,6 +2376,9 @@ class JwtSecurityDefinition:
 </li>
 <li>
 <h4><code><a title="nitric.resources.Spark" href="#nitric.resources.Spark">Spark</a></code></h4>
+<ul class="">
+<li><code><a title="nitric.resources.Spark.allow" href="#nitric.resources.Spark.allow">allow</a></code></li>
+</ul>
 </li>
 <li>
 <h4><code><a title="nitric.resources.Sql" href="#nitric.resources.Sql">Sql</a></code></h4>
