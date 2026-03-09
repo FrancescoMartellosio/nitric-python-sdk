@@ -39,25 +39,19 @@ class SparkQuery:
     """A fluent query builder for Spark operations."""
 
     def __init__(self, cluster_name: str, table_pattern: str, stub: SparkStub):
-        """
-        Initialize a new SparkQuery.
-
-        :param cluster_name: The name of the cluster
-        :param table_pattern: The Redis key pattern
-        :param stub: The gRPC stub
-        """
+        """Initialize a new SparkQuery."""
         self._cluster_name = cluster_name
         self._table_pattern = table_pattern
         self._stub = stub
         self._instructions: List[SparkInstruction] = []
 
     def filter(self, column: str, operator: str, value: Union[str, int, float]) -> SparkQuery:
-        """Add a filter instruction."""
+        """Add a filter instruction and return self for chaining."""
         self._instructions.append(SparkInstruction(type="FILTER", column=column, operator=operator, value=str(value)))
         return self
 
     def map(self, column: str, operator: str, value: Optional[Union[str, int, float]] = None) -> SparkQuery:
-        """Add a map/transform instruction."""
+        """Add a map/transform instruction and return self for chaining."""
         self._instructions.append(
             SparkInstruction(
                 type="MAP", column=column, operator=operator, value=str(value) if value is not None else ""
@@ -66,21 +60,22 @@ class SparkQuery:
         return self
 
     async def sum(self, column: str) -> float:
-        """Execute the query and return the sum of a column."""
+        """Terminal operation: Add sum instruction and execute."""
         self._instructions.append(SparkInstruction(type="SUM", column=column))
         return await self._execute()
 
     async def save_to(self, target_table: str) -> float:
-        """Execute the query and save results to a new Redis table pattern."""
+        """Terminal operation: Add save instruction and execute."""
         self._instructions.append(SparkInstruction(type="SAVE", value=target_table))
         return await self._execute()
 
     async def _execute(self) -> float:
-        """Send the collected instructions to the Nitric Resource Server."""
+        """Construct the final request and send it to the provider."""
         req = SparkExecuteRequest(
             cluster_name=self._cluster_name, table_pattern=self._table_pattern, instructions=self._instructions
         )
         try:
+            # Note: Ensure the keyword argument matches your generated SparkStub
             response = await self._stub.execute(spark_execute_request=req)
             return response.value
         except GRPCError as grpc_err:
