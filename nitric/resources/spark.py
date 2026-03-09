@@ -77,14 +77,27 @@ class SparkQuery:
 
     async def _execute(self) -> float:
         """Send the collected instructions to the Nitric Resource Server."""
+        print(f"\n[DEBUG] Python calling Execute on: {self._stub.execute.name}")
         req = SparkExecuteRequest(
             cluster_name=self._cluster_name, table_pattern=self._table_pattern, instructions=self._instructions
         )
+
         try:
-            response = await self._stub.execute(spark_execute_request=req)
+            # Check if the channel is actually healthy before calling
+            print(f"[DEBUG] Channel State: {self._stub.channel._state}")
+
+            response = await self._stub.execute(req)
+            print(f"[DEBUG] Success! Response: {response.value}")
             return response.value
         except GRPCError as grpc_err:
+            print(f"[DEBUG] GRPC Error Code: {grpc_err.status}")
+            print(f"[DEBUG] GRPC Error Message: {grpc_err.message}")
+            # This will tell us if the error is coming from 'nitric.proto.spark.v1.Spark'
+            # or something else entirely
             raise exception_from_grpc_error(grpc_err) from grpc_err
+        except Exception as e:
+            print(f"[DEBUG] Unexpected Python Error: {type(e).__name__} - {e}")
+            raise e
 
 
 class SparkRef:
