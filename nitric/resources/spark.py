@@ -108,6 +108,24 @@ class SparkRef:
         """
         return SparkQuery(self.name, table_pattern, self._stub)
 
+    async def execute(self, table_pattern: str) -> float:
+        """Directly invoke the Execute RPC with hardcoded test instructions."""
+        # Hardcoding values to test the gRPC bridge
+        test_instructions = [
+            SparkInstruction(type="FILTER", column="status", operator="eq", value="active"),
+            SparkInstruction(type="SUM", column="amount", operator="", value=""),
+        ]
+
+        req = SparkExecuteRequest(cluster_name=self.name, table_pattern=table_pattern, instructions=test_instructions)
+
+        try:
+            print(f"📡 [SDK] Sending Execute Request for cluster: {self.name}")
+            response = await self._stub.execute(req)
+            return response.value
+        except GRPCError as grpc_err:
+            # This is where we will see the 'Unknown Service' if the CLI is blocking it
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
     async def submit(self, jar_path: str, args: Optional[List[str]] = None) -> str:
         """
         Submit a job to the Spark cluster.
