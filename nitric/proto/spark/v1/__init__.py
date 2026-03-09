@@ -23,23 +23,42 @@ if TYPE_CHECKING:
 
 
 @dataclass(eq=False, repr=False)
-class SparkSubmitRequest(betterproto.Message):
-    table_pattern: str = betterproto.string_field(1)
-    instructions: List["SparkInstruction"] = betterproto.message_field(2)
+class SparkExecuteRequest(betterproto.Message):
+    cluster_name: str = betterproto.string_field(1)
+    table_pattern: str = betterproto.string_field(2)
+    instructions: List["SparkInstruction"] = betterproto.message_field(3)
 
 
 @dataclass(eq=False, repr=False)
 class SparkInstruction(betterproto.Message):
     type: str = betterproto.string_field(1)
+    """
+    Enum for type safety, or string for maximum flexibility Using string here
+    to match your current interpreter.py logic
+    """
+
     column: str = betterproto.string_field(2)
     operator: str = betterproto.string_field(3)
     value: str = betterproto.string_field(4)
 
 
 @dataclass(eq=False, repr=False)
-class SparkSubmitResponse(betterproto.Message):
+class SparkExecuteResponse(betterproto.Message):
     value: float = betterproto.double_field(1)
     error: str = betterproto.string_field(2)
+
+
+@dataclass(eq=False, repr=False)
+class SparkSubmitRequest(betterproto.Message):
+    cluster_name: str = betterproto.string_field(1)
+    job_jar_path: str = betterproto.string_field(2)
+    arguments: List[str] = betterproto.string_field(3)
+
+
+@dataclass(eq=False, repr=False)
+class SparkSubmitResponse(betterproto.Message):
+    job_id: str = betterproto.string_field(1)
+    status: str = betterproto.string_field(2)
 
 
 class SparkStub(betterproto.ServiceStub):
@@ -60,11 +79,33 @@ class SparkStub(betterproto.ServiceStub):
             metadata=metadata,
         )
 
+    async def execute(
+        self,
+        spark_execute_request: "SparkExecuteRequest",
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional["Deadline"] = None,
+        metadata: Optional["MetadataLike"] = None
+    ) -> "SparkExecuteResponse":
+        return await self._unary_unary(
+            "/nitric.proto.spark.v1.Spark/Execute",
+            spark_execute_request,
+            SparkExecuteResponse,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
 
 class SparkBase(ServiceBase):
     async def submit(
         self, spark_submit_request: "SparkSubmitRequest"
     ) -> "SparkSubmitResponse":
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def execute(
+        self, spark_execute_request: "SparkExecuteRequest"
+    ) -> "SparkExecuteResponse":
         raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
 
     async def __rpc_submit(
@@ -74,6 +115,13 @@ class SparkBase(ServiceBase):
         response = await self.submit(request)
         await stream.send_message(response)
 
+    async def __rpc_execute(
+        self, stream: "grpclib.server.Stream[SparkExecuteRequest, SparkExecuteResponse]"
+    ) -> None:
+        request = await stream.recv_message()
+        response = await self.execute(request)
+        await stream.send_message(response)
+
     def __mapping__(self) -> Dict[str, grpclib.const.Handler]:
         return {
             "/nitric.proto.spark.v1.Spark/Submit": grpclib.const.Handler(
@@ -81,5 +129,11 @@ class SparkBase(ServiceBase):
                 grpclib.const.Cardinality.UNARY_UNARY,
                 SparkSubmitRequest,
                 SparkSubmitResponse,
+            ),
+            "/nitric.proto.spark.v1.Spark/Execute": grpclib.const.Handler(
+                self.__rpc_execute,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                SparkExecuteRequest,
+                SparkExecuteResponse,
             ),
         }

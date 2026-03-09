@@ -25,7 +25,7 @@ from nitric.exception import exception_from_grpc_error
 from nitric.channel import ChannelManager
 
 # Updated imports from your new proto generation
-from nitric.proto.spark.v1 import SparkStub, SparkSubmitRequest, SparkInstruction
+from nitric.proto.spark.v1 import SparkStub, SparkSubmitRequest, SparkExecuteRequest, SparkInstruction
 from nitric.proto.resources.v1 import (
     ResourceDeclareRequest,
     ResourceIdentifier,
@@ -76,18 +76,12 @@ class SparkQuery:
         return await self._execute()
 
     async def _execute(self) -> float:
-        """Use the 'Submit' RPC path to transport 'Execute' logic."""
-        # Note: We are using the renamed SparkSubmitRequest here
-        req = SparkSubmitRequest(table_pattern=self._table_pattern, instructions=self._instructions)
-
+        """Send the collected instructions to the Nitric Resource Server."""
+        req = SparkExecuteRequest(
+            cluster_name=self._cluster_name, table_pattern=self._table_pattern, instructions=self._instructions
+        )
         try:
-            # This calls the method the CLI already whitelisted
-            response = await self._stub.submit(req)
-
-            if response.error:
-                # Handle any custom errors from your Go provider
-                print(f"[DEBUG] Spark Provider Error: {response.error}")
-
+            response = await self._stub.execute(spark_execute_request=req)
             return response.value
         except GRPCError as grpc_err:
             raise exception_from_grpc_error(grpc_err) from grpc_err
