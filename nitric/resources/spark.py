@@ -25,7 +25,7 @@ from nitric.exception import exception_from_grpc_error
 from nitric.channel import ChannelManager
 
 # Updated imports from your new proto generation
-from nitric.proto.spark.v1 import SparkStub, SparkSubmitRequest, SparkExecuteRequest, SparkInstruction
+from nitric.proto.spark.v1 import SparkStub, SparkSubmitRequest, SparkInstruction
 from nitric.proto.resources.v1 import (
     ResourceDeclareRequest,
     ResourceIdentifier,
@@ -76,27 +76,21 @@ class SparkQuery:
         return await self._execute()
 
     async def _execute(self) -> float:
-        """Send the collected instructions to the Nitric Resource Server."""
-        # DEBUG: Send an empty request to check if the route/service is recognized
-        print(f"\n[DEBUG] Attempting Execute with EMPTY instructions...")
-        req = SparkExecuteRequest(
-            cluster_name=self._cluster_name, table_pattern=self._table_pattern, instructions=[]  # Sending an empty list
-        )
+        """Use the 'Submit' RPC path to transport 'Execute' logic."""
+        # Note: We are using the renamed SparkSubmitRequest here
+        req = SparkSubmitRequest(table_pattern=self._table_pattern, instructions=self._instructions)
 
         try:
-            print(f"[DEBUG] Channel State: {self._stub.channel._state}")
-            # Call the stub
-            response = await self._stub.execute(req)
+            # This calls the method the CLI already whitelisted
+            response = await self._stub.submit(req)
 
-            print(f"[DEBUG] Success! Response Value: {response.value}")
+            if response.error:
+                # Handle any custom errors from your Go provider
+                print(f"[DEBUG] Spark Provider Error: {response.error}")
+
             return response.value
         except GRPCError as grpc_err:
-            print(f"[DEBUG] GRPC Error Code: {grpc_err.status}")
-            print(f"[DEBUG] GRPC Error Message: {grpc_err.message}")
             raise exception_from_grpc_error(grpc_err) from grpc_err
-        except Exception as e:
-            print(f"[DEBUG] Unexpected Python Error: {type(e).__name__} - {e}")
-            raise e
 
 
 class SparkRef:
