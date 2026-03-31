@@ -60,7 +60,7 @@ class SparkQuery:
         """Add a stateless filter instruction."""
         instr = SparkInstruction(filter=FilterInstruction(column=column, operator=operator, value=str(value)))
         self._instructions.append(instr)
-        return
+        return self
 
     def stateful_filter(self, column: str, operator: str, value: Union[str, int, float], key_column: str) -> SparkQuery:
         """Add a stateful filter instruction."""
@@ -70,7 +70,7 @@ class SparkQuery:
             )
         )
         self._instructions.append(instr)
-        return
+        return self
 
     def group_by(self, columns: List[str]) -> SparkQuery:
         """Add a group by instruction."""
