@@ -27,7 +27,6 @@ from nitric.channel import ChannelManager
 # Updated imports from your new proto generation
 from nitric.proto.spark.v1 import (
     SparkStub,
-    SparkSubmitRequest,
     SparkExecuteRequest,
     SparkInstruction,
     FilterInstruction,
@@ -148,24 +147,6 @@ class SparkRef:
             return response.value
         except GRPCError as grpc_err:
             # This is where we will see the 'Unknown Service' if the CLI is blocking it
-            raise exception_from_grpc_error(grpc_err) from grpc_err
-
-    async def submit(self, jar_path: str, args: Optional[List[str]] = None) -> str:
-        """
-        Submit a job to the Spark cluster.
-
-        Return the job_id from the provider.
-        """
-        req = SparkSubmitRequest(
-            cluster_name=self.name,
-            job_jar_path=jar_path,
-            arguments=args or [],
-        )
-
-        try:
-            response = await self._stub.submit(spark_submit_request=req)
-            return response.job_id
-        except GRPCError as grpc_err:
             raise exception_from_grpc_error(grpc_err) from grpc_err
 
 
