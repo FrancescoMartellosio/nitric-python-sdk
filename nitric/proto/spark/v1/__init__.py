@@ -40,6 +40,7 @@ class SparkInstruction(betterproto.Message):
     column: str = betterproto.string_field(2)
     operator: str = betterproto.string_field(3)
     value: str = betterproto.string_field(4)
+    group_columns: List[str] = betterproto.string_field(5)
 
 
 @dataclass(eq=False, repr=False)
