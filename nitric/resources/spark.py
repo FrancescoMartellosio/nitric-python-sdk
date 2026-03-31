@@ -25,7 +25,19 @@ from nitric.exception import exception_from_grpc_error
 from nitric.channel import ChannelManager
 
 # Updated imports from your new proto generation
-from nitric.proto.spark.v1 import SparkStub, SparkSubmitRequest, SparkExecuteRequest, SparkInstruction
+from nitric.proto.spark.v1 import (
+    SparkStub,
+    SparkSubmitRequest,
+    SparkExecuteRequest,
+    SparkInstruction,
+    FilterInstruction,
+    MapInstruction,
+    SumInstruction,
+    SaveInstruction,
+    GroupByInstruction,
+    StatefulFilterInstruction,
+)
+
 from nitric.proto.resources.v1 import (
     ResourceDeclareRequest,
     ResourceIdentifier,
@@ -46,27 +58,45 @@ class SparkQuery:
         self._instructions: List[SparkInstruction] = []
 
     def filter(self, column: str, operator: str, value: Union[str, int, float]) -> SparkQuery:
-        """Add a filter instruction and return self for chaining."""
-        self._instructions.append(SparkInstruction(type="FILTER", column=column, operator=operator, value=str(value)))
+        """Add a stateless filter instruction."""
+        instr = SparkInstruction(filter=FilterInstruction(column=column, operator=operator, value=str(value)))
+        self._instructions.append(instr)
+        return
+
+    def stateful_filter(self, column: str, operator: str, value: Union[str, int, float], key_column: str) -> SparkQuery:
+        """Add a stateful filter instruction."""
+        instr = SparkInstruction(
+            stateful_filter=StatefulFilterInstruction(
+                column=column, operator=operator, value=str(value), key_column=key_column
+            )
+        )
+        self._instructions.append(instr)
+        return
+
+    def group_by(self, columns: List[str]) -> SparkQuery:
+        """Add a group by instruction."""
+        instr = SparkInstruction(group_by=GroupByInstruction(columns=columns))
+        self._instructions.append(instr)
         return self
 
     def map(self, column: str, operator: str, value: Optional[Union[str, int, float]] = None) -> SparkQuery:
-        """Add a map/transform instruction and return self for chaining."""
-        self._instructions.append(
-            SparkInstruction(
-                type="MAP", column=column, operator=operator, value=str(value) if value is not None else ""
-            )
+        """Add a map/transform instruction."""
+        instr = SparkInstruction(
+            map=MapInstruction(column=column, operator=operator, value=str(value) if value is not None else "")
         )
+        self._instructions.append(instr)
         return self
 
     async def sum(self, column: str) -> float:
         """Terminal operation: Add sum instruction and execute."""
-        self._instructions.append(SparkInstruction(type="SUM", column=column))
+        instr = SparkInstruction(sum=SumInstruction(column=column))
+        self._instructions.append(instr)
         return await self._execute()
 
     async def save_to(self, target_table: str) -> float:
         """Terminal operation: Add save instruction and execute."""
-        self._instructions.append(SparkInstruction(type="SAVE", value=target_table))
+        instr = SparkInstruction(save=SaveInstruction(target_table=target_table))
+        self._instructions.append(instr)
         return await self._execute()
 
     async def _execute(self) -> float:
@@ -75,8 +105,7 @@ class SparkQuery:
             cluster_name=self._cluster_name, table_pattern=self._table_pattern, instructions=self._instructions
         )
         try:
-            # Note: Ensure the keyword argument matches your generated SparkStub
-            response = await self._stub.execute(spark_execute_request=req)
+            response = await self._stub.execute(req)
             return response.value
         except GRPCError as grpc_err:
             raise exception_from_grpc_error(grpc_err) from grpc_err

@@ -31,16 +31,51 @@ class SparkExecuteRequest(betterproto.Message):
 
 @dataclass(eq=False, repr=False)
 class SparkInstruction(betterproto.Message):
-    type: str = betterproto.string_field(1)
-    """
-    Enum for type safety, or string for maximum flexibility Using string here
-    to match your current interpreter.py logic
-    """
+    filter: "FilterInstruction" = betterproto.message_field(1, group="action")
+    map: "MapInstruction" = betterproto.message_field(2, group="action")
+    sum: "SumInstruction" = betterproto.message_field(3, group="action")
+    save: "SaveInstruction" = betterproto.message_field(4, group="action")
+    group_by: "GroupByInstruction" = betterproto.message_field(5, group="action")
+    stateful_filter: "StatefulFilterInstruction" = betterproto.message_field(
+        6, group="action"
+    )
 
-    column: str = betterproto.string_field(2)
-    operator: str = betterproto.string_field(3)
-    value: str = betterproto.string_field(4)
-    group_columns: List[str] = betterproto.string_field(5)
+
+@dataclass(eq=False, repr=False)
+class FilterInstruction(betterproto.Message):
+    column: str = betterproto.string_field(1)
+    operator: str = betterproto.string_field(2)
+    value: str = betterproto.string_field(3)
+
+
+@dataclass(eq=False, repr=False)
+class MapInstruction(betterproto.Message):
+    column: str = betterproto.string_field(1)
+    operator: str = betterproto.string_field(2)
+    value: str = betterproto.string_field(3)
+
+
+@dataclass(eq=False, repr=False)
+class SumInstruction(betterproto.Message):
+    column: str = betterproto.string_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class SaveInstruction(betterproto.Message):
+    target_table: str = betterproto.string_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class GroupByInstruction(betterproto.Message):
+    columns: List[str] = betterproto.string_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class StatefulFilterInstruction(betterproto.Message):
+    column: str = betterproto.string_field(1)
+    operator: str = betterproto.string_field(2)
+    value: str = betterproto.string_field(3)
+    key_column: str = betterproto.string_field(4)
 
 
 @dataclass(eq=False, repr=False)
@@ -49,37 +84,7 @@ class SparkExecuteResponse(betterproto.Message):
     error: str = betterproto.string_field(2)
 
 
-@dataclass(eq=False, repr=False)
-class SparkSubmitRequest(betterproto.Message):
-    cluster_name: str = betterproto.string_field(1)
-    job_jar_path: str = betterproto.string_field(2)
-    arguments: List[str] = betterproto.string_field(3)
-
-
-@dataclass(eq=False, repr=False)
-class SparkSubmitResponse(betterproto.Message):
-    job_id: str = betterproto.string_field(1)
-    status: str = betterproto.string_field(2)
-
-
 class SparkStub(betterproto.ServiceStub):
-    async def submit(
-        self,
-        spark_submit_request: "SparkSubmitRequest",
-        *,
-        timeout: Optional[float] = None,
-        deadline: Optional["Deadline"] = None,
-        metadata: Optional["MetadataLike"] = None
-    ) -> "SparkSubmitResponse":
-        return await self._unary_unary(
-            "/nitric.proto.spark.v1.Spark/Submit",
-            spark_submit_request,
-            SparkSubmitResponse,
-            timeout=timeout,
-            deadline=deadline,
-            metadata=metadata,
-        )
-
     async def execute(
         self,
         spark_execute_request: "SparkExecuteRequest",
@@ -99,22 +104,10 @@ class SparkStub(betterproto.ServiceStub):
 
 
 class SparkBase(ServiceBase):
-    async def submit(
-        self, spark_submit_request: "SparkSubmitRequest"
-    ) -> "SparkSubmitResponse":
-        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
-
     async def execute(
         self, spark_execute_request: "SparkExecuteRequest"
     ) -> "SparkExecuteResponse":
         raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
-
-    async def __rpc_submit(
-        self, stream: "grpclib.server.Stream[SparkSubmitRequest, SparkSubmitResponse]"
-    ) -> None:
-        request = await stream.recv_message()
-        response = await self.submit(request)
-        await stream.send_message(response)
 
     async def __rpc_execute(
         self, stream: "grpclib.server.Stream[SparkExecuteRequest, SparkExecuteResponse]"
@@ -125,12 +118,6 @@ class SparkBase(ServiceBase):
 
     def __mapping__(self) -> Dict[str, grpclib.const.Handler]:
         return {
-            "/nitric.proto.spark.v1.Spark/Submit": grpclib.const.Handler(
-                self.__rpc_submit,
-                grpclib.const.Cardinality.UNARY_UNARY,
-                SparkSubmitRequest,
-                SparkSubmitResponse,
-            ),
             "/nitric.proto.spark.v1.Spark/Execute": grpclib.const.Handler(
                 self.__rpc_execute,
                 grpclib.const.Cardinality.UNARY_UNARY,
