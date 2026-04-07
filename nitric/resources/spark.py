@@ -34,7 +34,7 @@ from nitric.proto.spark.v1 import (
     SumInstruction,
     SaveInstruction,
     GroupByInstruction,
-    StatefulFilterInstruction,
+    MapToStateInstruction,
 )
 
 from nitric.proto.resources.v1 import (
@@ -62,11 +62,11 @@ class SparkQuery:
         self._instructions.append(instr)
         return self
 
-    def stateful_filter(self, column: str, operator: str, value: Union[str, int, float], key_column: str) -> SparkQuery:
-        """Add a stateful filter instruction."""
+    def map_to_state(self, key_column: str, state_name: str, operation: str, column: str) -> SparkQuery:
+        """Allow maintaining state (running balances or current temperature) across the stream."""
         instr = SparkInstruction(
-            stateful_filter=StatefulFilterInstruction(
-                column=column, operator=operator, value=str(value), key_column=key_column
+            map_to_state=MapToStateInstruction(
+                key_column=key_column, state_name=state_name, operation=operation, column=column
             )
         )
         self._instructions.append(instr)

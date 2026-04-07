@@ -36,9 +36,7 @@ class SparkInstruction(betterproto.Message):
     sum: "SumInstruction" = betterproto.message_field(3, group="action")
     save: "SaveInstruction" = betterproto.message_field(4, group="action")
     group_by: "GroupByInstruction" = betterproto.message_field(5, group="action")
-    stateful_filter: "StatefulFilterInstruction" = betterproto.message_field(
-        6, group="action"
-    )
+    map_to_state: "MapToStateInstruction" = betterproto.message_field(6, group="action")
 
 
 @dataclass(eq=False, repr=False)
@@ -71,11 +69,11 @@ class GroupByInstruction(betterproto.Message):
 
 
 @dataclass(eq=False, repr=False)
-class StatefulFilterInstruction(betterproto.Message):
-    column: str = betterproto.string_field(1)
-    operator: str = betterproto.string_field(2)
-    value: str = betterproto.string_field(3)
-    key_column: str = betterproto.string_field(4)
+class MapToStateInstruction(betterproto.Message):
+    key_column: str = betterproto.string_field(1)
+    state_name: str = betterproto.string_field(2)
+    operation: str = betterproto.string_field(3)
+    column: str = betterproto.string_field(4)
 
 
 @dataclass(eq=False, repr=False)
