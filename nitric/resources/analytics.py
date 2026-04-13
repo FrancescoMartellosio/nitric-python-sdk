@@ -7,7 +7,7 @@ from nitric.application import Nitric
 from nitric.exception import exception_from_grpc_error
 from nitric.channel import ChannelManager
 
-from nitric.proto.analytics.v1 import (
+from nitric.proto.analyticsservice.v1 import (
     AnalyticsServiceStub,
     ExecuteRequest,
     PlanResponse,
