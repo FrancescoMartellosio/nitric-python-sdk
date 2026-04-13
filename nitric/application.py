@@ -45,6 +45,7 @@ class Nitric:
         "job": {},
         "jobdefinition": {},
         "spark": {},
+        "analyticsservice": {},
     }
 
     @classmethod
@@ -71,8 +72,11 @@ class Nitric:
         """
         Check if the Nitric application has been started.
 
-        Returns:
-            bool: True if the Nitric application has been started, False otherwise.
+        Returns
+        -------
+        bool
+            True if the Nitric application has been started, False otherwise.
+
         """
         return cls._has_run
 

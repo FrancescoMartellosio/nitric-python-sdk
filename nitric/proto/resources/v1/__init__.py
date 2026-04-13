@@ -44,6 +44,7 @@ class ResourceType(betterproto.Enum):
     Job = 16
     Website = 17
     Spark = 18
+    AnalyticsService = 19
 
 
 class Action(betterproto.Enum):
@@ -109,6 +110,9 @@ class ResourceDeclareRequest(betterproto.Message):
     sql_database: "SqlDatabaseResource" = betterproto.message_field(18, group="config")
     job: "JobResource" = betterproto.message_field(19, group="config")
     spark: "SparkResource" = betterproto.message_field(20, group="config")
+    analytics_service: "AnalyticsServiceResource" = betterproto.message_field(
+        21, group="config"
+    )
 
 
 @dataclass(eq=False, repr=False)
@@ -146,6 +150,11 @@ class SparkResource(betterproto.Message):
     workers_per_host: int = betterproto.uint32_field(1)
     memory_gb: int = betterproto.uint32_field(2)
     cpus_per_worker: int = betterproto.uint32_field(3)
+
+
+@dataclass(eq=False, repr=False)
+class AnalyticsServiceResource(betterproto.Message):
+    pass
 
 
 @dataclass(eq=False, repr=False)

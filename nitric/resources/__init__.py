@@ -24,6 +24,7 @@ from nitric.resources.kv import KeyValueStoreRef, kv
 from nitric.resources.schedules import ScheduleServer, schedule
 from nitric.resources.secrets import Secret, secret
 from nitric.resources.spark import Spark, spark
+from nitric.resources.analyticsservice import AnalyticsService, analytics_service
 from nitric.resources.topics import Topic, topic
 from nitric.resources.websockets import Websocket, websocket
 from nitric.resources.queues import Queue, queue
@@ -53,6 +54,8 @@ __all__ = [
     "Secret",
     "spark",
     "Spark",
+    "analytics_service",
+    "AnalyticsService",
     "sql",
     "Sql",
     "topic",

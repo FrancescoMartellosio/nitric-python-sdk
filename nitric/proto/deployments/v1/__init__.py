@@ -272,6 +272,11 @@ class Spark(betterproto.Message):
 
 
 @dataclass(eq=False, repr=False)
+class AnalyticsService(betterproto.Message):
+    pass
+
+
+@dataclass(eq=False, repr=False)
 class SubscriptionTarget(betterproto.Message):
     service: str = betterproto.string_field(1, group="target")
     """The name of an service to target"""
@@ -394,6 +399,9 @@ class Resource(betterproto.Message):
     batch: "Batch" = betterproto.message_field(22, group="config")
     website: "Website" = betterproto.message_field(23, group="config")
     spark: "Spark" = betterproto.message_field(24, group="config")
+    analytics_service: "AnalyticsService" = betterproto.message_field(
+        25, group="config"
+    )
 
 
 @dataclass(eq=False, repr=False)
