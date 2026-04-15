@@ -87,6 +87,65 @@ class MapToDataStrategy(betterproto.Enum):
 
 
 @dataclass(eq=False, repr=False)
+class SparkStreamingExecuteRequest(betterproto.Message):
+    pipeline: "Pipeline" = betterproto.message_field(1)
+    hints: "Hints" = betterproto.message_field(2)
+
+
+@dataclass(eq=False, repr=False)
+class SparkStreamingExecuteResponse(betterproto.Message):
+    query_id: str = betterproto.string_field(1)
+    """
+    Spark streaming query ID — uniquely identifies the running job. Use this to
+    monitor or stop the job via Spark's REST API.
+    """
+
+    error: str = betterproto.string_field(2)
+    """Non-empty if the pipeline was rejected or failed to start."""
+
+
+@dataclass(eq=False, repr=False)
+class SparkBatchExecuteRequest(betterproto.Message):
+    pipeline: "Pipeline" = betterproto.message_field(1)
+    hints: "BatchHints" = betterproto.message_field(2)
+
+
+@dataclass(eq=False, repr=False)
+class BatchHints(betterproto.Message):
+    partition_column: str = betterproto.string_field(1)
+    """Column to partition output by when writing to a table or file sink."""
+
+    adaptive_query: bool = betterproto.bool_field(2)
+    """
+    Enable Spark Adaptive Query Execution — recommended for most batch jobs.
+    """
+
+    shuffle_partitions: int = betterproto.int32_field(3)
+    """
+    Number of shuffle partitions. 0 = use Spark default or SHUFFLE_PARTITIONS
+    env var.
+    """
+
+    starting_offsets: str = betterproto.string_field(4)
+    """
+    For Kafka sources: read from earliest or latest offset. Default: earliest —
+    batch reads full topic history.
+    """
+
+
+@dataclass(eq=False, repr=False)
+class SparkBatchExecuteResponse(betterproto.Message):
+    rows_written: int = betterproto.int64_field(1)
+    """Number of rows written to the sink."""
+
+    output_path: str = betterproto.string_field(2)
+    """Path or table name where results were written."""
+
+    error: str = betterproto.string_field(3)
+    """Non-empty if the job failed."""
+
+
+@dataclass(eq=False, repr=False)
 class ExecuteRequest(betterproto.Message):
     pipeline: "Pipeline" = betterproto.message_field(1)
     """
@@ -188,6 +247,8 @@ class Hints(betterproto.Message):
     Recommended when the view will be queried frequently by the state key.
     Ignored by Spark engines.
     """
+
+    starting_offsets: str = betterproto.string_field(11)
 
 
 @dataclass(eq=False, repr=False)
@@ -558,6 +619,44 @@ class AnalyticsServiceStub(betterproto.ServiceStub):
         )
 
 
+class SparkStreamingExecutionServiceStub(betterproto.ServiceStub):
+    async def execute(
+        self,
+        spark_streaming_execute_request: "SparkStreamingExecuteRequest",
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional["Deadline"] = None,
+        metadata: Optional["MetadataLike"] = None
+    ) -> "SparkStreamingExecuteResponse":
+        return await self._unary_unary(
+            "/nitric.proto.analyticsservice.v1.SparkStreamingExecutionService/Execute",
+            spark_streaming_execute_request,
+            SparkStreamingExecuteResponse,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
+
+class SparkBatchExecutionServiceStub(betterproto.ServiceStub):
+    async def execute(
+        self,
+        spark_batch_execute_request: "SparkBatchExecuteRequest",
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional["Deadline"] = None,
+        metadata: Optional["MetadataLike"] = None
+    ) -> "SparkBatchExecuteResponse":
+        return await self._unary_unary(
+            "/nitric.proto.analyticsservice.v1.SparkBatchExecutionService/Execute",
+            spark_batch_execute_request,
+            SparkBatchExecuteResponse,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
+
 class AnalyticsServiceBase(ServiceBase):
     async def execute(self, execute_request: "ExecuteRequest") -> "ExecuteResponse":
         raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
@@ -592,5 +691,55 @@ class AnalyticsServiceBase(ServiceBase):
                 grpclib.const.Cardinality.UNARY_UNARY,
                 ExecuteRequest,
                 PlanResponse,
+            ),
+        }
+
+
+class SparkStreamingExecutionServiceBase(ServiceBase):
+    async def execute(
+        self, spark_streaming_execute_request: "SparkStreamingExecuteRequest"
+    ) -> "SparkStreamingExecuteResponse":
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def __rpc_execute(
+        self,
+        stream: "grpclib.server.Stream[SparkStreamingExecuteRequest, SparkStreamingExecuteResponse]",
+    ) -> None:
+        request = await stream.recv_message()
+        response = await self.execute(request)
+        await stream.send_message(response)
+
+    def __mapping__(self) -> Dict[str, grpclib.const.Handler]:
+        return {
+            "/nitric.proto.analyticsservice.v1.SparkStreamingExecutionService/Execute": grpclib.const.Handler(
+                self.__rpc_execute,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                SparkStreamingExecuteRequest,
+                SparkStreamingExecuteResponse,
+            ),
+        }
+
+
+class SparkBatchExecutionServiceBase(ServiceBase):
+    async def execute(
+        self, spark_batch_execute_request: "SparkBatchExecuteRequest"
+    ) -> "SparkBatchExecuteResponse":
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def __rpc_execute(
+        self,
+        stream: "grpclib.server.Stream[SparkBatchExecuteRequest, SparkBatchExecuteResponse]",
+    ) -> None:
+        request = await stream.recv_message()
+        response = await self.execute(request)
+        await stream.send_message(response)
+
+    def __mapping__(self) -> Dict[str, grpclib.const.Handler]:
+        return {
+            "/nitric.proto.analyticsservice.v1.SparkBatchExecutionService/Execute": grpclib.const.Handler(
+                self.__rpc_execute,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                SparkBatchExecuteRequest,
+                SparkBatchExecuteResponse,
             ),
         }
