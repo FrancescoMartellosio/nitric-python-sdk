@@ -101,7 +101,8 @@ class PipelineQuery:
 
     def with_watermarks(self, watermarks: Dict[str, str]) -> PipelineQuery:
         """Set watermark delays keyed by logical source name."""
-        self._hints.watermarks.update(watermarks)
+        for key, value in watermarks.items():
+            self._hints.watermarks[key] = value
         return self
 
     def with_shuffle_partitions(self, n: int) -> PipelineQuery:
@@ -306,14 +307,17 @@ class PipelineQuery:
             raise exception_from_grpc_error(grpc_err) from grpc_err
 
     def _build_request(self) -> ExecuteRequest:
+        pipeline = Pipeline(
+            name=self._pipeline_name,
+            mode=self._mode,
+            source=self._source,
+            steps=self._steps,
+            sink=self._sink,
+        )
+        print(f"[DEBUG] hints watermarks: {dict(self._hints.watermarks)}")
+        print(f"[DEBUG] full hints: {self._hints}")
         return ExecuteRequest(
-            pipeline=Pipeline(
-                name=self._pipeline_name,
-                mode=self._mode,
-                source=self._source,
-                steps=self._steps,
-                sink=self._sink,
-            ),
+            pipeline=pipeline,
             hints=self._hints,
         )
 
