@@ -38,52 +38,47 @@ class PipelineMode(betterproto.Enum):
 class StateOperation(betterproto.Enum):
     STATE_OPERATION_UNSPECIFIED = 0
     REPLACE = 1
-    """
-    Overwrite with the latest value. Use for: current readings, latest status.
-    Translates to: LAST() / last_value()
-    """
-
     INCREMENT = 2
-    """
-    Add incoming value to a running total. Use for: cumulative energy, total
-    spend. Translates to: SUM()
-    """
-
     DECREMENT = 3
-    """
-    Subtract incoming value from a running total. Translates to: SUM() with
-    negation
-    """
-
     MAXIMUM = 4
-    """
-    Keep the highest value seen. Use for: peak temperature, maximum load.
-    Translates to: MAX()
-    """
-
     MINIMUM = 5
-    """Keep the lowest value seen. Translates to: MIN()"""
-
     COLLECT = 6
+
+
+class StreamOperator(betterproto.Enum):
+    STREAM_OPERATOR_UNSPECIFIED = 0
+    ISTREAM = 1
     """
-    Append values to a list, keeping the last N. Use for: recent readings
-    buffer. Note: not supported by all materialized view engines.
+    IStream — emit a tuple when it is INSERTED into the relation. A tuple is
+    "inserted" when it appears for the first time, or when it re-enters after
+    being absent (e.g. crossed a threshold). Spark streaming:
+    outputMode("append") — only new rows per batch. Materialized view: triggers
+    on INSERT events via CDC.
+    """
+
+    DSTREAM = 2
+    """
+    DStream — emit a tuple when it is DELETED from the relation. A tuple is
+    "deleted" when it is retracted — a key is removed or a filter step
+    eliminates it from the current state. Spark streaming: requires retraction
+    tracking (append of tombstones). Materialized view: triggers on DELETE
+    events via CDC.
+    """
+
+    RSTREAM = 3
+    """
+    RStream — emit the entire current relation at every evaluation. Produces a
+    full snapshot on every micro-batch or refresh tick. Spark streaming:
+    outputMode("complete") — full table every batch. Materialized view: full
+    refresh on schedule.
     """
 
 
-class MapToDataStrategy(betterproto.Enum):
-    MAP_TO_DATA_STRATEGY_UNSPECIFIED = 0
-    SNAPSHOT = 1
-    """Emit full current state once as a bounded dataset."""
-
-    CDC = 2
-    """
-    Emit each state change as an event as it happens. Requires engine support
-    for change data capture.
-    """
-
-    PERIODIC = 3
-    """Emit full state as a bounded dataset on a recurring schedule."""
+class LogicalOperator(betterproto.Enum):
+    LOGICAL_OPERATOR_UNSPECIFIED = 0
+    AND = 1
+    OR = 2
+    NOT = 3
 
 
 @dataclass(eq=False, repr=False)
@@ -95,11 +90,6 @@ class SparkStreamingExecuteRequest(betterproto.Message):
 @dataclass(eq=False, repr=False)
 class SparkStreamingExecuteResponse(betterproto.Message):
     query_id: str = betterproto.string_field(1)
-    """
-    Spark streaming query ID — uniquely identifies the running job. Use this to
-    monitor or stop the job via Spark's REST API.
-    """
-
     error: str = betterproto.string_field(2)
     """Non-empty if the pipeline was rejected or failed to start."""
 
@@ -113,19 +103,8 @@ class SparkBatchExecuteRequest(betterproto.Message):
 @dataclass(eq=False, repr=False)
 class BatchHints(betterproto.Message):
     partition_column: str = betterproto.string_field(1)
-    """Column to partition output by when writing to a table or file sink."""
-
     adaptive_query: bool = betterproto.bool_field(2)
-    """
-    Enable Spark Adaptive Query Execution — recommended for most batch jobs.
-    """
-
     shuffle_partitions: int = betterproto.int32_field(3)
-    """
-    Number of shuffle partitions. 0 = use Spark default or SHUFFLE_PARTITIONS
-    env var.
-    """
-
     starting_offsets: str = betterproto.string_field(4)
     """
     For Kafka sources: read from earliest or latest offset. Default: earliest —
@@ -164,137 +143,32 @@ class ExecuteRequest(betterproto.Message):
 @dataclass(eq=False, repr=False)
 class Hints(betterproto.Message):
     engine: "EnginePreference" = betterproto.enum_field(1)
-    """
-    Preferred engine. ENGINE_UNSPECIFIED (default) = auto-route based on
-    pipeline content. Auto-routing rules (applied in order, first match wins):
-    1. source is StreamSource                  → SPARK_STREAMING   2. pipeline
-    has Window or CDC MapToData     → SPARK_STREAMING   3. pipeline has
-    MapToState + TableSink      → MATERIALIZED_VIEW   4. pipeline has
-    MapToState + StreamSink     → SPARK_STREAMING   5. pipeline is stateless
-    over TableSource   → MATERIALIZED_VIEW   6. fallback
-    → SPARK_BATCH Override when you have a specific reason — for example,
-    forcing SPARK_BATCH to recompute a full historical snapshot of state from a
-    pipeline that would otherwise route to MATERIALIZED_VIEW.
-    """
-
     watermarks: Dict[str, str] = betterproto.map_field(
         2, betterproto.TYPE_STRING, betterproto.TYPE_STRING
     )
-    """
-    Watermark delays keyed by logical source name. Required when the pipeline
-    contains:   - a Window step (to bound late data)   - a stream-stream Join
-    (to align the two streams) Format: source logical name → delay string
-    Example: {"temperature_readings": "10 minutes", "room_events": "5 minutes"}
-    Ignored by batch and materialized view engines.
-    """
-
     checkpoint_base: str = betterproto.string_field(3)
-    """
-    Base directory for Spark streaming checkpoints. One subdirectory is created
-    per pipeline name under this path. Default: /tmp/checkpoints Ignored by
-    batch and materialized view engines.
-    """
-
     shuffle_partitions: int = betterproto.int32_field(4)
-    """
-    Number of shuffle partitions for wide transformations (joins, aggregations,
-    MapToState). Spark default is 200 — reduce significantly for small
-    clusters. A good starting point: number of CPU cores across all workers. 0
-    = use Spark default.
-    """
-
     partition_column: str = betterproto.string_field(5)
-    """
-    Column to partition the output by when writing to a table or file sink.
-    Useful for large outputs that will be queried by this column later.
-    Example: "date" to partition a daily snapshot by date. Empty = no
-    partitioning. Ignored by streaming and materialized view engines.
-    """
-
     adaptive_query: bool = betterproto.bool_field(6)
-    """
-    Enable Spark Adaptive Query Execution (AQE). Recommended for most batch
-    workloads — Spark dynamically adjusts join strategies and partition sizes
-    at runtime. Ignored by streaming and materialized view engines.
-    """
-
     connection_name: str = betterproto.string_field(7)
-    """
-    Logical name of the database connection to use. Resolved by the
-    materialized view adapter to a physical connection string. Required when
-    engine is MATERIALIZED_VIEW or when auto-routing selects it — the adapter
-    will error if this is empty.
-    """
-
     refresh_strategy: str = betterproto.string_field(8)
-    """
-    How the view is refreshed when underlying data changes.   INCREMENTAL —
-    database applies only changed rows (preferred)   FULL        — database
-    recomputes the entire view on each refresh Default: INCREMENTAL Ignored by
-    Spark engines.
-    """
-
     refresh_schedule: str = betterproto.string_field(9)
-    """
-    Cron expression for time-based refresh. Empty = refresh automatically when
-    underlying data changes. Example: "0 2 * * *" — refresh daily at 02:00
-    Ignored by Spark engines.
-    """
-
     create_indexes: bool = betterproto.bool_field(10)
-    """
-    Whether to create indexes on the view output for faster key lookups.
-    Recommended when the view will be queried frequently by the state key.
-    Ignored by Spark engines.
-    """
-
     starting_offsets: str = betterproto.string_field(11)
 
 
 @dataclass(eq=False, repr=False)
 class ExecuteResponse(betterproto.Message):
     engine_used: "EnginePreference" = betterproto.enum_field(1)
-    """
-    Which engine was selected and executed the pipeline. Useful when engine was
-    ENGINE_UNSPECIFIED and auto-routing was used.
-    """
-
     job_id: str = betterproto.string_field(2)
-    """
-    Identifier of the running job or created view. Spark: Spark application ID
-    Materialized view: fully qualified view name in the database
-    """
-
     error: str = betterproto.string_field(3)
-    """
-    Non-empty if the pipeline was rejected or failed to start. Execution errors
-    (e.g. runtime Spark failures) are reported via the pipeline's own logging,
-    not here — this RPC returns as soon as the job is submitted, not when it
-    finishes.
-    """
 
 
 @dataclass(eq=False, repr=False)
 class PlanResponse(betterproto.Message):
     selected_engine: "EnginePreference" = betterproto.enum_field(1)
-    """Engine the router would select for this pipeline and hints."""
-
     reason: str = betterproto.string_field(2)
-    """
-    Human-readable explanation of the routing decision. Examples:   "source is
-    StreamSource — only Spark streaming supports unbounded input"   "pipeline
-    has MapToState with TableSink — routed to materialized view    for live
-    incremental maintenance"   "engine explicitly requested via hints.engine"
-    """
-
     warnings: List[str] = betterproto.string_field(3)
-    """
-    Validation warnings. Pipeline would still execute but behaviour may differ
-    from expectations. Examples:   "shuffle_partitions not set — using Spark
-    default of 200"   "watermarks not set for stream-stream join — late data
-    may cause    unbounded state growth"
-    """
-
     physical_plan: List["StepTranslation"] = betterproto.message_field(4)
     """
     Step-by-step translation of the logical pipeline into physical operations
@@ -340,36 +214,10 @@ class StepTranslation(betterproto.Message):
 @dataclass(eq=False, repr=False)
 class Pipeline(betterproto.Message):
     name: str = betterproto.string_field(1)
-    """
-    Human-readable identifier. Used for logging, checkpointing, and view naming
-    in database engines.
-    """
-
     mode: "PipelineMode" = betterproto.enum_field(2)
-    """
-    Declares the semantic meaning of the source data. DATA  — source contains
-    immutable events. Multiple rows per key.         Has a time axis. Example:
-    temperature readings over time. STATE — source contains current truth. One
-    row per key. No time axis.         Example: current temperature per room.
-    The engine tracks this mode as it walks the steps list and updates it when
-    MapToState or MapToData boundary crossings are encountered. Steps that are
-    invalid for the current mode are rejected at plan time.
-    """
-
     source: "Source" = betterproto.message_field(3)
-    """
-    Where to read data from. Describes access method only — semantics are
-    determined by mode.
-    """
-
     steps: List["Step"] = betterproto.message_field(4)
-    """
-    Ordered sequence of logical operations. Applied left to right. Mode is
-    tracked across steps.
-    """
-
     sink: "Sink" = betterproto.message_field(5)
-    """Where to write the result."""
 
 
 @dataclass(eq=False, repr=False)
@@ -381,19 +229,13 @@ class Source(betterproto.Message):
 @dataclass(eq=False, repr=False)
 class StreamSource(betterproto.Message):
     name: str = betterproto.string_field(1)
-    """
-    Logical name. Example: "temperature_readings" Resolved by engine adapter to
-    e.g. Kafka topic "sensor.temp.raw"
-    """
+    """Logical name. Example: "temperature_readings"""
 
 
 @dataclass(eq=False, repr=False)
 class TableSource(betterproto.Message):
     name: str = betterproto.string_field(1)
-    """
-    Logical name. Example: "room_state" Resolved by engine adapter to e.g.
-    Postgres table "public.room_state"
-    """
+    """Logical name. Example: "room_state"""
 
     format: str = betterproto.string_field(2)
     """
@@ -417,10 +259,7 @@ class StreamSink(betterproto.Message):
 @dataclass(eq=False, repr=False)
 class TableSink(betterproto.Message):
     name: str = betterproto.string_field(1)
-    """Logical name resolved by engine adapter."""
-
     format: str = betterproto.string_field(2)
-    """Format hint for file-based sinks: parquet, csv, delta, json."""
 
 
 @dataclass(eq=False, repr=False)
@@ -447,10 +286,7 @@ class Project(betterproto.Message):
 @dataclass(eq=False, repr=False)
 class Window(betterproto.Message):
     duration: str = betterproto.string_field(1)
-    """
-    Bucket size. Format: "<N> <unit>" Valid units: seconds, minutes, hours,
-    days Example: "10 minutes"
-    """
+    """Example: "10 minutes"""
 
     slide: str = betterproto.string_field(2)
     """
@@ -459,19 +295,13 @@ class Window(betterproto.Message):
     """
 
     time_column: str = betterproto.string_field(3)
-    """
-    Timestamp column to use as event time. Must be a timestamp or long (epoch
-    ms) column.
-    """
+    """Timestamp column to use as event time."""
 
 
 @dataclass(eq=False, repr=False)
 class Aggregate(betterproto.Message):
     group_by: List[str] = betterproto.string_field(1)
-    """
-    Columns to group by. Empty = global aggregation (one output row). In STATE
-    mode: must not contain the state key column.
-    """
+    """Columns to group by."""
 
     aggs: List["AggExpr"] = betterproto.message_field(2)
 
@@ -484,9 +314,8 @@ class AggExpr(betterproto.Message):
     function: str = betterproto.string_field(2)
     """
     Aggregation function — logical name translated per engine:   SUM   → SUM()
-    / F.sum()   COUNT → COUNT() / F.count()   AVG   → AVG()   / F.avg()   /
-    F.mean()   MAX   → MAX()   / F.max()   MIN   → MIN()   / F.min()   LAST  →
-    last value seen — LAST() / F.last()
+    COUNT → COUNT()    AVG   → AVG()      MAX   → MAX()      MIN   → MIN()
+    LAST  → last value seen
     """
 
     column: str = betterproto.string_field(3)
@@ -496,19 +325,9 @@ class AggExpr(betterproto.Message):
 @dataclass(eq=False, repr=False)
 class Join(betterproto.Message):
     right_source: str = betterproto.string_field(1)
-    """
-    Logical name of the right-side source. Resolved by engine adapter to a
-    physical table or stream.
-    """
-
     left_key: str = betterproto.string_field(2)
     right_key: str = betterproto.string_field(3)
     join_type: str = betterproto.string_field(4)
-    """
-    Join semantics:   inner     — rows with matches on both sides only   left
-    — all left rows, null right columns if no match   left_semi — left rows
-    that have a match; right columns excluded
-    """
 
 
 @dataclass(eq=False, repr=False)
@@ -527,7 +346,7 @@ class MapToState(betterproto.Message):
 
 @dataclass(eq=False, repr=False)
 class MapToData(betterproto.Message):
-    strategy: "MapToDataStrategy" = betterproto.enum_field(1)
+    operator: "StreamOperator" = betterproto.enum_field(1)
     schedule: str = betterproto.string_field(2)
     """
     Cron expression for PERIODIC strategy. Example: "0 * * * *" — top of every
@@ -537,50 +356,58 @@ class MapToData(betterproto.Message):
 
 @dataclass(eq=False, repr=False)
 class Expression(betterproto.Message):
-    """
-    Single-column predicate. For compound conditions chain multiple Filter
-    steps (implicit AND).
-    """
+    comparison: "ComparisonExpr" = betterproto.message_field(1, group="expr")
+    logical: "LogicalExpr" = betterproto.message_field(2, group="expr")
+    function: "FunctionCallExpr" = betterproto.message_field(3, group="expr")
+    column_ref: "ColumnRef" = betterproto.message_field(4, group="expr")
+    literal: "Literal" = betterproto.message_field(5, group="expr")
+    arithmetic: "ArithmeticExpr" = betterproto.message_field(6, group="expr")
 
-    column: str = betterproto.string_field(1)
-    """Column to evaluate."""
 
+@dataclass(eq=False, repr=False)
+class ComparisonExpr(betterproto.Message):
+    left: "Expression" = betterproto.message_field(1)
     operator: str = betterproto.string_field(2)
-    """
-    Comparison operator:   eq  — equal   neq — not equal   gt  — greater than
-    lt  — less than   gte — greater than or equal   lte — less than or equal
-    """
+    right: "Expression" = betterproto.message_field(3)
 
-    value: str = betterproto.string_field(3)
-    """
-    Comparison value. Always a string — engine casts to the column's actual
-    type before evaluating.
-    """
+
+@dataclass(eq=False, repr=False)
+class LogicalExpr(betterproto.Message):
+    operator: "LogicalOperator" = betterproto.enum_field(1)
+    operands: List["Expression"] = betterproto.message_field(2)
+
+
+@dataclass(eq=False, repr=False)
+class FunctionCallExpr(betterproto.Message):
+    name: str = betterproto.string_field(1)
+    args: List["Expression"] = betterproto.message_field(2)
+
+
+@dataclass(eq=False, repr=False)
+class ArithmeticExpr(betterproto.Message):
+    left: "Expression" = betterproto.message_field(1)
+    operator: str = betterproto.string_field(2)
+    right: "Expression" = betterproto.message_field(3)
+
+
+@dataclass(eq=False, repr=False)
+class ColumnRef(betterproto.Message):
+    name: str = betterproto.string_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class Literal(betterproto.Message):
+    string_val: str = betterproto.string_field(1, group="value")
+    double_val: float = betterproto.double_field(2, group="value")
+    int_val: int = betterproto.int64_field(3, group="value")
+    bool_val: bool = betterproto.bool_field(4, group="value")
 
 
 @dataclass(eq=False, repr=False)
 class ColumnExpr(betterproto.Message):
-    """Column transformation used in Project steps."""
-
     input_column: str = betterproto.string_field(1)
-    """Source column in the current dataset."""
-
     output_column: str = betterproto.string_field(2)
-    """
-    Output column name. Same as input_column = transform in place. Different
-    from input_column = add a new column.
-    """
-
-    transform: str = betterproto.string_field(3)
-    """
-    Logical transform. Format: "FUNCTION" or "FUNCTION:param"   UPPERCASE
-    — string to upper case   LOWERCASE          — string to lower case
-    MULTIPLY:<factor>  — numeric multiply   e.g. "MULTIPLY:1.8"
-    DIVIDE:<factor>    — numeric divide      e.g. "DIVIDE:100"
-    ROUND:<decimals>   — round to N places   e.g. "ROUND:2"   CAST:<type>
-    — type cast           e.g. "CAST:double" Empty = copy input_column to
-    output_column unchanged.
-    """
+    transform: "Expression" = betterproto.message_field(3)
 
 
 class AnalyticsServiceStub(betterproto.ServiceStub):
