@@ -35,6 +35,13 @@ class PipelineMode(betterproto.Enum):
     STATE = 2
 
 
+class SourceType(betterproto.Enum):
+    SOURCE_TYPE_UNSPECIFIED = 0
+    STREAM = 1
+    KV = 2
+    TIMESERIES = 3
+
+
 class StateOperation(betterproto.Enum):
     STATE_OPERATION_UNSPECIFIED = 0
     REPLACE = 1
@@ -48,30 +55,8 @@ class StateOperation(betterproto.Enum):
 class StreamOperator(betterproto.Enum):
     STREAM_OPERATOR_UNSPECIFIED = 0
     ISTREAM = 1
-    """
-    IStream — emit a tuple when it is INSERTED into the relation. A tuple is
-    "inserted" when it appears for the first time, or when it re-enters after
-    being absent (e.g. crossed a threshold). Spark streaming:
-    outputMode("append") — only new rows per batch. Materialized view: triggers
-    on INSERT events via CDC.
-    """
-
     DSTREAM = 2
-    """
-    DStream — emit a tuple when it is DELETED from the relation. A tuple is
-    "deleted" when it is retracted — a key is removed or a filter step
-    eliminates it from the current state. Spark streaming: requires retraction
-    tracking (append of tombstones). Materialized view: triggers on DELETE
-    events via CDC.
-    """
-
     RSTREAM = 3
-    """
-    RStream — emit the entire current relation at every evaluation. Produces a
-    full snapshot on every micro-batch or refresh tick. Spark streaming:
-    outputMode("complete") — full table every batch. Materialized view: full
-    refresh on schedule.
-    """
 
 
 class LogicalOperator(betterproto.Enum):
@@ -223,43 +208,47 @@ class Pipeline(betterproto.Message):
 @dataclass(eq=False, repr=False)
 class Source(betterproto.Message):
     stream: "StreamSource" = betterproto.message_field(1, group="origin")
-    table: "TableSource" = betterproto.message_field(2, group="origin")
+    kv: "KvSource" = betterproto.message_field(2, group="origin")
+    timeseries: "TimeSeriesSource" = betterproto.message_field(3, group="origin")
 
 
 @dataclass(eq=False, repr=False)
 class StreamSource(betterproto.Message):
     name: str = betterproto.string_field(1)
-    """Logical name. Example: "temperature_readings"""
 
 
 @dataclass(eq=False, repr=False)
-class TableSource(betterproto.Message):
+class KvSource(betterproto.Message):
     name: str = betterproto.string_field(1)
-    """Logical name. Example: "room_state"""
 
-    format: str = betterproto.string_field(2)
-    """
-    Format hint for file-based sources: parquet, csv, delta, json. Ignored by
-    database-backed engines.
-    """
+
+@dataclass(eq=False, repr=False)
+class TimeSeriesSource(betterproto.Message):
+    name: str = betterproto.string_field(1)
+    mode: "PipelineMode" = betterproto.enum_field(2)
 
 
 @dataclass(eq=False, repr=False)
 class Sink(betterproto.Message):
     stream: "StreamSink" = betterproto.message_field(1, group="destination")
-    table: "TableSink" = betterproto.message_field(2, group="destination")
+    kv: "KvSink" = betterproto.message_field(2, group="destination")
+    timeseries: "TimeSeriesSink" = betterproto.message_field(3, group="destination")
 
 
 @dataclass(eq=False, repr=False)
 class StreamSink(betterproto.Message):
     name: str = betterproto.string_field(1)
-    """Logical name resolved by engine adapter."""
 
 
 @dataclass(eq=False, repr=False)
-class TableSink(betterproto.Message):
+class KvSink(betterproto.Message):
     name: str = betterproto.string_field(1)
-    format: str = betterproto.string_field(2)
+
+
+@dataclass(eq=False, repr=False)
+class TimeSeriesSink(betterproto.Message):
+    name: str = betterproto.string_field(1)
+    mode: "PipelineMode" = betterproto.enum_field(2)
 
 
 @dataclass(eq=False, repr=False)
@@ -328,6 +317,8 @@ class Join(betterproto.Message):
     left_key: str = betterproto.string_field(2)
     right_key: str = betterproto.string_field(3)
     join_type: str = betterproto.string_field(4)
+    right_source_type: "SourceType" = betterproto.enum_field(5)
+    right_source_mode: "PipelineMode" = betterproto.enum_field(6)
 
 
 @dataclass(eq=False, repr=False)
@@ -348,10 +339,6 @@ class MapToState(betterproto.Message):
 class MapToData(betterproto.Message):
     operator: "StreamOperator" = betterproto.enum_field(1)
     schedule: str = betterproto.string_field(2)
-    """
-    Cron expression for PERIODIC strategy. Example: "0 * * * *" — top of every
-    hour
-    """
 
 
 @dataclass(eq=False, repr=False)

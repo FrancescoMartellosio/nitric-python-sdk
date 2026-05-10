@@ -9,10 +9,12 @@ from nitric.proto.analyticsservice.v1 import (
     PipelineMode,
     Source,
     StreamSource,
-    TableSource,
+    KvSource,
+    TimeSeriesSource,
     Sink,
     StreamSink,
-    TableSink,
+    KvSink,
+    TimeSeriesSink,
     Step,
     Filter,
     Project,
@@ -20,6 +22,7 @@ from nitric.proto.analyticsservice.v1 import (
     Aggregate,
     AggExpr,
     Join,
+    SourceType,
     MapToState,
     MapToData,
     ColumnExpr,
@@ -43,12 +46,14 @@ class DeclarativeCompiler:
     """
 
     def __init__(self):
+        """Initialise an empty compiler state."""
         self._pipeline = Pipeline()
         self._expr = ExpressionCompiler()
         self._mode = PipelineMode.DATA
         self._state_key = None
 
     def compile(self, ctx) -> Pipeline:
+        """Walk the parse tree rooted at ctx and return the compiled Pipeline proto."""
         self._visit(ctx)
         return self._pipeline
 
@@ -86,59 +91,51 @@ class DeclarativeCompiler:
 
     def _visit_FromStreamContext(self, ctx):
         self._set_mode(PipelineMode.DATA)
-        self._pipeline.source.CopyFrom(Source(stream=StreamSource(name=self._name(ctx.name()))))
+        self._pipeline.source = Source(stream=StreamSource(name=self._name(ctx.name())))
 
     def _visit_FromKVContext(self, ctx):
         self._set_mode(PipelineMode.STATE)
-        self._pipeline.source.CopyFrom(Source(table=TableSource(name=self._name(ctx.name()))))
+        self._pipeline.source = Source(kv=KvSource(name=self._name(ctx.name())))
 
     def _visit_FromTimeseriesDataContext(self, ctx):
         self._set_mode(PipelineMode.DATA)
-        self._pipeline.source.CopyFrom(
-            Source(
-                table=TableSource(
-                    name=self._name(ctx.name()),
-                    format="timeseries",
-                )
+        self._pipeline.source = Source(
+            timeseries=TimeSeriesSource(
+                name=self._name(ctx.name()),
+                mode=PipelineMode.DATA,
             )
         )
 
     def _visit_FromTimeseriesStateContext(self, ctx):
         self._set_mode(PipelineMode.STATE)
-        self._pipeline.source.CopyFrom(
-            Source(
-                table=TableSource(
-                    name=self._name(ctx.name()),
-                    format="timeseries",
-                )
+        self._pipeline.source = Source(
+            timeseries=TimeSeriesSource(
+                name=self._name(ctx.name()),
+                mode=PipelineMode.STATE,
             )
         )
 
     # ── Sinks ─────────────────────────────────────────────────────────────────
 
     def _visit_IntoStreamContext(self, ctx):
-        self._pipeline.sink.CopyFrom(Sink(stream=StreamSink(name=self._name(ctx.name()))))
+        self._pipeline.sink = Sink(stream=StreamSink(name=self._name(ctx.name())))
 
     def _visit_IntoKVContext(self, ctx):
-        self._pipeline.sink.CopyFrom(Sink(table=TableSink(name=self._name(ctx.name()))))
+        self._pipeline.sink = Sink(kv=KvSink(name=self._name(ctx.name())))
 
     def _visit_IntoTimeseriesDataContext(self, ctx):
-        self._pipeline.sink.CopyFrom(
-            Sink(
-                table=TableSink(
-                    name=self._name(ctx.name()),
-                    format="timeseries",
-                )
+        self._pipeline.sink = Sink(
+            timeseries=TimeSeriesSink(
+                name=self._name(ctx.name()),
+                mode=PipelineMode.DATA,
             )
         )
 
     def _visit_IntoTimeseriesStateContext(self, ctx):
-        self._pipeline.sink.CopyFrom(
-            Sink(
-                table=TableSink(
-                    name=self._name(ctx.name()),
-                    format="timeseries",
-                )
+        self._pipeline.sink = Sink(
+            timeseries=TimeSeriesSink(
+                name=self._name(ctx.name()),
+                mode=PipelineMode.STATE,
             )
         )
 
@@ -262,32 +259,57 @@ class DeclarativeCompiler:
     def _add_join(self, join_ctx):
         ctx_type = type(join_ctx).__name__
 
-        if ctx_type == "ExplicitJoinContext":
-            join_type = join_ctx.joinType().getText().lower().replace("_", " ")
-            left_key, right_key = self._extract_join_keys(join_ctx.expression())
-            self._pipeline.steps.append(
-                Step(
-                    join=Join(
-                        right_source=self._name(join_ctx.name()),
-                        left_key=left_key,
-                        right_key=right_key,
-                        join_type=join_type,
-                    )
-                )
-            )
+        source_ref = join_ctx.sourceRef()
+        right_source, right_source_type, right_source_mode = self._compile_source_ref(source_ref)
 
+        if ctx_type == "ExplicitJoinContext":
+            join_type = join_ctx.joinType().getText().lower()
         elif ctx_type == "EnrichJoinContext":
-            left_key, right_key = self._extract_join_keys(join_ctx.expression())
-            self._pipeline.steps.append(
-                Step(
-                    join=Join(
-                        right_source=self._name(join_ctx.name()),
-                        left_key=left_key,
-                        right_key=right_key,
-                        join_type="left",
-                    )
+            join_type = "left"
+
+        left_key, right_key = self._extract_join_keys(join_ctx.expression())
+
+        self._pipeline.steps.append(
+            Step(
+                join=Join(
+                    right_source=right_source,
+                    left_key=left_key,
+                    right_key=right_key,
+                    join_type=join_type,
+                    right_source_type=right_source_type,
+                    right_source_mode=right_source_mode,
                 )
             )
+        )
+
+    def _compile_source_ref(self, source_ref_ctx):
+        ctx_type = type(source_ref_ctx).__name__
+
+        if ctx_type == "JoinStreamContext":
+            return (
+                self._name(source_ref_ctx.name()),
+                SourceType.STREAM,
+                PipelineMode.DATA,
+            )
+        if ctx_type == "JoinKVContext":
+            return (
+                self._name(source_ref_ctx.name()),
+                SourceType.KV,
+                PipelineMode.STATE,
+            )
+        if ctx_type == "JoinTimeseriesDataContext":
+            return (
+                self._name(source_ref_ctx.name()),
+                SourceType.TIMESERIES,
+                PipelineMode.DATA,
+            )
+        if ctx_type == "JoinTimeseriesStateContext":
+            return (
+                self._name(source_ref_ctx.name()),
+                SourceType.TIMESERIES,
+                PipelineMode.STATE,
+            )
+        raise ValueError(f"Unknown source ref type: {ctx_type}")
 
     def _extract_join_keys(self, expr_ctx) -> tuple[str, str]:
         """
@@ -334,16 +356,14 @@ class DeclarativeCompiler:
     def _visit_CrossToDataContext(self, ctx):
         operator = self._parse_stream_operator(ctx.streamOperator().getText())
 
-        if operator == StreamOperator.RSTREAM:
-            schedule = ""
-            if ctx.schedule() is not None:
-                schedule = self._unquote(ctx.schedule().STRING().getText())
-            mtd = MapToData(operator=operator, schedule=schedule)
-        else:
-            # ISTREAM and DSTREAM never have a schedule
-            mtd = MapToData(operator=operator)
+        schedule = ""
+        # ctx.schedule is a token attribute (STRING token), not a rule method
+        # Access it as ctx.schedule, not ctx.schedule()
+        if ctx.schedule is not None:
+            schedule = self._unquote(ctx.schedule.text)
 
-        self._pipeline.steps.append(Step(map_to_data=mtd))
+        self._pipeline.steps.append(Step(map_to_data=MapToData(operator=operator, schedule=schedule)))
+
         self._mode = PipelineMode.DATA
         self._state_key = None
         self._visit_children(ctx)

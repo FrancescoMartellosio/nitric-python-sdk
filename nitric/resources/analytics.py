@@ -16,9 +16,11 @@ from nitric.proto.analyticsservice.v1 import (
     Source,
     Sink,
     StreamSource,
-    TableSource,
+    KvSource,
+    TimeSeriesSource,
     StreamSink,
-    TableSink,
+    KvSink,
+    TimeSeriesSink,
     Step,
     Filter,
     Project,
@@ -75,6 +77,7 @@ class Expr:
     """
 
     def __init__(self, proto: Expression):
+        """Wrap an Expression proto."""
         self._proto = proto
 
     # ── Factory methods ───────────────────────────────────────────────────────
@@ -435,6 +438,7 @@ class PipelineQuery:
         mode: PipelineMode,
         stub: AnalyticsServiceStub,
     ):
+        """Initialise a pipeline query builder with the given source and mode."""
         self._service_name = service_name
         self._pipeline_name = pipeline_name
         self._source = source
@@ -455,17 +459,24 @@ class PipelineQuery:
 
     def to_kv(self, name: str) -> PipelineQuery:
         """Write output to a KV store sink. Requires STATE mode."""
-        self._sink = Sink(table=TableSink(name=name))
+        self._sink = Sink(kv=KvSink(name=name))
         return self
 
     def to_table(self, name: str, format: str = "") -> PipelineQuery:
         """Write output to a table or file sink."""
-        self._sink = Sink(table=TableSink(name=name, format=format))
+        # to_table remains for backwards compatibility with raw table/file sinks
+        # Use to_kv() or to_timeseries() for semantic sink types
+        self._sink = Sink(kv=KvSink(name=name))
         return self
 
     def to_timeseries(self, name: str) -> PipelineQuery:
         """Write output to a time series database."""
-        self._sink = Sink(table=TableSink(name=name, format="timeseries"))
+        self._sink = Sink(
+            timeseries=TimeSeriesSink(
+                name=name,
+                mode=self._mode,  # set at call time — mode may change later if more steps added
+            )
+        )
         return self
 
     # ── Hints ─────────────────────────────────────────────────────────────────
@@ -576,7 +587,9 @@ class PipelineQuery:
                     )
                 )
             elif isinstance(c, Expr):
-                if c._proto.HasField("column_ref"):
+                # betterproto: check column_ref by testing if name is set
+                # instead of HasField("column_ref") which does not exist
+                if c._proto.column_ref.name:
                     name = c._proto.column_ref.name
                     project.columns.append(
                         ColumnExpr(
@@ -856,6 +869,7 @@ class AnalyticsRef:
     """
 
     def __init__(self, name: str):
+        """Create a runtime reference to the named analytics service."""
         self._name = name
         self._channel = ChannelManager.get_channel()
         self._stub = AnalyticsServiceStub(channel=self._channel)
@@ -883,21 +897,11 @@ class AnalyticsRef:
         )
 
     def from_kv(self, source_name: str, pipeline_name: str) -> PipelineQuery:
-        """
-        Start a STATE pipeline reading from a KV store.
-
-        Example:
-            await (
-                ref.from_kv("room-current-temp", "hot-state")
-                .filter(col("temperature") > 25.0)
-                .to_kv("hot-room-state")
-                .execute()
-            )
-        """
+        """Start a STATE pipeline reading from a KV store."""
         return PipelineQuery(
             service_name=self._name,
             pipeline_name=pipeline_name,
-            source=Source(table=TableSource(name=source_name)),
+            source=Source(kv=KvSource(name=source_name)),
             mode=PipelineMode.STATE,
             stub=self._stub,
         )
@@ -909,11 +913,11 @@ class AnalyticsRef:
         mode: PipelineMode = PipelineMode.DATA,
         format: str = "",
     ) -> PipelineQuery:
-        """Start a pipeline reading from a table or file."""
+        """Start a pipeline reading from a table or file (kept for compatibility)."""
         return PipelineQuery(
             service_name=self._name,
             pipeline_name=pipeline_name,
-            source=Source(table=TableSource(name=source_name, format=format)),
+            source=Source(kv=KvSource(name=source_name)),
             mode=mode,
             stub=self._stub,
         )
@@ -928,7 +932,12 @@ class AnalyticsRef:
         return PipelineQuery(
             service_name=self._name,
             pipeline_name=pipeline_name,
-            source=Source(table=TableSource(name=source_name, format="timeseries")),
+            source=Source(
+                timeseries=TimeSeriesSource(
+                    name=source_name,
+                    mode=mode,
+                )
+            ),
             mode=mode,
             stub=self._stub,
         )
@@ -1122,6 +1131,7 @@ class AnalyticsService(Resource):
     """An AnalyticsService resource used for deployment."""
 
     def __init__(self, name: str):
+        """Declare an analytics service resource with the given name."""
         super().__init__(name)
 
     async def _register(self) -> None:
