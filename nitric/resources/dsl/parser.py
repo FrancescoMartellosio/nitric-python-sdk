@@ -7,8 +7,8 @@ from typing import List
 from antlr4 import CommonTokenStream, InputStream
 from antlr4.error.ErrorListener import ErrorListener
 
-from nitric.proto.analyticsservice.v1 import Pipeline
-from nitric.resources.dsl.validator import PipelineValidator
+from nitric.proto.analyticsservice.v1 import Subgraph
+from nitric.resources.dsl.validator import SubgraphValidator
 
 
 class ParseError(Exception):
@@ -30,9 +30,9 @@ class _ErrorCollector(ErrorListener):
         self.errors.append(f"Line {line}:{col} — {msg}")
 
 
-def parse(source: str) -> Pipeline:
+def parse(source: str) -> Subgraph:
     """
-    Parse a declarative pipeline definition and return a Pipeline proto.
+    Parse a declarative pipeline definition and return a Subgraph proto.
 
     Accepts either a DSL string or a path to a .pipeline file.
     Runs both syntactic (ANTLR grammar) and semantic (validator) checks.
@@ -42,7 +42,7 @@ def parse(source: str) -> Pipeline:
         source: Declarative DSL text, or path to a .pipeline file.
 
     Returns:
-        A validated Pipeline proto ready to submit to the analytics service.
+        A validated Subgraph proto ready to submit to the analytics service.
 
     Raises:
         ParseError: if the DSL has syntax errors.
@@ -50,36 +50,33 @@ def parse(source: str) -> Pipeline:
 
     Examples:
         # From string
-        pipeline = parse('''
+        subgraph = parse('''
             FROM STREAM temperature_readings
             WHERE temperature > 25.0
             INTO STREAM hot_rooms
         ''')
 
         # From file
-        pipeline = parse('/pipelines/hot_rooms.pipeline')
+        subgraph = parse('/pipelines/hot_rooms.pipeline')
     """
-    # Support file paths transparently
     if os.path.isfile(source):
         with open(source, "r", encoding="utf-8") as f:
             source = f.read()
 
-    pipeline = _parse_declarative(source)
+    subgraph = _parse_declarative(source)
 
-    # Semantic validation after parsing
-    validator = PipelineValidator()
-    result = validator.validate(pipeline)
+    validator = SubgraphValidator()
+    result = validator.validate(subgraph)
 
-    # Surface warnings before raising so callers see them
     for w in result.warnings:
         warnings.warn(str(w), stacklevel=3)
 
     result.raise_if_invalid()
 
-    return pipeline
+    return subgraph
 
 
-def _parse_declarative(source: str) -> Pipeline:
+def _parse_declarative(source: str) -> Subgraph:
     """
     Run the ANTLR lexer + parser and compile the AST to a Pipeline proto.
     Does NOT run semantic validation — call parse() for the full pipeline.

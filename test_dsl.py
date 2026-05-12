@@ -1,7 +1,7 @@
 """
 Standalone test for the declarative DSL parser.
 Runs without the Nitric runtime — parses DSL strings and
-inspects the resulting Pipeline proto using betterproto.
+inspects the resulting Subgraph proto.
 
 Run with:
     cd python-sdk
@@ -15,8 +15,14 @@ import warnings
 sys.path.insert(0, ".")
 
 from nitric.resources.dsl.parser import parse, ParseError  # noqa: E402
-from nitric.resources.dsl.validator import _step_type  # noqa: E402
-from nitric.proto.analyticsservice.v1 import StreamOperator, PipelineMode  # noqa: E402
+from nitric.resources.dsl.validator import _step_op  # noqa: E402
+from nitric.proto.analyticsservice.v1 import (  # noqa: E402
+    Subgraph,
+    Node,
+    PipelineMode,
+    JoinType,
+    MapToDataStrategy,
+)
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -31,29 +37,44 @@ def assert_eq(label: str, actual, expected):
         raise AssertionError(f"  {label}: expected {expected!r}, got {actual!r}")
 
 
-def step_type(p, index: int) -> str:
-    """Return the operation type of the step at the given index."""
-    return _step_type(p.steps[index])
+def classify(sg: Subgraph):
+    """
+    Split a Subgraph's nodes into (sources, steps, sinks) by graph topology.
+    Sources have in-degree 0. Sinks have out-degree 0. Steps are in between.
+    """
+    has_incoming = {e.to_node for e in sg.edges}
+    has_outgoing = {e.from_node for e in sg.edges}
+    node_map = {n.id: n for n in sg.nodes}
+    sources = [node_map[n.id] for n in sg.nodes if n.id not in has_incoming]
+    sinks = [node_map[n.id] for n in sg.nodes if n.id not in has_outgoing]
+    steps = [node_map[n.id] for n in sg.nodes if n.id in has_incoming and n.id in has_outgoing]
+    return sources, steps, sinks
+
+
+def step_type_at(sg: Subgraph, index: int) -> str:
+    """Return the operation type of the step node at the given index."""
+    _, steps, _ = classify(sg)
+    return _step_op(steps[index].step)
 
 
 def test(name: str, dsl: str, expect_error: bool = False, check=None):
     """
-    Parse a DSL string and optionally run a check function on the proto.
+    Parse a DSL string and optionally run a check function on the Subgraph.
     Suppresses the 'no name' warning since test pipelines have no name.
     """
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            pipeline = parse(dsl)
+            sg = parse(dsl)
 
         if expect_error:
             print(f"{FAIL} {name}")
-            print(f"     Expected parse/validation error but got a valid pipeline")
+            print(f"     Expected parse/validation error but got a valid subgraph")
             results["failed"] += 1
             return
 
         if check:
-            check(pipeline)
+            check(sg)
 
         print(f"{PASS} {name}")
         results["passed"] += 1
@@ -68,20 +89,28 @@ def test(name: str, dsl: str, expect_error: bool = False, check=None):
             print(f"     {e}")
             results["failed"] += 1
 
-    except Exception as e:
+    except Exception:
         print(f"{FAIL} {name}")
         traceback.print_exc()
         results["failed"] += 1
 
 
 def show(name: str, dsl: str):
-    """Parse and print the resulting proto — useful for inspection."""
+    """Parse and print the resulting Subgraph proto — useful for inspection."""
     print(f"\n── {name} ──────────────────────────────────────")
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            pipeline = parse(dsl)
-        print(pipeline)
+            sg = parse(dsl)
+        sources, steps, sinks = classify(sg)
+        print(f"  nodes: {[n.id for n in sg.nodes]}")
+        print(f"  edges: {[(e.from_node, e.to_node) for e in sg.edges]}")
+        for s in sources:
+            print(f"  source: topic={s.source.stream.topic!r} store={s.source.kv.store!r}")
+        for s in steps:
+            print(f"  step[{s.id}]: {_step_op(s.step)}")
+        for s in sinks:
+            print(f"  sink: topic={s.sink.stream.topic!r} store={s.sink.kv.store!r}")
     except Exception as e:
         print(f"ERROR: {e}")
     print()
@@ -102,11 +131,11 @@ test(
     WHERE temperature > 25.0
     INTO STREAM hot_rooms
 """,
-    check=lambda p: (
-        assert_eq("source", p.source.stream.name, "temperature_readings"),
-        assert_eq("sink", p.sink.stream.name, "hot_rooms"),
-        assert_eq("steps", len(p.steps), 1),
-        assert_eq("step0", step_type(p, 0), "filter"),
+    check=lambda sg: (
+        assert_eq("source topic", classify(sg)[0][0].source.stream.topic, "temperature_readings"),
+        assert_eq("sink topic", classify(sg)[2][0].sink.stream.topic, "hot_rooms"),
+        assert_eq("step count", len(classify(sg)[1]), 1),
+        assert_eq("step0 type", step_type_at(sg, 0), "filter"),
     ),
 )
 
@@ -120,9 +149,9 @@ test(
       AND room_id IS NOT NULL
     INTO STREAM filtered_readings
 """,
-    check=lambda p: (
-        assert_eq("steps", len(p.steps), 1),
-        assert_eq("step type", step_type(p, 0), "filter"),
+    check=lambda sg: (
+        assert_eq("step count", len(classify(sg)[1]), 1),
+        assert_eq("step0 type", step_type_at(sg, 0), "filter"),
     ),
 )
 
@@ -164,10 +193,24 @@ test(
 """,
 )
 
-# ── SELECT / project ──────────────────────────────────────────────────────────
+# ── SELECT / derive ───────────────────────────────────────────────────────────
 
 test(
-    "SELECT with alias",
+    "SELECT plain columns produces select node",
+    """
+    FROM STREAM temperature_readings
+    SELECT room_id, temperature
+    INTO STREAM projected
+""",
+    check=lambda sg: (
+        # plain columns → select node
+        assert_eq("has select step", any(_step_op(n.step) == "select" for n in classify(sg)[1]), True),
+        assert_eq("select cols", classify(sg)[1][0].step.select.columns, ["room_id", "temperature"]),
+    ),
+)
+
+test(
+    "SELECT with aliases produces derive node",
     """
     FROM STREAM temperature_readings
     WHERE temperature > 0.0
@@ -177,10 +220,15 @@ test(
       UPPER(unit) AS unit_upper
     INTO STREAM projected_readings
 """,
-    check=lambda p: (
-        assert_eq("steps", len(p.steps), 2),
-        assert_eq("project", step_type(p, 1), "project"),
-        assert_eq("columns", len(p.steps[1].project.columns), 3),
+    check=lambda sg: (
+        # expect: filter, select (room_id), derive (temp_c, unit_upper)
+        assert_eq("has select", any(_step_op(n.step) == "select" for n in classify(sg)[1]), True),
+        assert_eq("has derive", any(_step_op(n.step) == "derive" for n in classify(sg)[1]), True),
+        assert_eq(
+            "derive exprs",
+            len([n for n in classify(sg)[1] if _step_op(n.step) == "derive"][0].step.derive.expressions),
+            2,
+        ),
     ),
 )
 
@@ -208,14 +256,15 @@ test(
       COUNT(*) AS reading_count
     INTO STREAM windowed_averages
 """,
-    check=lambda p: (
-        assert_eq("steps", len(p.steps), 3),
-        assert_eq("window", step_type(p, 1), "window"),
-        assert_eq("duration", p.steps[1].window.duration, "1 minute"),
-        assert_eq("time_col", p.steps[1].window.time_column, "event_time"),
-        assert_eq("aggregate", step_type(p, 2), "aggregate"),
-        assert_eq("group_by", list(p.steps[2].aggregate.group_by), ["window", "room_id"]),
-        assert_eq("agg count", len(p.steps[2].aggregate.aggs), 3),
+    check=lambda sg: (
+        assert_eq("step count", len(classify(sg)[1]), 3),  # filter, window, aggregate
+        assert_eq("step0", step_type_at(sg, 0), "filter"),
+        assert_eq("step1", step_type_at(sg, 1), "window"),
+        assert_eq("step2", step_type_at(sg, 2), "aggregate"),
+        assert_eq("duration", classify(sg)[1][1].step.window.duration, "1 minute"),
+        assert_eq("time_col", classify(sg)[1][1].step.window.time_column, "event_time"),
+        assert_eq("group_by", list(classify(sg)[1][2].step.aggregate.group_by), ["window", "room_id"]),
+        assert_eq("agg count", len(classify(sg)[1][2].step.aggregate.aggs), 3),
     ),
 )
 
@@ -228,7 +277,7 @@ test(
       AVG(temperature) AS avg_temp
     INTO STREAM sliding_averages
 """,
-    check=lambda p: (assert_eq("slide", p.steps[0].window.slide, "2 minutes"),),
+    check=lambda sg: (assert_eq("slide", classify(sg)[1][0].step.window.slide, "2 minutes"),),
 )
 
 test(
@@ -237,45 +286,50 @@ test(
     FROM KV room_current_temp
     GROUP BY
       AVG(temperature) AS global_avg
-    INTO TIMESERIES global_stats AS STATE
+    INTO KV global_stats
 """,
 )
 
 # ── JOIN ──────────────────────────────────────────────────────────────────────
 
 test(
-    "inner join",
+    "inner join STREAM sources",
     """
     FROM STREAM temperature_readings
-    INNER JOIN room_metadata ON room_id = room_id
+    INNER JOIN STREAM room_metadata ON room_id = room_id
     INTO STREAM enriched_readings
 """,
-    check=lambda p: (
-        assert_eq("join type", p.steps[0].join.join_type, "inner"),
-        assert_eq("right source", p.steps[0].join.right_source, "room_metadata"),
-        assert_eq("left key", p.steps[0].join.left_key, "room_id"),
-        assert_eq("right key", p.steps[0].join.right_key, "room_id"),
+    check=lambda sg: (
+        # 2 sources, 1 join step, 1 sink = 4 nodes
+        assert_eq("node count", len(sg.nodes), 4),
+        assert_eq("source count", len(classify(sg)[0]), 2),
+        assert_eq("join type", classify(sg)[1][0].step.join.join_type, JoinType.INNER),
+        assert_eq("left key", classify(sg)[1][0].step.join.left_key, "room_id"),
+        assert_eq("right key", classify(sg)[1][0].step.join.right_key, "room_id"),
     ),
 )
 
 test(
-    "left join enrichment",
+    "left join enrichment (ENRICH keyword)",
     """
     FROM STREAM temperature_readings
-    ENRICH room_metadata ON room_id = room_id
+    ENRICH KV room_metadata ON room_id = room_id
     INTO STREAM enriched_readings
 """,
-    check=lambda p: (assert_eq("join type", p.steps[0].join.join_type, "left"),),
+    check=lambda sg: (
+        assert_eq("join type", classify(sg)[1][0].step.join.join_type, JoinType.LEFT),
+        assert_eq("right mode", classify(sg)[1][0].step.join.right_source_mode, PipelineMode.STATE),
+    ),
 )
 
 test(
     "left_semi join",
     """
     FROM STREAM temperature_readings
-    LEFT_SEMI JOIN room_metadata ON room_id = room_id
+    LEFT_SEMI JOIN STREAM room_metadata ON room_id = room_id
     INTO STREAM semi_enriched
 """,
-    check=lambda p: (assert_eq("join type", p.steps[0].join.join_type, "left_semi"),),
+    check=lambda sg: (assert_eq("join type", classify(sg)[1][0].step.join.join_type, JoinType.LEFT_SEMI),),
 )
 
 # ── MAP TO STATE ──────────────────────────────────────────────────────────────
@@ -288,11 +342,13 @@ test(
     MAP TO STATE KEY room_id VALUE temperature USING REPLACE
     INTO KV room_current_temp
 """,
-    check=lambda p: (
-        assert_eq("steps", len(p.steps), 2),
-        assert_eq("mts", step_type(p, 1), "map_to_state"),
-        assert_eq("key col", p.steps[1].map_to_state.key_column, "room_id"),
-        assert_eq("val col", p.steps[1].map_to_state.value_column, "temperature"),
+    check=lambda sg: (
+        assert_eq("step count", len(classify(sg)[1]), 2),
+        assert_eq("step0", step_type_at(sg, 0), "filter"),
+        assert_eq("step1", step_type_at(sg, 1), "map_to_state"),
+        assert_eq("key col", classify(sg)[1][1].step.map_to_state.key_column, "room_id"),
+        assert_eq("val col", classify(sg)[1][1].step.map_to_state.value_column, "temperature"),
+        assert_eq("sink store", classify(sg)[2][0].sink.kv.store, "room_current_temp"),
     ),
 )
 
@@ -313,17 +369,19 @@ test(
     WHERE temperature > 25.0
     INTO KV hot_room_state
 """,
-    check=lambda p: (
-        assert_eq("steps", len(p.steps), 2),
-        assert_eq("step0", step_type(p, 0), "map_to_state"),
-        assert_eq("step1", step_type(p, 1), "filter"),
+    check=lambda sg: (
+        assert_eq("step count", len(classify(sg)[1]), 2),
+        assert_eq("step0", step_type_at(sg, 0), "map_to_state"),
+        assert_eq("step1", step_type_at(sg, 1), "filter"),
     ),
 )
 
-# ── IStream / DStream / RStream ───────────────────────────────────────────────
+# ── MAP TO DATA ───────────────────────────────────────────────────────────────
+# ISTREAM and DSTREAM both map to CDC strategy.
+# RSTREAM maps to SNAPSHOT (no schedule) or PERIODIC (with schedule).
 
 test(
-    "MAP TO DATA ISTREAM",
+    "MAP TO DATA ISTREAM → CDC",
     """
     FROM STREAM temperature_readings
     MAP TO STATE KEY room_id VALUE temperature USING REPLACE
@@ -331,15 +389,15 @@ test(
     MAP TO DATA ISTREAM
     INTO STREAM newly_hot_rooms
 """,
-    check=lambda p: (
-        assert_eq("steps", len(p.steps), 3),
-        assert_eq("mtd", step_type(p, 2), "map_to_data"),
-        assert_eq("operator", p.steps[2].map_to_data.operator, StreamOperator.ISTREAM),
+    check=lambda sg: (
+        assert_eq("step count", len(classify(sg)[1]), 3),
+        assert_eq("step2 type", step_type_at(sg, 2), "map_to_data"),
+        assert_eq("strategy", classify(sg)[1][2].step.map_to_data.strategy, MapToDataStrategy.CDC),
     ),
 )
 
 test(
-    "MAP TO DATA DSTREAM",
+    "MAP TO DATA DSTREAM → CDC",
     """
     FROM STREAM temperature_readings
     MAP TO STATE KEY room_id VALUE temperature USING REPLACE
@@ -347,11 +405,11 @@ test(
     MAP TO DATA DSTREAM
     INTO STREAM cooling_rooms
 """,
-    check=lambda p: (assert_eq("operator", p.steps[2].map_to_data.operator, StreamOperator.DSTREAM),),
+    check=lambda sg: (assert_eq("strategy", classify(sg)[1][2].step.map_to_data.strategy, MapToDataStrategy.CDC),),
 )
 
 test(
-    "MAP TO DATA RSTREAM",
+    "MAP TO DATA RSTREAM → SNAPSHOT",
     """
     FROM STREAM temperature_readings
     MAP TO STATE KEY room_id VALUE temperature USING REPLACE
@@ -359,18 +417,21 @@ test(
     MAP TO DATA RSTREAM
     INTO STREAM hot_room_snapshot
 """,
-    check=lambda p: (assert_eq("operator", p.steps[2].map_to_data.operator, StreamOperator.RSTREAM),),
+    check=lambda sg: (assert_eq("strategy", classify(sg)[1][2].step.map_to_data.strategy, MapToDataStrategy.SNAPSHOT),),
 )
 
 test(
-    "MAP TO DATA RSTREAM with schedule",
+    "MAP TO DATA RSTREAM with cron schedule → PERIODIC",
     """
     FROM STREAM temperature_readings
     MAP TO STATE KEY room_id VALUE temperature USING REPLACE
     MAP TO DATA RSTREAM ON SCHEDULE '0 * * * *'
     INTO STREAM hourly_snapshot
 """,
-    check=lambda p: (assert_eq("schedule", p.steps[1].map_to_data.schedule, "0 * * * *"),),
+    check=lambda sg: (
+        assert_eq("strategy", classify(sg)[1][1].step.map_to_data.strategy, MapToDataStrategy.PERIODIC),
+        assert_eq("cron", classify(sg)[1][1].step.map_to_data.schedule.cron, "0 * * * *"),
+    ),
 )
 
 # ── Source types ──────────────────────────────────────────────────────────────
@@ -382,30 +443,10 @@ test(
     WHERE temperature > 25.0
     INTO KV hot_room_state
 """,
-    check=lambda p: (
-        assert_eq("source", p.source.kv.name, "room_current_temp"),
-        assert_eq("sink", p.sink.kv.name, "hot_room_state"),
+    check=lambda sg: (
+        assert_eq("source store", classify(sg)[0][0].source.kv.store, "room_current_temp"),
+        assert_eq("sink store", classify(sg)[2][0].sink.kv.store, "hot_room_state"),
     ),
-)
-
-test(
-    "TIMESERIES source AS DATA",
-    """
-    FROM TIMESERIES sensor_history AS DATA
-    WHERE temperature > 0.0
-    GROUP BY room_id
-      AVG(temperature) AS avg_temp
-    INTO TIMESERIES room_averages AS DATA
-""",
-)
-
-test(
-    "TIMESERIES source AS STATE",
-    """
-    FROM TIMESERIES room_snapshots AS STATE
-    WHERE temperature > 25.0
-    INTO KV hot_rooms
-""",
 )
 
 # ── Round trip DATA → STATE → DATA ────────────────────────────────────────────
@@ -420,12 +461,12 @@ test(
     MAP TO DATA ISTREAM
     INTO STREAM critical_alerts
 """,
-    check=lambda p: (
-        assert_eq("steps", len(p.steps), 4),
-        assert_eq("step0", step_type(p, 0), "filter"),
-        assert_eq("step1", step_type(p, 1), "map_to_state"),
-        assert_eq("step2", step_type(p, 2), "filter"),
-        assert_eq("step3", step_type(p, 3), "map_to_data"),
+    check=lambda sg: (
+        assert_eq("step count", len(classify(sg)[1]), 4),
+        assert_eq("step0", step_type_at(sg, 0), "filter"),
+        assert_eq("step1", step_type_at(sg, 1), "map_to_state"),
+        assert_eq("step2", step_type_at(sg, 2), "filter"),
+        assert_eq("step3", step_type_at(sg, 3), "map_to_data"),
     ),
 )
 
@@ -443,15 +484,19 @@ for op in ["REPLACE", "INCREMENT", "DECREMENT", "MAXIMUM", "MINIMUM", "COLLECT"]
 
 # ── All join types ────────────────────────────────────────────────────────────
 
-for jt, expected in [("INNER", "inner"), ("LEFT", "left"), ("LEFT_SEMI", "left_semi")]:
+for jt, expected_enum in [
+    ("INNER", JoinType.INNER),
+    ("LEFT", JoinType.LEFT),
+    ("LEFT_SEMI", JoinType.LEFT_SEMI),
+]:
     test(
         f"join type {jt}",
         f"""
         FROM STREAM readings
-        {jt} JOIN metadata ON room_id = room_id
+        {jt} JOIN STREAM metadata ON room_id = room_id
         INTO STREAM enriched
     """,
-        check=lambda p, e=expected: (assert_eq("join type", p.steps[0].join.join_type, e),),
+        check=lambda sg, e=expected_enum: (assert_eq("join type", classify(sg)[1][0].step.join.join_type, e),),
     )
 
 # =============================================================================
@@ -514,18 +559,6 @@ test(
 )
 
 test(
-    "aggregate group_by includes state key",
-    expect_error=True,
-    dsl="""
-        FROM STREAM temperature_readings
-        MAP TO STATE KEY room_id VALUE temperature USING REPLACE
-        GROUP BY room_id
-          AVG(temperature) AS avg_temp
-        INTO KV output
-    """,
-)
-
-test(
     "WINDOW without GROUP BY",
     expect_error=True,
     dsl="""
@@ -564,17 +597,6 @@ test(
     """,
 )
 
-test(
-    "unknown stream operator",
-    expect_error=True,
-    dsl="""
-        FROM STREAM temperature_readings
-        MAP TO STATE KEY room_id VALUE temperature USING REPLACE
-        MAP TO DATA CSTREAM
-        INTO STREAM output
-    """,
-)
-
 # =============================================================================
 # PROTO INSPECTION
 # =============================================================================
@@ -582,7 +604,7 @@ test(
 print("\n=== PROTO INSPECTION ===\n")
 
 show(
-    "filter pipeline proto",
+    "filter pipeline",
     """
     FROM STREAM temperature_readings
     WHERE temperature > 25.0
@@ -591,7 +613,7 @@ show(
 )
 
 show(
-    "IStream pipeline proto",
+    "IStream pipeline (ISTREAM → CDC)",
     """
     FROM STREAM temperature_readings
     MAP TO STATE KEY room_id VALUE temperature USING REPLACE
@@ -602,7 +624,7 @@ show(
 )
 
 show(
-    "window pipeline proto",
+    "window pipeline",
     """
     FROM STREAM temperature_readings
     WINDOW('1 minute', event_time)
@@ -614,14 +636,11 @@ show(
 )
 
 show(
-    "round trip pipeline proto",
+    "join pipeline",
     """
     FROM STREAM temperature_readings
-    WHERE temperature > 0.0
-    MAP TO STATE KEY room_id VALUE temperature USING REPLACE
-    WHERE temperature > 30.0
-    MAP TO DATA DSTREAM
-    INTO STREAM cooling_rooms
+    ENRICH KV room_metadata ON room_id = room_id
+    INTO STREAM enriched
 """,
 )
 

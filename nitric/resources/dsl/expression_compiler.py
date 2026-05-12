@@ -3,13 +3,35 @@ from __future__ import annotations
 from nitric.proto.analyticsservice.v1 import (
     Expression,
     ComparisonExpr,
+    CompareOp,
     LogicalExpr,
     LogicalOperator,
     FunctionCallExpr,
     ArithmeticExpr,
+    ArithmeticOp,
+    BetweenExpr,
+    IsNullExpr,
     ColumnRef,
     Literal,
 )
+
+_DSL_COMPARE_OPS = {
+    "=": CompareOp.EQ,
+    "==": CompareOp.EQ,
+    "!=": CompareOp.NEQ,
+    "<>": CompareOp.NEQ,
+    ">": CompareOp.GT,
+    "<": CompareOp.LT,
+    ">=": CompareOp.GTE,
+    "<=": CompareOp.LTE,
+}
+
+_DSL_ARITH_OPS = {
+    "+": ArithmeticOp.ADD,
+    "-": ArithmeticOp.SUBTRACT,
+    "*": ArithmeticOp.MULTIPLY,
+    "/": ArithmeticOp.DIVIDE,
+}
 
 # ── Known built-in functions ──────────────────────────────────────────────────
 
@@ -97,10 +119,14 @@ class ExpressionCompiler:
         # ── Comparison ────────────────────────────────────────────────────────
 
         if ctx_type == "CompExprContext":
+            op_text = ctx.compOp().getText()
+            op = _DSL_COMPARE_OPS.get(op_text)
+            if op is None:
+                raise ValueError(f"Unknown comparison operator: '{op_text}'")
             return Expression(
                 comparison=ComparisonExpr(
                     left=self.compile(ctx.expression(0)),
-                    operator=ctx.compOp().getText(),
+                    operator=op,
                     right=self.compile(ctx.expression(1)),
                 )
             )
@@ -108,49 +134,36 @@ class ExpressionCompiler:
         # ── Arithmetic ────────────────────────────────────────────────────────
 
         if ctx_type == "ArithExprContext":
+            op_text = ctx.arithOp().getText()
+            op = _DSL_ARITH_OPS.get(op_text)
+            if op is None:
+                raise ValueError(f"Unknown arithmetic operator: '{op_text}'")
             return Expression(
                 arithmetic=ArithmeticExpr(
                     left=self.compile(ctx.expression(0)),
-                    operator=ctx.arithOp().getText(),
+                    operator=op,
                     right=self.compile(ctx.expression(1)),
                 )
             )
 
-        # ── BETWEEN — desugars to >= AND <= ───────────────────────────────────
+        # ── BETWEEN ───────────────────────────────────────────────────────────
 
         if ctx_type == "BetweenExprContext":
-            subject = self.compile(ctx.expression(0))
-            lower = self.compile(ctx.expression(1))
-            upper = self.compile(ctx.expression(2))
             return Expression(
-                logical=LogicalExpr(
-                    operator=LogicalOperator.AND,
-                    operands=[
-                        Expression(
-                            comparison=ComparisonExpr(
-                                left=lower,
-                                operator=">=",
-                                right=subject,
-                            )
-                        ),
-                        Expression(
-                            comparison=ComparisonExpr(
-                                left=subject,
-                                operator="<=",
-                                right=upper,
-                            )
-                        ),
-                    ],
+                between=BetweenExpr(
+                    value=self.compile(ctx.expression(0)),
+                    lower=self.compile(ctx.expression(1)),
+                    upper=self.compile(ctx.expression(2)),
                 )
             )
 
         # ── IS NULL / IS NOT NULL ─────────────────────────────────────────────
 
         if ctx_type == "IsNullExprContext":
-            return Expression(function=FunctionCallExpr(name="IS_NULL", args=[self.compile(ctx.expression())]))
+            return Expression(is_null=IsNullExpr(operand=self.compile(ctx.expression()), negated=False))
 
         if ctx_type == "IsNotNullExprContext":
-            return Expression(function=FunctionCallExpr(name="IS_NOT_NULL", args=[self.compile(ctx.expression())]))
+            return Expression(is_null=IsNullExpr(operand=self.compile(ctx.expression()), negated=True))
 
         # ── Built-in function call ─────────────────────────────────────────────
 

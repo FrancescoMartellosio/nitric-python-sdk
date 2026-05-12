@@ -29,17 +29,33 @@ class EnginePreference(betterproto.Enum):
     MATERIALIZED_VIEW = 3
 
 
-class PipelineMode(betterproto.Enum):
-    PIPELINE_MODE_UNSPECIFIED = 0
-    DATA = 1
-    STATE = 2
+class HandoffDirection(betterproto.Enum):
+    HANDOFF_DIRECTION_UNSPECIFIED = 0
+    SOURCE = 1
+    SINK = 2
 
 
-class SourceType(betterproto.Enum):
-    SOURCE_TYPE_UNSPECIFIED = 0
-    STREAM = 1
-    KV = 2
-    TIMESERIES = 3
+class AggFunc(betterproto.Enum):
+    AGG_FUNC_UNSPECIFIED = 0
+    SUM = 1
+    COUNT = 2
+    AVG = 3
+    MAX = 4
+    MIN = 5
+    LAST = 6
+    FIRST = 7
+    STDDEV = 8
+    VARIANCE = 9
+    COLLECT_LIST = 10
+
+
+class JoinType(betterproto.Enum):
+    JOIN_TYPE_UNSPECIFIED = 0
+    INNER = 1
+    LEFT = 2
+    LEFT_SEMI = 3
+    FULL = 4
+    FULL_OUTER = 5
 
 
 class StateOperation(betterproto.Enum):
@@ -52,11 +68,30 @@ class StateOperation(betterproto.Enum):
     COLLECT = 6
 
 
-class StreamOperator(betterproto.Enum):
-    STREAM_OPERATOR_UNSPECIFIED = 0
-    ISTREAM = 1
-    DSTREAM = 2
-    RSTREAM = 3
+class MapToDataStrategy(betterproto.Enum):
+    MAP_TO_DATA_STRATEGY_UNSPECIFIED = 0
+    SNAPSHOT = 1
+    CDC = 2
+    PERIODIC = 3
+
+
+class FieldType(betterproto.Enum):
+    FIELD_TYPE_UNSPECIFIED = 0
+    DOUBLE = 1
+    LONG = 2
+    STRING = 3
+    BOOLEAN = 4
+    TIMESTAMP = 5
+
+
+class CompareOp(betterproto.Enum):
+    COMPARE_OP_UNSPECIFIED = 0
+    EQ = 1
+    NEQ = 2
+    GT = 3
+    LT = 4
+    GTE = 5
+    LTE = 6
 
 
 class LogicalOperator(betterproto.Enum):
@@ -66,9 +101,37 @@ class LogicalOperator(betterproto.Enum):
     NOT = 3
 
 
+class ArithmeticOp(betterproto.Enum):
+    ARITHMETIC_OP_UNSPECIFIED = 0
+    ADD = 1
+    SUBTRACT = 2
+    MULTIPLY = 3
+    DIVIDE = 4
+
+
+class PipelineMode(betterproto.Enum):
+    PIPELINE_MODE_UNSPECIFIED = 0
+    DATA = 1
+    STATE = 2
+
+
+class FrequencyVal(betterproto.Enum):
+    FREQUENCY_UNSPECIFIED = 0
+    HIGH = 1
+    MEDIUM = 2
+    LOW = 3
+
+
+class DeliveryVal(betterproto.Enum):
+    DELIVERY_UNSPECIFIED = 0
+    AT_MOST_ONCE = 1
+    AT_LEAST_ONCE = 2
+    EXACTLY_ONCE = 3
+
+
 @dataclass(eq=False, repr=False)
 class SparkStreamingExecuteRequest(betterproto.Message):
-    pipeline: "Pipeline" = betterproto.message_field(1)
+    subgraph: "Subgraph" = betterproto.message_field(1)
     hints: "Hints" = betterproto.message_field(2)
 
 
@@ -81,7 +144,7 @@ class SparkStreamingExecuteResponse(betterproto.Message):
 
 @dataclass(eq=False, repr=False)
 class SparkBatchExecuteRequest(betterproto.Message):
-    pipeline: "Pipeline" = betterproto.message_field(1)
+    subgraph: "Subgraph" = betterproto.message_field(1)
     hints: "BatchHints" = betterproto.message_field(2)
 
 
@@ -111,7 +174,7 @@ class SparkBatchExecuteResponse(betterproto.Message):
 
 @dataclass(eq=False, repr=False)
 class ExecuteRequest(betterproto.Message):
-    pipeline: "Pipeline" = betterproto.message_field(1)
+    subgraph: "Subgraph" = betterproto.message_field(1)
     """
     The logical pipeline to execute. Engine-agnostic. This is the only thing
     the client needs to think about.
@@ -197,69 +260,104 @@ class StepTranslation(betterproto.Message):
 
 
 @dataclass(eq=False, repr=False)
-class Pipeline(betterproto.Message):
+class Subgraph(betterproto.Message):
     name: str = betterproto.string_field(1)
-    mode: "PipelineMode" = betterproto.enum_field(2)
-    source: "Source" = betterproto.message_field(3)
-    steps: List["Step"] = betterproto.message_field(4)
-    sink: "Sink" = betterproto.message_field(5)
+    nodes: List["Node"] = betterproto.message_field(2)
+    edges: List["Edge"] = betterproto.message_field(3)
+
+
+@dataclass(eq=False, repr=False)
+class Node(betterproto.Message):
+    id: str = betterproto.string_field(1)
+    synthetic: bool = betterproto.bool_field(2)
+    source: "Source" = betterproto.message_field(3, group="kind")
+    sink: "Sink" = betterproto.message_field(4, group="kind")
+    handoff: "Handoff" = betterproto.message_field(5, group="kind")
+    step: "Step" = betterproto.message_field(6, group="kind")
+
+
+@dataclass(eq=False, repr=False)
+class Edge(betterproto.Message):
+    from_node: str = betterproto.string_field(1)
+    to_node: str = betterproto.string_field(2)
+    schedule: "Schedule" = betterproto.message_field(3)
+    mode: "PipelineMode" = betterproto.enum_field(4)
+
+
+@dataclass(eq=False, repr=False)
+class Schedule(betterproto.Message):
+    cron: str = betterproto.string_field(1, group="trigger")
+    interval: str = betterproto.string_field(2, group="trigger")
 
 
 @dataclass(eq=False, repr=False)
 class Source(betterproto.Message):
-    stream: "StreamSource" = betterproto.message_field(1, group="origin")
-    kv: "KvSource" = betterproto.message_field(2, group="origin")
-    timeseries: "TimeSeriesSource" = betterproto.message_field(3, group="origin")
+    frequency: "FrequencyVal" = betterproto.enum_field(1)
+    mode: "PipelineMode" = betterproto.enum_field(2)
+    schema: List["FieldDef"] = betterproto.message_field(3)
+    stream: "StreamSource" = betterproto.message_field(4, group="origin")
+    kv: "KvSource" = betterproto.message_field(5, group="origin")
 
 
 @dataclass(eq=False, repr=False)
 class StreamSource(betterproto.Message):
-    name: str = betterproto.string_field(1)
+    topic: str = betterproto.string_field(1)
 
 
 @dataclass(eq=False, repr=False)
 class KvSource(betterproto.Message):
-    name: str = betterproto.string_field(1)
-
-
-@dataclass(eq=False, repr=False)
-class TimeSeriesSource(betterproto.Message):
-    name: str = betterproto.string_field(1)
-    mode: "PipelineMode" = betterproto.enum_field(2)
+    store: str = betterproto.string_field(1)
 
 
 @dataclass(eq=False, repr=False)
 class Sink(betterproto.Message):
-    stream: "StreamSink" = betterproto.message_field(1, group="destination")
-    kv: "KvSink" = betterproto.message_field(2, group="destination")
-    timeseries: "TimeSeriesSink" = betterproto.message_field(3, group="destination")
+    frequency: "FrequencyVal" = betterproto.enum_field(1)
+    delivery: "DeliveryVal" = betterproto.enum_field(2)
+    mode: "PipelineMode" = betterproto.enum_field(3)
+    stream: "StreamSink" = betterproto.message_field(4, group="destination")
+    kv: "KvSink" = betterproto.message_field(5, group="destination")
 
 
 @dataclass(eq=False, repr=False)
 class StreamSink(betterproto.Message):
-    name: str = betterproto.string_field(1)
+    topic: str = betterproto.string_field(1)
 
 
 @dataclass(eq=False, repr=False)
 class KvSink(betterproto.Message):
-    name: str = betterproto.string_field(1)
+    store: str = betterproto.string_field(1)
 
 
 @dataclass(eq=False, repr=False)
-class TimeSeriesSink(betterproto.Message):
-    name: str = betterproto.string_field(1)
+class Handoff(betterproto.Message):
+    direction: "HandoffDirection" = betterproto.enum_field(1)
     mode: "PipelineMode" = betterproto.enum_field(2)
+    schema: List["FieldDef"] = betterproto.message_field(3)
+    kafka: "KafkaHandoff" = betterproto.message_field(4, group="transport")
+    kv: "KvHandoff" = betterproto.message_field(5, group="transport")
+
+
+@dataclass(eq=False, repr=False)
+class KafkaHandoff(betterproto.Message):
+    topic: str = betterproto.string_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class KvHandoff(betterproto.Message):
+    store: str = betterproto.string_field(1)
 
 
 @dataclass(eq=False, repr=False)
 class Step(betterproto.Message):
-    filter: "Filter" = betterproto.message_field(1, group="operation")
-    project: "Project" = betterproto.message_field(2, group="operation")
-    window: "Window" = betterproto.message_field(3, group="operation")
-    aggregate: "Aggregate" = betterproto.message_field(4, group="operation")
-    join: "Join" = betterproto.message_field(5, group="operation")
-    map_to_state: "MapToState" = betterproto.message_field(6, group="operation")
-    map_to_data: "MapToData" = betterproto.message_field(7, group="operation")
+    id: str = betterproto.string_field(1)
+    filter: "Filter" = betterproto.message_field(2, group="operation")
+    derive: "Derive" = betterproto.message_field(3, group="operation")
+    select: "Select" = betterproto.message_field(4, group="operation")
+    window: "Window" = betterproto.message_field(5, group="operation")
+    aggregate: "Aggregate" = betterproto.message_field(6, group="operation")
+    join: "Join" = betterproto.message_field(7, group="operation")
+    map_to_state: "MapToState" = betterproto.message_field(8, group="operation")
+    map_to_data: "MapToData" = betterproto.message_field(9, group="operation")
 
 
 @dataclass(eq=False, repr=False)
@@ -268,77 +366,66 @@ class Filter(betterproto.Message):
 
 
 @dataclass(eq=False, repr=False)
-class Project(betterproto.Message):
-    columns: List["ColumnExpr"] = betterproto.message_field(1)
+class Derive(betterproto.Message):
+    expressions: List["DeriveExpr"] = betterproto.message_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class DeriveExpr(betterproto.Message):
+    transform: "Expression" = betterproto.message_field(1)
+    output_column: str = betterproto.string_field(2)
+
+
+@dataclass(eq=False, repr=False)
+class Select(betterproto.Message):
+    columns: List[str] = betterproto.string_field(1)
 
 
 @dataclass(eq=False, repr=False)
 class Window(betterproto.Message):
     duration: str = betterproto.string_field(1)
-    """Example: "10 minutes"""
-
     slide: str = betterproto.string_field(2)
-    """
-    Slide interval for sliding windows. Empty = tumbling window. Must be <=
-    duration when set.
-    """
-
     time_column: str = betterproto.string_field(3)
-    """Timestamp column to use as event time."""
 
 
 @dataclass(eq=False, repr=False)
 class Aggregate(betterproto.Message):
     group_by: List[str] = betterproto.string_field(1)
-    """Columns to group by."""
-
     aggs: List["AggExpr"] = betterproto.message_field(2)
 
 
 @dataclass(eq=False, repr=False)
 class AggExpr(betterproto.Message):
     output_name: str = betterproto.string_field(1)
-    """Name of the output column."""
-
-    function: str = betterproto.string_field(2)
-    """
-    Aggregation function — logical name translated per engine:   SUM   → SUM()
-    COUNT → COUNT()    AVG   → AVG()      MAX   → MAX()      MIN   → MIN()
-    LAST  → last value seen
-    """
-
-    column: str = betterproto.string_field(3)
-    """Column to aggregate."""
+    function: "AggFunc" = betterproto.enum_field(2)
+    input: "Expression" = betterproto.message_field(3)
 
 
 @dataclass(eq=False, repr=False)
 class Join(betterproto.Message):
-    right_source: str = betterproto.string_field(1)
-    left_key: str = betterproto.string_field(2)
-    right_key: str = betterproto.string_field(3)
-    join_type: str = betterproto.string_field(4)
-    right_source_type: "SourceType" = betterproto.enum_field(5)
-    right_source_mode: "PipelineMode" = betterproto.enum_field(6)
+    left_key: str = betterproto.string_field(1)
+    right_key: str = betterproto.string_field(2)
+    join_type: "JoinType" = betterproto.enum_field(3)
+    right_source_mode: "PipelineMode" = betterproto.enum_field(4)
 
 
 @dataclass(eq=False, repr=False)
 class MapToState(betterproto.Message):
     key_column: str = betterproto.string_field(1)
-    """
-    Column that uniquely identifies each state entry. One output row per
-    distinct value.
-    """
-
     value_column: str = betterproto.string_field(2)
-    """Column whose value drives the state update."""
-
     operation: "StateOperation" = betterproto.enum_field(3)
 
 
 @dataclass(eq=False, repr=False)
 class MapToData(betterproto.Message):
-    operator: "StreamOperator" = betterproto.enum_field(1)
-    schedule: str = betterproto.string_field(2)
+    strategy: "MapToDataStrategy" = betterproto.enum_field(1)
+    schedule: "Schedule" = betterproto.message_field(2)
+
+
+@dataclass(eq=False, repr=False)
+class FieldDef(betterproto.Message):
+    name: str = betterproto.string_field(1)
+    type: "FieldType" = betterproto.enum_field(2)
 
 
 @dataclass(eq=False, repr=False)
@@ -349,12 +436,15 @@ class Expression(betterproto.Message):
     column_ref: "ColumnRef" = betterproto.message_field(4, group="expr")
     literal: "Literal" = betterproto.message_field(5, group="expr")
     arithmetic: "ArithmeticExpr" = betterproto.message_field(6, group="expr")
+    between: "BetweenExpr" = betterproto.message_field(7, group="expr")
+    is_null: "IsNullExpr" = betterproto.message_field(8, group="expr")
+    case_expr: "CaseExpr" = betterproto.message_field(9, group="expr")
 
 
 @dataclass(eq=False, repr=False)
 class ComparisonExpr(betterproto.Message):
     left: "Expression" = betterproto.message_field(1)
-    operator: str = betterproto.string_field(2)
+    operator: "CompareOp" = betterproto.enum_field(2)
     right: "Expression" = betterproto.message_field(3)
 
 
@@ -365,16 +455,42 @@ class LogicalExpr(betterproto.Message):
 
 
 @dataclass(eq=False, repr=False)
-class FunctionCallExpr(betterproto.Message):
-    name: str = betterproto.string_field(1)
-    args: List["Expression"] = betterproto.message_field(2)
+class ArithmeticExpr(betterproto.Message):
+    left: "Expression" = betterproto.message_field(1)
+    operator: "ArithmeticOp" = betterproto.enum_field(2)
+    right: "Expression" = betterproto.message_field(3)
 
 
 @dataclass(eq=False, repr=False)
-class ArithmeticExpr(betterproto.Message):
-    left: "Expression" = betterproto.message_field(1)
-    operator: str = betterproto.string_field(2)
-    right: "Expression" = betterproto.message_field(3)
+class BetweenExpr(betterproto.Message):
+    value: "Expression" = betterproto.message_field(1)
+    lower: "Expression" = betterproto.message_field(2)
+    upper: "Expression" = betterproto.message_field(3)
+
+
+@dataclass(eq=False, repr=False)
+class IsNullExpr(betterproto.Message):
+    operand: "Expression" = betterproto.message_field(1)
+    negated: bool = betterproto.bool_field(2)
+
+
+@dataclass(eq=False, repr=False)
+class CaseExpr(betterproto.Message):
+    subject: "Expression" = betterproto.message_field(1)
+    whens: List["WhenClause"] = betterproto.message_field(2)
+    else_expr: "Expression" = betterproto.message_field(3)
+
+
+@dataclass(eq=False, repr=False)
+class WhenClause(betterproto.Message):
+    condition: "Expression" = betterproto.message_field(1)
+    result: "Expression" = betterproto.message_field(2)
+
+
+@dataclass(eq=False, repr=False)
+class FunctionCallExpr(betterproto.Message):
+    name: str = betterproto.string_field(1)
+    args: List["Expression"] = betterproto.message_field(2)
 
 
 @dataclass(eq=False, repr=False)
@@ -388,13 +504,6 @@ class Literal(betterproto.Message):
     double_val: float = betterproto.double_field(2, group="value")
     int_val: int = betterproto.int64_field(3, group="value")
     bool_val: bool = betterproto.bool_field(4, group="value")
-
-
-@dataclass(eq=False, repr=False)
-class ColumnExpr(betterproto.Message):
-    input_column: str = betterproto.string_field(1)
-    output_column: str = betterproto.string_field(2)
-    transform: "Expression" = betterproto.message_field(3)
 
 
 class AnalyticsServiceStub(betterproto.ServiceStub):

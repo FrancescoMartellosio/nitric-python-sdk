@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
+
+_UNSET: Any = object()  # sentinel to distinguish "not provided" from None
 from grpclib import GRPCError
 
 from nitric.application import Nitric
@@ -11,36 +13,44 @@ from nitric.proto.analyticsservice.v1 import (
     AnalyticsServiceStub,
     ExecuteRequest,
     PlanResponse,
-    Pipeline,
+    Subgraph,
+    Node,
+    Edge,
+    Schedule,
     PipelineMode,
     Source,
     Sink,
     StreamSource,
     KvSource,
-    TimeSeriesSource,
     StreamSink,
     KvSink,
-    TimeSeriesSink,
     Step,
     Filter,
-    Project,
+    Derive,
+    DeriveExpr,
+    Select,
     Window,
     Aggregate,
     AggExpr,
+    AggFunc,
     Join,
+    JoinType,
     MapToState,
     MapToData,
+    MapToDataStrategy,
     Expression,
     ComparisonExpr,
+    CompareOp,
     LogicalExpr,
     LogicalOperator,
     FunctionCallExpr,
     ArithmeticExpr,
+    ArithmeticOp,
+    BetweenExpr,
+    IsNullExpr,
     ColumnRef,
     Literal,
-    ColumnExpr,
     StateOperation,
-    StreamOperator,
     Hints,
     EnginePreference,
 )
@@ -54,19 +64,68 @@ from nitric.proto.resources.v1 import (
 from nitric.resources.resource import Resource
 
 # =============================================================================
+# Operator lookup tables
+# =============================================================================
+
+_COMPARE_OPS: Dict[str, CompareOp] = {
+    "==": CompareOp.EQ,
+    "!=": CompareOp.NEQ,
+    ">": CompareOp.GT,
+    "<": CompareOp.LT,
+    ">=": CompareOp.GTE,
+    "<=": CompareOp.LTE,
+}
+
+_ARITH_OPS: Dict[str, ArithmeticOp] = {
+    "+": ArithmeticOp.ADD,
+    "-": ArithmeticOp.SUBTRACT,
+    "*": ArithmeticOp.MULTIPLY,
+    "/": ArithmeticOp.DIVIDE,
+}
+
+_JOIN_TYPES: Dict[str, JoinType] = {
+    "inner": JoinType.INNER,
+    "left": JoinType.LEFT,
+    "left_semi": JoinType.LEFT_SEMI,
+    "full": JoinType.FULL,
+    "full_outer": JoinType.FULL_OUTER,
+}
+
+_AGG_FUNCS: Dict[str, AggFunc] = {
+    "SUM": AggFunc.SUM,
+    "COUNT": AggFunc.COUNT,
+    "AVG": AggFunc.AVG,
+    "MAX": AggFunc.MAX,
+    "MIN": AggFunc.MIN,
+    "LAST": AggFunc.LAST,
+    "FIRST": AggFunc.FIRST,
+    "STDDEV": AggFunc.STDDEV,
+    "VARIANCE": AggFunc.VARIANCE,
+    "COLLECT_LIST": AggFunc.COLLECT_LIST,
+}
+
+_MAP_TO_DATA_STRATEGIES: Dict[str, MapToDataStrategy] = {
+    "SNAPSHOT": MapToDataStrategy.SNAPSHOT,
+    "CDC": MapToDataStrategy.CDC,
+    "PERIODIC": MapToDataStrategy.PERIODIC,
+}
+
+
+# =============================================================================
 # Expr — fluent expression builder
 # =============================================================================
 #
-# Replaces the old filter("column", "operator", "value") string API.
-# Expressions are Python objects — composable, type-safe, and supporting
-# all built-in functions as method chains.
+# Wraps an Expression proto and supports Python operators and built-in
+# function method chains so expressions can be written naturally.
 #
 # Quick reference:
 #   col("temperature") > 25.0
 #   col("temperature").round(2) > 25.0
 #   (col("temperature") > 20.0) & (col("unit") == "C")
-#   col("label").upper().as_("label_upper")          ← alias for project()
-#   (col("temperature") * 1.8 + 32).as_("temp_f")   ← alias for project()
+#   col("label").upper().as_("label_upper")
+#   (col("temperature") * 1.8 + 32).as_("temp_f")
+#   col("temperature").between(20.0, 30.0)
+#   col("room_id").is_not_null()
 
 
 class Expr:
@@ -77,7 +136,6 @@ class Expr:
     """
 
     def __init__(self, proto: Expression):
-        """Wrap an Expression proto."""
         self._proto = proto
 
     # ── Factory methods ───────────────────────────────────────────────────────
@@ -242,27 +300,35 @@ class Expr:
 
     def is_null(self) -> Expr:
         """IS NULL — true if column value is null."""
-        return _fn("IS_NULL", self)
+        return Expr(Expression(is_null=IsNullExpr(operand=self._proto, negated=False)))
 
     def is_not_null(self) -> Expr:
         """IS NOT NULL — true if column value is not null."""
-        return _fn("IS_NOT_NULL", self)
+        return Expr(Expression(is_null=IsNullExpr(operand=self._proto, negated=True)))
 
     def between(self, lower, upper) -> Expr:
         """
-        Sugar for (self >= lower) & (self <= upper).
+        BETWEEN lower AND upper — true if value is in [lower, upper].
 
         Example:
             col("temperature").between(20.0, 30.0)
         """
-        return (self >= lower) & (self <= upper)
+        return Expr(
+            Expression(
+                between=BetweenExpr(
+                    value=self._proto,
+                    lower=_to_expr(lower)._proto,
+                    upper=_to_expr(upper)._proto,
+                )
+            )
+        )
 
-    # ── Alias — for use in project() ─────────────────────────────────────────
+    # ── Alias — for use in derive() ───────────────────────────────────────────
 
     def as_(self, alias: str) -> _AliasedExpr:
         """
         Assign an output column name. Required for non-trivial expressions
-        when used in project().
+        when used in derive().
 
         Examples:
             col("temperature").round(2).as_("temp_rounded")
@@ -278,7 +344,6 @@ class Expr:
         return self._proto
 
     def __hash__(self):
-        # Required because __eq__ is overridden
         return id(self)
 
     def __repr__(self) -> str:
@@ -286,7 +351,7 @@ class Expr:
 
 
 class _AliasedExpr:
-    """Result of expr.as_('name'). Used by project() to name output columns."""
+    """Result of expr.as_('name'). Used by derive() to name output columns."""
 
     def __init__(self, expr: Expr, alias: str):
         self.expr = expr
@@ -315,7 +380,6 @@ def _make_literal(value) -> Expression:
 
 
 def _to_expr(value) -> Expr:
-    """Convert a raw Python value to an Expr if it is not one already."""
     if isinstance(value, Expr):
         return value
     return Expr(_make_literal(value))
@@ -326,7 +390,7 @@ def _cmp(left: Expr, op: str, right) -> Expr:
         Expression(
             comparison=ComparisonExpr(
                 left=left._proto,
-                operator=op,
+                operator=_COMPARE_OPS[op],
                 right=_to_expr(right)._proto,
             )
         )
@@ -338,7 +402,7 @@ def _arith(left: Expr, op: str, right) -> Expr:
         Expression(
             arithmetic=ArithmeticExpr(
                 left=left._proto,
-                operator=op,
+                operator=_ARITH_OPS[op],
                 right=_to_expr(right)._proto,
             )
         )
@@ -356,6 +420,14 @@ def _fn(name: str, *args: Expr) -> Expr:
     )
 
 
+def _parse_schedule(s: str) -> Schedule:
+    """Parse a schedule string into a Schedule proto (cron or interval)."""
+    parts = s.strip().split()
+    if len(parts) == 5:
+        return Schedule(cron=s)
+    return Schedule(interval=s)
+
+
 # =============================================================================
 # Public helpers — imported by users
 # =============================================================================
@@ -366,7 +438,7 @@ def col(name: str) -> Expr:
     Reference a column by name.
 
     Returns an Expr that supports Python operators, built-in function chains,
-    and .as_() for aliasing in project().
+    and .as_() for aliasing in derive().
 
     Examples:
         col("temperature") > 25.0
@@ -375,6 +447,7 @@ def col(name: str) -> Expr:
         col("label").upper()
         col("room_id").is_not_null()
         (col("temperature") > 20.0) & (col("unit") == "C")
+        col("temperature").between(20.0, 30.0)
     """
     return Expr.col(name)
 
@@ -391,102 +464,132 @@ def lit(value) -> Expr:
     return Expr.lit(value)
 
 
-def agg(output_name: str, function: str, column: str) -> AggExpr:
+def agg(
+    output_name: str,
+    function: "AggFunc | str",
+    column: "Expr | str",
+) -> AggExpr:
     """
     Build an AggExpr for use in aggregate().
 
+    function: AggFunc enum or string ("AVG", "SUM", "COUNT", etc.)
+    column:   col() expression or column name string
+
     Examples:
-        agg("avg_temp",   "AVG",   "temperature")
-        agg("room_count", "COUNT", "room_id")
-        agg("max_temp",   "MAX",   "temperature")
-        agg("total",      "SUM",   "energy_wh")
+        agg("avg_temp",   AggFunc.AVG,   col("temperature"))
+        agg("room_count", AggFunc.COUNT, col("room_id"))
+        agg("max_temp",   AggFunc.MAX,   col("temperature"))
+        agg("total",      AggFunc.SUM,   col("energy_wh"))
+        agg("avg_temp",   "AVG",         "temperature")   # string shorthand
     """
-    return AggExpr(
-        output_name=output_name,
-        function=function.upper(),
-        column=column,
-    )
+    if isinstance(function, str):
+        func = _AGG_FUNCS.get(function.upper())
+        if func is None:
+            raise ValueError(f"Unknown aggregation function: '{function}'. " f"Valid: {sorted(_AGG_FUNCS)}")
+    else:
+        func = function
+
+    if isinstance(column, str):
+        input_expr = Expression(column_ref=ColumnRef(name=column))
+    else:
+        input_expr = column.build()
+
+    return AggExpr(output_name=output_name, function=func, input=input_expr)
 
 
 # =============================================================================
-# PipelineQuery — fluent builder
+# SubgraphBuilder — top-level graph builder
 # =============================================================================
 
 
-class PipelineQuery:
+class SubgraphBuilder:
     """
-    Fluent builder for an analytics pipeline.
+    Builds a Subgraph — a DAG of Nodes connected by Edges.
 
-    Each method call appends a Step to the pipeline proto and tracks
-    the current mode (DATA or STATE) so invalid operations are caught
-    immediately with a clear error message rather than at execution time.
+    Obtain via AnalyticsRef.subgraph("name").
+    Add source nodes via source_stream() or source_kv(), which return
+    a NodeBuilder for chaining downstream operations.
 
-    Typical usage:
-        job_id = await (
-            ref.from_stream("temperature-readings", "hot-rooms")
+    Example:
+        graph = ref.subgraph("hot-rooms")
+        await (
+            graph.source_stream("temperature-readings")
             .filter(col("temperature") > 25.0)
             .to_stream("hot-rooms-output")
             .execute()
         )
+
+        # Fanout to two sinks
+        graph = ref.subgraph("fanout")
+        filtered = graph.source_stream("input").filter(col("temperature") > 25.0)
+        filtered.to_stream("hot-output")
+        filtered.to_kv("hot-state")
+        await graph.execute()
     """
 
-    def __init__(
-        self,
-        service_name: str,
-        pipeline_name: str,
-        source: Source,
-        mode: PipelineMode,
-        stub: AnalyticsServiceStub,
-    ):
-        """Initialise a pipeline query builder with the given source and mode."""
-        self._service_name = service_name
-        self._pipeline_name = pipeline_name
-        self._source = source
-        self._initial_mode = mode  # mode at source — stored for proto
-        self._mode = mode  # current mode — changes on boundary crossings
+    def __init__(self, name: str, stub: AnalyticsServiceStub):
+        self._name = name
         self._stub = stub
-        self._steps: List[Step] = []
-        self._sink: Optional[Sink] = None
+        self._nodes: List[Node] = []
+        self._edges: List[Edge] = []
+        self._counters: Dict[str, int] = {}
         self._hints: Hints = Hints()
-        self._state_key: Optional[str] = None
 
-    # ── Sink ──────────────────────────────────────────────────────────────────
+    # ── Internal helpers ──────────────────────────────────────────────────────
 
-    def to_stream(self, name: str) -> PipelineQuery:
-        """Write output to a stream sink (e.g. Kafka topic). Requires DATA mode."""
-        self._sink = Sink(stream=StreamSink(name=name))
-        return self
+    def _new_id(self, prefix: str) -> str:
+        n = self._counters.get(prefix, 0)
+        self._counters[prefix] = n + 1
+        return f"{prefix}-{n}"
 
-    def to_kv(self, name: str) -> PipelineQuery:
-        """Write output to a KV store sink. Requires STATE mode."""
-        self._sink = Sink(kv=KvSink(name=name))
-        return self
+    def _add_node(self, node: Node) -> None:
+        self._nodes.append(node)
 
-    def to_table(self, name: str, format: str = "") -> PipelineQuery:
-        """Write output to a table or file sink."""
-        # to_table remains for backwards compatibility with raw table/file sinks
-        # Use to_kv() or to_timeseries() for semantic sink types
-        self._sink = Sink(kv=KvSink(name=name))
-        return self
+    def _add_edge(self, from_id: str, to_id: str, mode: PipelineMode) -> None:
+        self._edges.append(Edge(from_node=from_id, to_node=to_id, mode=mode))
 
-    def to_timeseries(self, name: str) -> PipelineQuery:
-        """Write output to a time series database."""
-        self._sink = Sink(
-            timeseries=TimeSeriesSink(
-                name=name,
-                mode=self._mode,  # set at call time — mode may change later if more steps added
+    # ── Source entry points ───────────────────────────────────────────────────
+
+    def source_stream(self, topic: str) -> NodeBuilder:
+        """
+        Add a stream source node (Kafka topic) in DATA mode.
+
+        Example:
+            graph.source_stream("temperature-readings")
+        """
+        node_id = self._new_id("source")
+        self._add_node(
+            Node(
+                id=node_id,
+                source=Source(stream=StreamSource(topic=topic), mode=PipelineMode.DATA),
             )
         )
-        return self
+        return NodeBuilder(self, node_id, PipelineMode.DATA)
+
+    def source_kv(self, store: str) -> NodeBuilder:
+        """
+        Add a KV source node in STATE mode.
+
+        Example:
+            graph.source_kv("room-metadata")
+        """
+        node_id = self._new_id("source")
+        self._add_node(
+            Node(
+                id=node_id,
+                source=Source(kv=KvSource(store=store), mode=PipelineMode.STATE),
+            )
+        )
+        return NodeBuilder(self, node_id, PipelineMode.STATE)
 
     # ── Hints ─────────────────────────────────────────────────────────────────
 
-    def with_engine(self, engine: EnginePreference) -> PipelineQuery:
+    def with_engine(self, engine: EnginePreference) -> SubgraphBuilder:
         """Force a specific execution engine."""
         self._hints.engine = engine
         return self
 
-    def with_watermarks(self, watermarks: Dict[str, str]) -> PipelineQuery:
+    def with_watermarks(self, watermarks: Dict[str, str]) -> SubgraphBuilder:
         """
         Set watermark delays keyed by time column name.
         Required for window steps and stream-stream joins.
@@ -494,26 +597,26 @@ class PipelineQuery:
         Example:
             .with_watermarks({"event_time": "30 seconds"})
         """
-        for key, value in watermarks.items():
-            self._hints.watermarks[key] = value
+        for k, v in watermarks.items():
+            self._hints.watermarks[k] = v
         return self
 
-    def with_shuffle_partitions(self, n: int) -> PipelineQuery:
+    def with_shuffle_partitions(self, n: int) -> SubgraphBuilder:
         """Set the number of Spark shuffle partitions."""
         self._hints.shuffle_partitions = n
         return self
 
-    def with_checkpoint_base(self, path: str) -> PipelineQuery:
+    def with_checkpoint_base(self, path: str) -> SubgraphBuilder:
         """Set the base directory for Spark streaming checkpoints."""
         self._hints.checkpoint_base = path
         return self
 
-    def with_partition_column(self, column: str) -> PipelineQuery:
+    def with_partition_column(self, column: str) -> SubgraphBuilder:
         """Partition Spark batch output by this column."""
         self._hints.partition_column = column
         return self
 
-    def with_starting_offsets(self, offsets: str) -> PipelineQuery:
+    def with_starting_offsets(self, offsets: str) -> SubgraphBuilder:
         """
         Set Kafka starting offsets for batch pipelines.
         'earliest' reads full topic history (default for batch).
@@ -522,20 +625,107 @@ class PipelineQuery:
         self._hints.starting_offsets = offsets
         return self
 
-    def with_refresh(self, strategy: str, schedule: str = "") -> PipelineQuery:
+    def with_refresh(self, strategy: str, schedule: str = "") -> SubgraphBuilder:
         """Set the materialized view refresh strategy."""
         self._hints.refresh_strategy = strategy
         self._hints.refresh_schedule = schedule
         return self
 
-    def with_indexes(self, enabled: bool = True) -> PipelineQuery:
+    def with_indexes(self, enabled: bool = True) -> SubgraphBuilder:
         """Create indexes on the materialized view output."""
         self._hints.create_indexes = enabled
         return self
 
+    # ── Terminal operations ───────────────────────────────────────────────────
+
+    def _build(self) -> Subgraph:
+        return Subgraph(name=self._name, nodes=self._nodes, edges=self._edges)
+
+    async def execute(self) -> str:
+        """
+        Submit the subgraph for execution and return the job ID.
+
+        For streaming subgraphs the job runs indefinitely.
+        For batch subgraphs this returns after the job completes.
+        """
+        req = ExecuteRequest(subgraph=self._build(), hints=self._hints)
+        try:
+            response = await self._stub.execute(req)
+            if response.error:
+                raise RuntimeError(f"Pipeline execution failed: {response.error}")
+            return response.job_id
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+    async def plan(self) -> PlanResponse:
+        """
+        Dry-run: validate the subgraph and return the routing decision.
+
+        Returns a PlanResponse with:
+          - selected_engine: which engine would execute this subgraph
+          - reason: why that engine was selected
+          - physical_plan: step-by-step translation for the selected engine
+          - warnings: non-fatal issues
+          - error: non-empty if the subgraph would be rejected
+        """
+        req = ExecuteRequest(subgraph=self._build(), hints=self._hints)
+        try:
+            return await self._stub.plan(req)
+        except GRPCError as grpc_err:
+            raise exception_from_grpc_error(grpc_err) from grpc_err
+
+
+# =============================================================================
+# NodeBuilder — fluent node chaining
+# =============================================================================
+
+
+class NodeBuilder:
+    """
+    Represents a node in the dataflow graph.
+
+    Each step method creates a new downstream Node + Edge in the parent
+    SubgraphBuilder and returns a new NodeBuilder targeting that node,
+    allowing unlimited method chaining.
+
+    Sink methods (to_stream, to_kv) return the parent SubgraphBuilder
+    so you can call .execute() or add more source branches.
+    """
+
+    def __init__(
+        self,
+        graph: SubgraphBuilder,
+        node_id: str,
+        mode: PipelineMode,
+        state_key: Optional[str] = None,
+    ):
+        self._graph = graph
+        self._node_id = node_id
+        self._mode = mode
+        self._state_key = state_key
+
+    def _step_node(
+        self,
+        prefix: str,
+        step: Step,
+        out_mode: Optional[PipelineMode] = None,
+        out_state_key: Any = _UNSET,
+    ) -> NodeBuilder:
+        """Create a single-parent step node downstream of this node."""
+        node_id = self._graph._new_id(prefix)
+        step.id = node_id
+        self._graph._add_node(Node(id=node_id, step=step))
+        self._graph._add_edge(self._node_id, node_id, self._mode)
+        return NodeBuilder(
+            self._graph,
+            node_id,
+            out_mode if out_mode is not None else self._mode,
+            self._state_key if out_state_key is _UNSET else out_state_key,
+        )
+
     # ── Steps ─────────────────────────────────────────────────────────────────
 
-    def filter(self, expr: Expr) -> PipelineQuery:
+    def filter(self, expr: Expr) -> NodeBuilder:
         """
         Keep rows satisfying an expression. Discard the rest.
 
@@ -554,76 +744,59 @@ class PipelineQuery:
         if not isinstance(expr, Expr):
             raise TypeError(
                 f"filter() expects an Expr, got {type(expr).__name__}. "
-                f"Use col('name') > value, or col('name') == 'value', etc. "
-                f"Example: .filter(col('temperature') > 25.0)"
+                f"Use col('name') > value, or col('name') == 'value', etc."
             )
-        self._steps.append(Step(filter=Filter(predicate=expr.build())))
-        return self
+        return self._step_node("filter", Step(filter=Filter(predicate=expr.build())))
 
-    def project(self, *columns) -> PipelineQuery:
+    def derive(self, *exprs: _AliasedExpr) -> NodeBuilder:
         """
-        Transform, rename, or derive columns row by row. No cross-row logic.
+        Compute new or transformed columns row by row. No cross-row logic.
 
         Valid in both DATA and STATE mode.
-        Pass bare col('name') to copy a column unchanged.
-        Pass expr.as_('name') for any transformation.
+        Every argument must have an alias — use .as_('name').
 
         Examples:
-            .project(
-                col("room_id"),
+            .derive(
                 col("temperature").round(2).as_("temp_c"),
                 (col("temperature") * 1.8 + 32).as_("temp_f"),
                 col("label").upper().as_("label_upper"),
                 col("event_time").year().as_("year"),
             )
         """
-        project = Project()
-        for c in columns:
-            if isinstance(c, _AliasedExpr):
-                project.columns.append(
-                    ColumnExpr(
-                        output_column=c.alias,
-                        transform=c.expr.build(),
-                    )
-                )
-            elif isinstance(c, Expr):
-                # betterproto: check column_ref by testing if name is set
-                # instead of HasField("column_ref") which does not exist
-                if c._proto.column_ref.name:
-                    name = c._proto.column_ref.name
-                    project.columns.append(
-                        ColumnExpr(
-                            input_column=name,
-                            output_column=name,
-                        )
-                    )
-                else:
-                    raise ValueError(
-                        "Expressions in project() must have an alias. "
-                        "Use .as_('output_name') to name the output column. "
-                        "Example: (col('temperature') * 1.8 + 32).as_('temp_f')"
-                    )
-            else:
+        derive_exprs = []
+        for e in exprs:
+            if not isinstance(e, _AliasedExpr):
                 raise TypeError(
-                    f"project() expects Expr or AliasedExpr arguments, "
-                    f"got {type(c).__name__}. "
-                    f"Use col('name') or expr.as_('alias')."
+                    f"derive() expects AliasedExpr arguments (use expr.as_('name')), " f"got {type(e).__name__}."
                 )
-        self._steps.append(Step(project=project))
-        return self
+            derive_exprs.append(DeriveExpr(transform=e.expr.build(), output_column=e.alias))
+        return self._step_node("derive", Step(derive=Derive(expressions=derive_exprs)))
+
+    def select(self, *columns: str) -> NodeBuilder:
+        """
+        Project to a specific subset of columns by name.
+
+        Valid in both DATA and STATE mode.
+        Use derive() instead for transformations or renaming.
+
+        Examples:
+            .select("room_id", "temperature", "event_time")
+            .select("key", "value")
+        """
+        return self._step_node("select", Step(select=Select(columns=list(columns))))
 
     def window(
         self,
         duration: str,
         time_column: str,
         slide: str = "",
-    ) -> PipelineQuery:
+    ) -> NodeBuilder:
         """
         Group events into time-bounded buckets.
 
         Valid in DATA mode only — state has no event time axis.
         Must be immediately followed by aggregate().
-        Declare watermarks via with_watermarks({time_column: delay}).
+        Declare watermarks via SubgraphBuilder.with_watermarks({time_column: delay}).
 
         Examples:
             .window("1 minute", "event_time")
@@ -632,27 +805,19 @@ class PipelineQuery:
         if self._mode == PipelineMode.STATE:
             raise ValueError(
                 "window() is invalid in STATE mode. "
-                "State has no event time axis — "
-                "window requires events arriving over time. "
-                "Move window() before map_to_state(), or use "
-                "map_to_data() to cross back to DATA first."
+                "State has no event time axis. "
+                "Use map_to_data() to cross back to DATA first."
             )
-        self._steps.append(
-            Step(
-                window=Window(
-                    duration=duration,
-                    time_column=time_column,
-                    slide=slide,
-                )
-            )
+        return self._step_node(
+            "window",
+            Step(window=Window(duration=duration, time_column=time_column, slide=slide)),
         )
-        return self
 
     def aggregate(
         self,
         group_by: List[str],
         aggs: List[AggExpr],
-    ) -> PipelineQuery:
+    ) -> NodeBuilder:
         """
         Collapse rows into groups and compute summary values per group.
 
@@ -660,12 +825,12 @@ class PipelineQuery:
         Empty group_by = global aggregation (produces one output row).
 
         Examples:
-            .aggregate(["room_id"], [agg("avg_temp", "AVG", "temperature")])
-            .aggregate([], [agg("global_avg", "AVG", "temperature")])
+            .aggregate(["room_id"], [agg("avg_temp", AggFunc.AVG, col("temperature"))])
+            .aggregate([], [agg("global_avg", AggFunc.AVG, col("temperature"))])
             .aggregate(["window", "room_id"], [
-                agg("avg_temp",   "AVG",   "temperature"),
-                agg("max_temp",   "MAX",   "temperature"),
-                agg("room_count", "COUNT", "room_id"),
+                agg("avg_temp",   AggFunc.AVG,   col("temperature")),
+                agg("max_temp",   AggFunc.MAX,   col("temperature")),
+                agg("room_count", AggFunc.COUNT, col("room_id")),
             ])
         """
         if self._mode == PipelineMode.STATE and self._state_key:
@@ -674,56 +839,72 @@ class PipelineQuery:
                     f"aggregate() group_by must not include the state key "
                     f"'{self._state_key}' in STATE mode. "
                     f"Each group would contain exactly one row — "
-                    f"any aggregation function would be a no-op. "
-                    f"Group by a non-key column (e.g. 'building_id'), "
-                    f"or use an empty group_by for global aggregation "
-                    f"across all state entries."
+                    f"any aggregation function would be a no-op."
                 )
-        self._steps.append(Step(aggregate=Aggregate(group_by=group_by, aggs=aggs)))
-        return self
+        return self._step_node(
+            "aggregate",
+            Step(aggregate=Aggregate(group_by=group_by, aggs=aggs)),
+        )
 
     def join(
         self,
-        right_source: str,
+        right: NodeBuilder,
         left_key: str,
         right_key: str,
-        join_type: str = "inner",
-    ) -> PipelineQuery:
+        join_type: "JoinType | str" = JoinType.INNER,
+    ) -> NodeBuilder:
         """
-        Combine the current dataset with another source by matching keys.
+        Combine this node's data with another NodeBuilder by matching keys.
 
-        DATA mode: stream-table enrichment or stream-stream join.
-        STATE mode: plain table join — no time alignment needed.
+        Two edges are added: one from this node (left) and one from the
+        right NodeBuilder. Both must belong to the same SubgraphBuilder.
 
-        join_type: "inner", "left", or "left_semi"
+        join_type: JoinType enum or string ("inner", "left", "left_semi",
+                   "full", "full_outer")
 
         Examples:
-            .join("room-metadata", "room_id", "id", "left")
-            .join("building-state", "building_id", "id", "inner")
+            readings = graph.source_stream("temperature-readings")
+            metadata = graph.source_kv("room-metadata")
+            joined = readings.join(metadata, "room_id", "id", JoinType.LEFT)
+
+            # stream-stream join (both DATA mode)
+            events = graph.source_stream("events")
+            clicks = graph.source_stream("clicks")
+            joined = events.join(clicks, "user_id", "user_id", JoinType.INNER)
         """
-        self._steps.append(
-            Step(
-                join=Join(
-                    right_source=right_source,
-                    left_key=left_key,
-                    right_key=right_key,
-                    join_type=join_type,
-                )
-            )
+        if isinstance(join_type, str):
+            jt = _JOIN_TYPES.get(join_type.lower())
+            if jt is None:
+                raise ValueError(f"Unknown join type: '{join_type}'. " f"Valid: {list(_JOIN_TYPES)}")
+        else:
+            jt = join_type
+
+        node_id = self._graph._new_id("join")
+        step = Step(
+            id=node_id,
+            join=Join(
+                left_key=left_key,
+                right_key=right_key,
+                join_type=jt,
+                right_source_mode=right._mode,
+            ),
         )
-        return self
+        self._graph._add_node(Node(id=node_id, step=step))
+        self._graph._add_edge(self._node_id, node_id, self._mode)
+        self._graph._add_edge(right._node_id, node_id, right._mode)
+        return NodeBuilder(self._graph, node_id, self._mode)
 
     def map_to_state(
         self,
         key_column: str,
         value_column: str,
         operation: StateOperation,
-    ) -> PipelineQuery:
+    ) -> NodeBuilder:
         """
         Boundary crossing: DATA → STATE.
 
         All steps after this operate in STATE mode.
-        Invalid if the pipeline is already in STATE mode.
+        Invalid if the node is already in STATE mode.
 
         Examples:
             .map_to_state("room_id", "temperature", StateOperation.REPLACE)
@@ -732,127 +913,113 @@ class PipelineQuery:
         """
         if self._mode == PipelineMode.STATE:
             raise ValueError(
-                "map_to_state() is invalid — pipeline is already in STATE mode. "
+                "map_to_state() is invalid — already in STATE mode. "
                 "Cannot cross DATA→STATE twice without map_to_data() in between."
             )
-        self._steps.append(
+        return self._step_node(
+            "map-to-state",
             Step(
                 map_to_state=MapToState(
                     key_column=key_column,
                     value_column=value_column,
                     operation=operation,
                 )
-            )
+            ),
+            out_mode=PipelineMode.STATE,
+            out_state_key=key_column,
         )
-        self._mode = PipelineMode.STATE
-        self._state_key = key_column
-        return self
 
     def map_to_data(
         self,
-        operator: StreamOperator,
+        strategy: "MapToDataStrategy | str",
         schedule: str = "",
-    ) -> PipelineQuery:
+    ) -> NodeBuilder:
         """
-        Boundary crossing: STATE → DATA using a CQL stream operator.
+        Boundary crossing: STATE → DATA.
 
-        IStream (ISTREAM) — emit tuples as they are inserted into the relation.
-            Use when you want to react to new or changed state entries.
-            Example: room temperature just crossed above threshold.
+        strategy:
+          SNAPSHOT — emit full state once as a bounded dataset
+          CDC      — emit each state change as an event (insert or delete)
+          PERIODIC — emit full state on a recurring schedule
 
-        DStream (DSTREAM) — emit tuples as they are deleted from the relation.
-            Use when you want to react to state entries disappearing.
-            Example: room temperature dropped back below threshold.
-
-        RStream (RSTREAM) — emit the full current relation at every evaluation.
-            Use when downstream consumers need the complete current picture.
-            Optionally pass a cron schedule to limit emission frequency.
+        schedule: cron expression or interval string, required for PERIODIC.
+          Examples: "0 6 * * *" (cron), "1 hour" (interval)
 
         Examples:
-            .map_to_data(StreamOperator.ISTREAM)
-            .map_to_data(StreamOperator.DSTREAM)
-            .map_to_data(StreamOperator.RSTREAM)
-            .map_to_data(StreamOperator.RSTREAM, "0 * * * *")
+            .map_to_data(MapToDataStrategy.CDC)
+            .map_to_data(MapToDataStrategy.SNAPSHOT)
+            .map_to_data(MapToDataStrategy.PERIODIC, "0 * * * *")
+            .map_to_data("PERIODIC", "1 hour")   # string shorthand
         """
         if self._mode == PipelineMode.DATA:
-            raise ValueError("map_to_data() is invalid — pipeline is already in DATA mode.")
-        if operator == StreamOperator.STREAM_OPERATOR_UNSPECIFIED:
-            raise ValueError(
-                "map_to_data() requires a stream operator. " "Use StreamOperator.ISTREAM, DSTREAM, or RSTREAM."
-            )
-        if operator == StreamOperator.RSTREAM and not schedule:
+            raise ValueError("map_to_data() is invalid — already in DATA mode.")
+
+        if isinstance(strategy, str):
+            strat = _MAP_TO_DATA_STRATEGIES.get(strategy.upper())
+            if strat is None:
+                raise ValueError(f"Unknown strategy: '{strategy}'. Valid: SNAPSHOT, CDC, PERIODIC")
+        else:
+            strat = strategy
+
+        if strat == MapToDataStrategy.PERIODIC and not schedule:
             import warnings
 
             warnings.warn(
-                "map_to_data(RSTREAM) without a schedule will emit the full "
-                "relation on every micro-batch. Pass a cron schedule to limit "
-                "emission frequency. "
-                "Example: .map_to_data(StreamOperator.RSTREAM, '0 * * * *')",
+                "map_to_data(PERIODIC) without a schedule will emit on every "
+                "micro-batch. Pass a cron or interval schedule. "
+                "Example: .map_to_data(MapToDataStrategy.PERIODIC, '0 * * * *')",
                 stacklevel=2,
             )
-        if operator in (StreamOperator.ISTREAM, StreamOperator.DSTREAM) and schedule:
-            import warnings
 
-            warnings.warn(
-                f"map_to_data({operator.name}) does not use a schedule — " f"the schedule argument will be ignored.",
-                stacklevel=2,
+        sched = _parse_schedule(schedule) if schedule else Schedule()
+        return self._step_node(
+            "map-to-data",
+            Step(map_to_data=MapToData(strategy=strat, schedule=sched)),
+            out_mode=PipelineMode.DATA,
+            out_state_key=None,
+        )
+
+    # ── Sinks ─────────────────────────────────────────────────────────────────
+
+    def to_stream(self, topic: str) -> SubgraphBuilder:
+        """
+        Write output to a stream sink (e.g. Kafka topic).
+
+        Returns the SubgraphBuilder so you can chain .execute() or add
+        more branches (fanout) before calling execute().
+
+        Example:
+            .to_stream("hot-rooms-output").execute()
+        """
+        node_id = self._graph._new_id("sink")
+        self._graph._add_node(
+            Node(
+                id=node_id,
+                sink=Sink(stream=StreamSink(topic=topic), mode=self._mode),
             )
-            schedule = ""
-
-        self._steps.append(Step(map_to_data=MapToData(operator=operator, schedule=schedule)))
-        self._mode = PipelineMode.DATA
-        self._state_key = None
-        return self
-
-    # ── Terminal operations ───────────────────────────────────────────────────
-
-    async def execute(self) -> str:
-        """
-        Submit the pipeline for execution and return the job ID.
-
-        For streaming pipelines the job runs indefinitely.
-        For batch pipelines this returns after the job completes.
-        """
-        if self._sink is None:
-            raise ValueError("No sink configured. " "Call to_stream(), to_kv(), or to_table() before execute().")
-        req = self._build_request()
-        try:
-            response = await self._stub.execute(req)
-            if response.error:
-                raise RuntimeError(f"Pipeline execution failed: {response.error}")
-            return response.job_id
-        except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err) from grpc_err
-
-    async def plan(self) -> PlanResponse:
-        """
-        Dry-run: validate the pipeline and return the routing decision.
-
-        Returns a PlanResponse with:
-          - selected_engine: which engine would execute this pipeline
-          - reason: why that engine was selected
-          - physical_plan: step-by-step translation for the selected engine
-          - warnings: non-fatal issues
-          - error: non-empty if the pipeline would be rejected
-        """
-        req = self._build_request()
-        try:
-            return await self._stub.plan(req)
-        except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err) from grpc_err
-
-    def _build_request(self) -> ExecuteRequest:
-        pipeline = Pipeline(
-            name=self._pipeline_name,
-            mode=self._initial_mode,
-            source=self._source,
-            steps=self._steps,
-            sink=self._sink,
         )
-        return ExecuteRequest(
-            pipeline=pipeline,
-            hints=self._hints,
+        self._graph._add_edge(self._node_id, node_id, self._mode)
+        return self._graph
+
+    def to_kv(self, store: str) -> SubgraphBuilder:
+        """
+        Write output to a KV store sink.
+
+        Returns the SubgraphBuilder so you can chain .execute() or add
+        more branches (fanout) before calling execute().
+
+        Example:
+            .to_kv("room-state").execute()
+        """
+        node_id = self._graph._new_id("sink")
+        self._graph._add_node(
+            Node(
+                id=node_id,
+                sink=Sink(kv=KvSink(store=store), mode=self._mode),
+            )
         )
+        self._graph._add_edge(self._node_id, node_id, self._mode)
+        return self._graph
 
 
 # =============================================================================
@@ -862,264 +1029,65 @@ class PipelineQuery:
 
 class AnalyticsRef:
     """
-    Runtime reference to the analytics service for pipeline submission.
+    Runtime reference to the analytics service for subgraph submission.
 
     Obtained via analytics_service("name").allow().
-    Provides both the fluent builder API and the declarative DSL API.
     """
 
     def __init__(self, name: str):
-        """Create a runtime reference to the named analytics service."""
         self._name = name
         self._channel = ChannelManager.get_channel()
         self._stub = AnalyticsServiceStub(channel=self._channel)
 
-    # ── Fluent builder entry points ───────────────────────────────────────────
-
-    def from_stream(self, source_name: str, pipeline_name: str) -> PipelineQuery:
+    def subgraph(self, name: str) -> SubgraphBuilder:
         """
-        Start a DATA pipeline reading from an event stream (Kafka topic).
+        Start building an analytics subgraph (DAG of nodes and edges).
 
-        Example:
+        Returns a SubgraphBuilder. Add source nodes via source_stream() or
+        source_kv(), then chain operations on the returned NodeBuilder.
+
+        Examples:
+            # Simple linear pipeline
+            graph = ref.subgraph("hot-rooms")
             await (
-                ref.from_stream("temperature_readings", "hot-rooms")
+                graph.source_stream("temperature-readings")
                 .filter(col("temperature") > 25.0)
                 .to_stream("hot-rooms-output")
                 .execute()
             )
-        """
-        return PipelineQuery(
-            service_name=self._name,
-            pipeline_name=pipeline_name,
-            source=Source(stream=StreamSource(name=source_name)),
-            mode=PipelineMode.DATA,
-            stub=self._stub,
-        )
 
-    def from_kv(self, source_name: str, pipeline_name: str) -> PipelineQuery:
-        """Start a STATE pipeline reading from a KV store."""
-        return PipelineQuery(
-            service_name=self._name,
-            pipeline_name=pipeline_name,
-            source=Source(kv=KvSource(name=source_name)),
-            mode=PipelineMode.STATE,
-            stub=self._stub,
-        )
+            # Join stream with KV lookup
+            graph = ref.subgraph("enrichment")
+            readings = graph.source_stream("temperature-readings")
+            metadata = graph.source_kv("room-metadata")
+            await (
+                readings.join(metadata, "room_id", "id", JoinType.LEFT)
+                .filter(col("temperature") > 25.0)
+                .to_stream("enriched-output")
+                .execute()
+            )
 
-    def from_table(
-        self,
-        source_name: str,
-        pipeline_name: str,
-        mode: PipelineMode = PipelineMode.DATA,
-        format: str = "",
-    ) -> PipelineQuery:
-        """Start a pipeline reading from a table or file (kept for compatibility)."""
-        return PipelineQuery(
-            service_name=self._name,
-            pipeline_name=pipeline_name,
-            source=Source(kv=KvSource(name=source_name)),
-            mode=mode,
-            stub=self._stub,
-        )
-
-    def from_timeseries(
-        self,
-        source_name: str,
-        pipeline_name: str,
-        mode: PipelineMode = PipelineMode.DATA,
-    ) -> PipelineQuery:
-        """Start a pipeline reading from a time series database."""
-        return PipelineQuery(
-            service_name=self._name,
-            pipeline_name=pipeline_name,
-            source=Source(
-                timeseries=TimeSeriesSource(
-                    name=source_name,
-                    mode=mode,
-                )
-            ),
-            mode=mode,
-            stub=self._stub,
-        )
-
-    # ── Declarative DSL entry points ──────────────────────────────────────────
-
-    async def execute_dsl(
-        self,
-        source: str,
-        hints: Optional[Hints] = None,
-    ) -> str:
-        """
-        Parse and execute a declarative pipeline.
-
-        Accepts either an inline DSL string or a path to a .pipeline file.
-        Grammar style is auto-detected — no need to specify.
-
-        Args:
-            source: Declarative DSL string or path to a .pipeline file.
-            hints:  Optional execution hints (watermarks, engine, etc.)
-
-        Returns:
-            Job ID of the started pipeline.
-
-        Raises:
-            ParseError: if the DSL has syntax errors.
-            ValueError: if the pipeline fails semantic validation.
-            RuntimeError: if execution fails.
-
-        Examples:
-            # Inline string
-            job_id = await ref.execute_dsl('''
-                FROM STREAM temperature_readings
-                WHERE ROUND(temperature, 1) > 25.0
-                  AND UPPER(unit) = 'C'
-                INTO STREAM hot_rooms
-            ''')
+            # Fanout: one source feeds two sinks
+            graph = ref.subgraph("fanout")
+            filtered = graph.source_stream("input").filter(col("temperature") > 25.0)
+            filtered.to_stream("hot-output")
+            filtered.to_kv("hot-state")
+            await graph.execute()
 
             # With hints
-            job_id = await ref.execute_dsl(
-                '/pipelines/window_avg.pipeline',
-                hints=Hints(watermarks={"event_time": "30 seconds"})
+            graph = ref.subgraph("windowed-avg")
+            await (
+                graph
+                .with_watermarks({"event_time": "30 seconds"})
+                .with_engine(EnginePreference.SPARK_STREAMING)
+                .source_stream("temperature-readings")
+                .window("1 minute", "event_time")
+                .aggregate(["room_id"], [agg("avg_temp", AggFunc.AVG, col("temperature"))])
+                .to_stream("room-averages")
+                .execute()
             )
         """
-        from nitric.resources.dsl.parser import parse, ParseError
-
-        try:
-            pipeline = parse(source)
-        except ParseError as e:
-            raise RuntimeError("Declarative pipeline parse failed:\n" + "\n".join(e.errors)) from e
-
-        return await self._submit(pipeline, hints)
-
-    async def plan_dsl(
-        self,
-        source: str,
-        hints: Optional[Hints] = None,
-    ) -> PlanResponse:
-        """
-        Parse a declarative pipeline and explain routing without executing.
-
-        Useful for validating a pipeline and understanding which engine
-        would be selected before committing to execution.
-
-        Example:
-            plan = await ref.plan_dsl('''
-                FROM STREAM temperature_readings
-                WHERE temperature > 25.0
-                INTO STREAM hot_rooms
-            ''')
-            print(plan.selected_engine)
-            print(plan.reason)
-            for step in plan.physical_plan:
-                print(f"  {step.operation} → {step.physical_translation}")
-        """
-        from nitric.resources.dsl.parser import parse, ParseError
-
-        try:
-            pipeline = parse(source)
-        except ParseError as e:
-            raise RuntimeError("Declarative pipeline parse failed:\n" + "\n".join(e.errors)) from e
-
-        req = ExecuteRequest(pipeline=pipeline, hints=hints or Hints())
-        try:
-            return await self._stub.plan(req)
-        except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err) from grpc_err
-
-    def pipeline_from_file(self, path: str) -> _DeclarativePipelineBuilder:
-        """
-        Load a .pipeline file and attach hints before submitting.
-
-        Example:
-            job_id = await (
-                ref.pipeline_from_file('/pipelines/room_temp.pipeline')
-                   .with_watermarks({"event_time": "30 seconds"})
-                   .with_engine(EnginePreference.SPARK_STREAMING)
-                   .execute()
-            )
-        """
-        return _DeclarativePipelineBuilder(self._stub, path)
-
-    # ── Internal ──────────────────────────────────────────────────────────────
-
-    async def _submit(self, pipeline: Pipeline, hints: Optional[Hints]) -> str:
-        req = ExecuteRequest(pipeline=pipeline, hints=hints or Hints())
-        try:
-            resp = await self._stub.execute(req)
-            if resp.error:
-                raise RuntimeError(f"Pipeline execution failed: {resp.error}")
-            return resp.job_id
-        except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err) from grpc_err
-
-
-# =============================================================================
-# _DeclarativePipelineBuilder
-# =============================================================================
-
-
-class _DeclarativePipelineBuilder:
-    """
-    Wraps a declarative pipeline file or string and lets you attach
-    hints before executing. Mirrors the PipelineQuery terminal interface.
-    """
-
-    def __init__(self, stub: AnalyticsServiceStub, source: str):
-        self._stub = stub
-        self._source = source
-        self._hints = Hints()
-
-    def with_watermarks(self, watermarks: Dict[str, str]) -> _DeclarativePipelineBuilder:
-        for k, v in watermarks.items():
-            self._hints.watermarks[k] = v
-        return self
-
-    def with_engine(self, engine: EnginePreference) -> _DeclarativePipelineBuilder:
-        self._hints.engine = engine
-        return self
-
-    def with_shuffle_partitions(self, n: int) -> _DeclarativePipelineBuilder:
-        self._hints.shuffle_partitions = n
-        return self
-
-    def with_checkpoint_base(self, path: str) -> _DeclarativePipelineBuilder:
-        self._hints.checkpoint_base = path
-        return self
-
-    def with_starting_offsets(self, offsets: str) -> _DeclarativePipelineBuilder:
-        self._hints.starting_offsets = offsets
-        return self
-
-    async def execute(self) -> str:
-        from nitric.resources.dsl.parser import parse, ParseError
-
-        try:
-            pipeline = parse(self._source)
-        except ParseError as e:
-            raise RuntimeError("Declarative pipeline parse failed:\n" + "\n".join(e.errors)) from e
-
-        req = ExecuteRequest(pipeline=pipeline, hints=self._hints)
-        try:
-            resp = await self._stub.execute(req)
-            if resp.error:
-                raise RuntimeError(f"Pipeline execution failed: {resp.error}")
-            return resp.job_id
-        except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err) from grpc_err
-
-    async def plan(self) -> PlanResponse:
-        from nitric.resources.dsl.parser import parse, ParseError
-
-        try:
-            pipeline = parse(self._source)
-        except ParseError as e:
-            raise RuntimeError("Declarative pipeline parse failed:\n" + "\n".join(e.errors)) from e
-
-        req = ExecuteRequest(pipeline=pipeline, hints=self._hints)
-        try:
-            return await self._stub.plan(req)
-        except GRPCError as grpc_err:
-            raise exception_from_grpc_error(grpc_err) from grpc_err
+        return SubgraphBuilder(name=name, stub=self._stub)
 
 
 # =============================================================================
@@ -1131,7 +1099,6 @@ class AnalyticsService(Resource):
     """An AnalyticsService resource used for deployment."""
 
     def __init__(self, name: str):
-        """Declare an analytics service resource with the given name."""
         super().__init__(name)
 
     async def _register(self) -> None:
@@ -1152,7 +1119,7 @@ class AnalyticsService(Resource):
         )
 
     def allow(self) -> AnalyticsRef:
-        """Return a runtime reference for submitting pipelines."""
+        """Return a runtime reference for submitting subgraphs."""
         return AnalyticsRef(self.name)
 
 
@@ -1166,23 +1133,27 @@ def analytics_service(name: str) -> AnalyticsService:
     Define an Analytics Service resource in a Nitric application.
 
     Example:
-        from nitric.resources.analytics import analytics_service, col, agg
+        from nitric.resources.analytics import analytics_service, col, agg, AggFunc, JoinType
         svc = analytics_service("my-analytics")
         ref = svc.allow()
 
-        # Fluent
-        job_id = await (
-            ref.from_stream("temperature_readings", "hot-rooms")
+        # Linear pipeline
+        graph = ref.subgraph("hot-rooms")
+        await (
+            graph.source_stream("temperature_readings")
             .filter(col("temperature") > 25.0)
-            .to_stream("hot-rooms")
+            .to_stream("hot_rooms")
             .execute()
         )
 
-        # Declarative
-        job_id = await ref.execute_dsl('''
-            FROM STREAM temperature_readings
-            WHERE temperature > 25.0
-            INTO STREAM hot_rooms
-        ''')
+        # Join
+        graph = ref.subgraph("enrichment")
+        readings = graph.source_stream("temperature_readings")
+        metadata = graph.source_kv("room_metadata")
+        await (
+            readings.join(metadata, "room_id", "id", JoinType.LEFT)
+            .to_stream("enriched")
+            .execute()
+        )
     """
     return Nitric._create_resource(AnalyticsService, name)
