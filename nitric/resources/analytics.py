@@ -53,6 +53,8 @@ from nitric.proto.analyticsservice.v1 import (
     StateOperation,
     Hints,
     EnginePreference,
+    FieldDef,
+    FieldType,
 )
 
 from nitric.proto.resources.v1 import (
@@ -550,34 +552,46 @@ class SubgraphBuilder:
 
     # ── Source entry points ───────────────────────────────────────────────────
 
-    def source_stream(self, topic: str) -> NodeBuilder:
+    def source_stream(self, topic: str, schema: List[FieldDef]) -> NodeBuilder:
         """
         Add a stream source node (Kafka topic) in DATA mode.
 
+        schema: list of FieldDef(name=..., type=FieldType.XXX) describing the topic fields.
+
         Example:
-            graph.source_stream("temperature-readings")
+            graph.source_stream("temperature-readings", schema=[
+                FieldDef(name="room_id",      type=FieldType.STRING),
+                FieldDef(name="temperature",  type=FieldType.DOUBLE),
+                FieldDef(name="event_time",   type=FieldType.TIMESTAMP),
+            ])
         """
         node_id = self._new_id("source")
         self._add_node(
             Node(
                 id=node_id,
-                source=Source(stream=StreamSource(topic=topic), mode=PipelineMode.DATA),
+                source=Source(stream=StreamSource(topic=topic), mode=PipelineMode.DATA, schema=schema),
             )
         )
         return NodeBuilder(self, node_id, PipelineMode.DATA)
 
-    def source_kv(self, store: str) -> NodeBuilder:
+    def source_kv(self, store: str, schema: List[FieldDef]) -> NodeBuilder:
         """
         Add a KV source node in STATE mode.
 
+        schema: list of FieldDef(name=..., type=FieldType.XXX) describing the store fields.
+
         Example:
-            graph.source_kv("room-metadata")
+            graph.source_kv("room-metadata", schema=[
+                FieldDef(name="id",       type=FieldType.STRING),
+                FieldDef(name="building", type=FieldType.STRING),
+                FieldDef(name="floor",    type=FieldType.LONG),
+            ])
         """
         node_id = self._new_id("source")
         self._add_node(
             Node(
                 id=node_id,
-                source=Source(kv=KvSource(store=store), mode=PipelineMode.STATE),
+                source=Source(kv=KvSource(store=store), mode=PipelineMode.STATE, schema=schema),
             )
         )
         return NodeBuilder(self, node_id, PipelineMode.STATE)

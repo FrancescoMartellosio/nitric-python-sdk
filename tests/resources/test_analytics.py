@@ -38,6 +38,8 @@ from nitric.proto.analyticsservice.v1 import (
     ExecuteRequest,
     ExecuteResponse,
     Expression,
+    FieldDef,
+    FieldType,
     Filter,
     Hints,
     IsNullExpr,
@@ -83,6 +85,18 @@ from nitric.resources.analytics import (
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
+_SCHEMA = [FieldDef(name="x", type=FieldType.DOUBLE)]
+_STREAM_SCHEMA = [
+    FieldDef(name="room_id", type=FieldType.STRING),
+    FieldDef(name="temperature", type=FieldType.DOUBLE),
+    FieldDef(name="event_time", type=FieldType.TIMESTAMP),
+]
+_KV_SCHEMA = [
+    FieldDef(name="id", type=FieldType.STRING),
+    FieldDef(name="building", type=FieldType.STRING),
+    FieldDef(name="floor", type=FieldType.LONG),
+]
 
 
 def _stub(job_id: str = "job-1", error: str = "") -> MagicMock:
@@ -307,25 +321,27 @@ class TestAggHelper(TestCase):
 class TestSubgraphBuilderStructure(TestCase):
     def test_source_stream_creates_data_node(self):
         graph = _graph()
-        nb = graph.source_stream("temperature-readings")
+        nb = graph.source_stream("temperature-readings", _STREAM_SCHEMA)
         sg = graph._build()
         self.assertEqual(len(sg.nodes), 1)
         self.assertEqual(sg.nodes[0].source.stream.topic, "temperature-readings")
         self.assertEqual(sg.nodes[0].source.mode, PipelineMode.DATA)
+        self.assertEqual(sg.nodes[0].source.schema, _STREAM_SCHEMA)
         self.assertIsInstance(nb, NodeBuilder)
         self.assertEqual(nb._mode, PipelineMode.DATA)
 
     def test_source_kv_creates_state_node(self):
         graph = _graph()
-        nb = graph.source_kv("room-metadata")
+        nb = graph.source_kv("room-metadata", _KV_SCHEMA)
         sg = graph._build()
         self.assertEqual(sg.nodes[0].source.kv.store, "room-metadata")
         self.assertEqual(sg.nodes[0].source.mode, PipelineMode.STATE)
+        self.assertEqual(sg.nodes[0].source.schema, _KV_SCHEMA)
         self.assertEqual(nb._mode, PipelineMode.STATE)
 
     def test_linear_pipeline_node_and_edge_count(self):
         graph = _graph("linear")
-        graph.source_stream("input").filter(col("x") > 0).to_stream("output")
+        graph.source_stream("input", _SCHEMA).filter(col("x") > 0).to_stream("output")
         sg = graph._build()
         # source-0, filter-0, sink-0
         self.assertEqual(len(sg.nodes), 3)
@@ -334,14 +350,14 @@ class TestSubgraphBuilderStructure(TestCase):
 
     def test_linear_pipeline_node_ids(self):
         graph = _graph()
-        graph.source_stream("input").filter(col("x") > 0).to_stream("output")
+        graph.source_stream("input", _SCHEMA).filter(col("x") > 0).to_stream("output")
         sg = graph._build()
         ids = [n.id for n in sg.nodes]
         self.assertEqual(ids, ["source-0", "filter-0", "sink-0"])
 
     def test_linear_pipeline_edge_connections(self):
         graph = _graph()
-        graph.source_stream("input").filter(col("x") > 0).to_stream("output")
+        graph.source_stream("input", _SCHEMA).filter(col("x") > 0).to_stream("output")
         sg = graph._build()
         self.assertEqual(sg.edges[0].from_node, "source-0")
         self.assertEqual(sg.edges[0].to_node, "filter-0")
@@ -350,14 +366,14 @@ class TestSubgraphBuilderStructure(TestCase):
 
     def test_edge_carries_mode(self):
         graph = _graph()
-        graph.source_stream("input").filter(col("x") > 0).to_stream("output")
+        graph.source_stream("input", _SCHEMA).filter(col("x") > 0).to_stream("output")
         sg = graph._build()
         self.assertEqual(sg.edges[0].mode, PipelineMode.DATA)
         self.assertEqual(sg.edges[1].mode, PipelineMode.DATA)
 
     def test_fanout_to_two_sinks(self):
         graph = _graph("fanout")
-        filtered = graph.source_stream("input").filter(col("x") > 0)
+        filtered = graph.source_stream("input", _SCHEMA).filter(col("x") > 0)
         filtered.to_stream("stream-out")
         filtered.to_kv("kv-out")
         sg = graph._build()
@@ -367,7 +383,7 @@ class TestSubgraphBuilderStructure(TestCase):
 
     def test_fanout_sink_node_contents(self):
         graph = _graph()
-        filtered = graph.source_stream("input").filter(col("x") > 0)
+        filtered = graph.source_stream("input", _SCHEMA).filter(col("x") > 0)
         filtered.to_stream("stream-out")
         filtered.to_kv("kv-out")
         sg = graph._build()
@@ -376,8 +392,8 @@ class TestSubgraphBuilderStructure(TestCase):
 
     def test_join_creates_two_sources_one_join_node(self):
         graph = _graph("join")
-        readings = graph.source_stream("temperature-readings")
-        metadata = graph.source_kv("room-metadata")
+        readings = graph.source_stream("temperature-readings", _STREAM_SCHEMA)
+        metadata = graph.source_kv("room-metadata", _KV_SCHEMA)
         readings.join(metadata, "room_id", "id", JoinType.LEFT).to_stream("enriched")
         sg = graph._build()
         # source-0, source-1, join-0, sink-0
@@ -387,8 +403,8 @@ class TestSubgraphBuilderStructure(TestCase):
 
     def test_join_both_sources_connect_to_join_node(self):
         graph = _graph()
-        readings = graph.source_stream("temperature-readings")
-        metadata = graph.source_kv("room-metadata")
+        readings = graph.source_stream("temperature-readings", _STREAM_SCHEMA)
+        metadata = graph.source_kv("room-metadata", _KV_SCHEMA)
         readings.join(metadata, "room_id", "id").to_stream("enriched")
         sg = graph._build()
         to_join = [e for e in sg.edges if e.to_node == "join-0"]
@@ -398,8 +414,8 @@ class TestSubgraphBuilderStructure(TestCase):
 
     def test_join_node_contents(self):
         graph = _graph()
-        readings = graph.source_stream("temperature-readings")
-        metadata = graph.source_kv("room-metadata")
+        readings = graph.source_stream("temperature-readings", _STREAM_SCHEMA)
+        metadata = graph.source_kv("room-metadata", _KV_SCHEMA)
         readings.join(metadata, "room_id", "id", JoinType.LEFT).to_stream("out")
         sg = graph._build()
         join_node = next(n for n in sg.nodes if n.id == "join-0")
@@ -410,8 +426,8 @@ class TestSubgraphBuilderStructure(TestCase):
 
     def test_join_string_join_type(self):
         graph = _graph()
-        left = graph.source_stream("left")
-        right = graph.source_stream("right")
+        left = graph.source_stream("left", _SCHEMA)
+        right = graph.source_stream("right", _SCHEMA)
         left.join(right, "k", "k", "inner").to_stream("out")
         sg = graph._build()
         join_node = next(n for n in sg.nodes if n.id == "join-0")
@@ -420,7 +436,7 @@ class TestSubgraphBuilderStructure(TestCase):
     def test_multiple_steps_chain(self):
         graph = _graph()
         (
-            graph.source_stream("events")
+            graph.source_stream("events", _SCHEMA)
             .filter(col("value") > 0)
             .window("1 minute", "event_time")
             .aggregate(["room_id"], [agg("avg", AggFunc.AVG, col("value"))])
@@ -435,14 +451,14 @@ class TestSubgraphBuilderStructure(TestCase):
 
     def test_map_to_state_changes_mode(self):
         graph = _graph()
-        nb = graph.source_stream("events").map_to_state("room_id", "temperature", StateOperation.REPLACE)
+        nb = graph.source_stream("events", _SCHEMA).map_to_state("room_id", "temperature", StateOperation.REPLACE)
         self.assertEqual(nb._mode, PipelineMode.STATE)
         self.assertEqual(nb._state_key, "room_id")
 
     def test_map_to_data_changes_mode_back(self):
         graph = _graph()
         nb = (
-            graph.source_stream("events")
+            graph.source_stream("events", _SCHEMA)
             .map_to_state("room_id", "temperature", StateOperation.REPLACE)
             .map_to_data(MapToDataStrategy.CDC)
         )
@@ -452,7 +468,7 @@ class TestSubgraphBuilderStructure(TestCase):
     def test_full_round_trip_data_state_data(self):
         graph = _graph()
         (
-            graph.source_stream("events")
+            graph.source_stream("events", _SCHEMA)
             .filter(col("value") > 0)
             .map_to_state("room_id", "value", StateOperation.REPLACE)
             .filter(col("value") > 30)
@@ -475,7 +491,7 @@ class TestNodeBuilderStepContents(TestCase):
 
     def test_filter_node_predicate(self):
         graph = _graph()
-        graph.source_stream("t").filter(col("temperature") > 25.0).to_stream("out")
+        graph.source_stream("t", _SCHEMA).filter(col("temperature") > 25.0).to_stream("out")
         node = self._get_node(graph._build(), "filter-0")
         pred = node.step.filter.predicate
         self.assertEqual(pred.comparison.operator, CompareOp.GT)
@@ -484,20 +500,20 @@ class TestNodeBuilderStepContents(TestCase):
 
     def test_filter_id_matches_node_id(self):
         graph = _graph()
-        graph.source_stream("t").filter(col("x") > 0).to_stream("out")
+        graph.source_stream("t", _SCHEMA).filter(col("x") > 0).to_stream("out")
         node = self._get_node(graph._build(), "filter-0")
         self.assertEqual(node.step.id, "filter-0")
 
     def test_select_node_columns(self):
         graph = _graph()
-        graph.source_stream("t").select("room_id", "temperature").to_stream("out")
+        graph.source_stream("t", _SCHEMA).select("room_id", "temperature").to_stream("out")
         node = self._get_node(graph._build(), "select-0")
         self.assertEqual(list(node.step.select.columns), ["room_id", "temperature"])
 
     def test_derive_node_expressions(self):
         graph = _graph()
         (
-            graph.source_stream("t")
+            graph.source_stream("t", _SCHEMA)
             .derive(
                 col("temperature").round(2).as_("temp_c"),
                 (col("temperature") * 1.8 + 32.0).as_("temp_f"),
@@ -513,7 +529,7 @@ class TestNodeBuilderStepContents(TestCase):
     def test_window_node_contents(self):
         graph = _graph()
         (
-            graph.source_stream("t")
+            graph.source_stream("t", _SCHEMA)
             .window("1 minute", "event_time", slide="30 seconds")
             .aggregate(["room_id"], [agg("avg", AggFunc.AVG, col("v"))])
             .to_stream("out")
@@ -529,7 +545,7 @@ class TestNodeBuilderStepContents(TestCase):
             agg("avg_temp", AggFunc.AVG, col("temperature")),
             agg("count", AggFunc.COUNT, col("room_id")),
         ]
-        graph.source_stream("t").aggregate(["room_id"], aggs).to_stream("out")
+        graph.source_stream("t", _SCHEMA).aggregate(["room_id"], aggs).to_stream("out")
         node = self._get_node(graph._build(), "aggregate-0")
         self.assertEqual(list(node.step.aggregate.group_by), ["room_id"])
         self.assertEqual(len(node.step.aggregate.aggs), 2)
@@ -538,7 +554,7 @@ class TestNodeBuilderStepContents(TestCase):
 
     def test_map_to_state_node_contents(self):
         graph = _graph()
-        (graph.source_stream("t").map_to_state("room_id", "temperature", StateOperation.INCREMENT).to_kv("state"))
+        (graph.source_stream("t", _SCHEMA).map_to_state("room_id", "temperature", StateOperation.INCREMENT).to_kv("state"))
         node = self._get_node(graph._build(), "map-to-state-0")
         self.assertEqual(node.step.map_to_state.key_column, "room_id")
         self.assertEqual(node.step.map_to_state.value_column, "temperature")
@@ -547,7 +563,7 @@ class TestNodeBuilderStepContents(TestCase):
     def test_map_to_data_cdc_node(self):
         graph = _graph()
         (
-            graph.source_stream("t")
+            graph.source_stream("t", _SCHEMA)
             .map_to_state("room_id", "v", StateOperation.REPLACE)
             .map_to_data(MapToDataStrategy.CDC)
             .to_stream("out")
@@ -558,7 +574,7 @@ class TestNodeBuilderStepContents(TestCase):
     def test_map_to_data_periodic_with_cron(self):
         graph = _graph()
         (
-            graph.source_stream("t")
+            graph.source_stream("t", _SCHEMA)
             .map_to_state("room_id", "v", StateOperation.REPLACE)
             .map_to_data(MapToDataStrategy.PERIODIC, "0 * * * *")
             .to_stream("out")
@@ -570,7 +586,7 @@ class TestNodeBuilderStepContents(TestCase):
     def test_map_to_data_periodic_with_interval(self):
         graph = _graph()
         (
-            graph.source_stream("t")
+            graph.source_stream("t", _SCHEMA)
             .map_to_state("room_id", "v", StateOperation.REPLACE)
             .map_to_data(MapToDataStrategy.PERIODIC, "1 hour")
             .to_stream("out")
@@ -581,7 +597,7 @@ class TestNodeBuilderStepContents(TestCase):
     def test_map_to_data_string_strategy(self):
         graph = _graph()
         (
-            graph.source_stream("t")
+            graph.source_stream("t", _SCHEMA)
             .map_to_state("room_id", "v", StateOperation.REPLACE)
             .map_to_data("CDC")
             .to_stream("out")
@@ -591,27 +607,27 @@ class TestNodeBuilderStepContents(TestCase):
 
     def test_to_stream_sink_topic(self):
         graph = _graph()
-        graph.source_stream("t").to_stream("hot-output")
+        graph.source_stream("t", _SCHEMA).to_stream("hot-output")
         sg = graph._build()
         sink = next(n for n in sg.nodes if n.sink.stream.topic)
         self.assertEqual(sink.sink.stream.topic, "hot-output")
 
     def test_to_kv_sink_store(self):
         graph = _graph()
-        graph.source_kv("src").to_kv("dest-store")
+        graph.source_kv("src", _KV_SCHEMA).to_kv("dest-store")
         sg = graph._build()
         sink = next(n for n in sg.nodes if n.sink.kv.store)
         self.assertEqual(sink.sink.kv.store, "dest-store")
 
     def test_to_stream_returns_subgraph_builder(self):
         graph = _graph()
-        result = graph.source_stream("t").to_stream("out")
+        result = graph.source_stream("t", _SCHEMA).to_stream("out")
         self.assertIsInstance(result, SubgraphBuilder)
         self.assertIs(result, graph)
 
     def test_to_kv_returns_subgraph_builder(self):
         graph = _graph()
-        result = graph.source_kv("s").to_kv("dest")
+        result = graph.source_kv("s", _KV_SCHEMA).to_kv("dest")
         self.assertIsInstance(result, SubgraphBuilder)
         self.assertIs(result, graph)
 
@@ -624,25 +640,25 @@ class TestNodeBuilderStepContents(TestCase):
 class TestNodeBuilderModeGuards(TestCase):
     def test_window_raises_in_state_mode(self):
         graph = _graph()
-        nb = graph.source_stream("t").map_to_state("room_id", "v", StateOperation.REPLACE)
+        nb = graph.source_stream("t", _SCHEMA).map_to_state("room_id", "v", StateOperation.REPLACE)
         with self.assertRaises(ValueError, msg="window() should raise in STATE mode"):
             nb.window("1 minute", "event_time")
 
     def test_map_to_state_raises_if_already_state(self):
         graph = _graph()
-        nb = graph.source_stream("t").map_to_state("room_id", "v", StateOperation.REPLACE)
+        nb = graph.source_stream("t", _SCHEMA).map_to_state("room_id", "v", StateOperation.REPLACE)
         with self.assertRaises(ValueError):
             nb.map_to_state("room_id", "v", StateOperation.REPLACE)
 
     def test_map_to_data_raises_if_already_data(self):
         graph = _graph()
-        nb = graph.source_stream("t")
+        nb = graph.source_stream("t", _SCHEMA)
         with self.assertRaises(ValueError):
             nb.map_to_data(MapToDataStrategy.CDC)
 
     def test_aggregate_raises_if_group_by_includes_state_key(self):
         graph = _graph()
-        nb = graph.source_stream("t").map_to_state("room_id", "v", StateOperation.REPLACE)
+        nb = graph.source_stream("t", _SCHEMA).map_to_state("room_id", "v", StateOperation.REPLACE)
         with self.assertRaises(ValueError):
             nb.aggregate(["room_id"], [agg("avg", AggFunc.AVG, col("v"))])
 
