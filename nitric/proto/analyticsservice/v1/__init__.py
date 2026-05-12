@@ -130,9 +130,24 @@ class DeliveryVal(betterproto.Enum):
 
 
 @dataclass(eq=False, repr=False)
+class SparkStreamingHints(betterproto.Message):
+    """
+    SparkStreamingHints field numbers match the JAR's
+    spark_streaming_execution.proto exactly. Do NOT reorder — the binary
+    encoding must be identical on both sides.
+    """
+
+    shuffle_partitions: int = betterproto.int32_field(1)
+    watermarks: Dict[str, str] = betterproto.map_field(
+        2, betterproto.TYPE_STRING, betterproto.TYPE_STRING
+    )
+    checkpoint_base: str = betterproto.string_field(3)
+
+
+@dataclass(eq=False, repr=False)
 class SparkStreamingExecuteRequest(betterproto.Message):
     subgraph: "Subgraph" = betterproto.message_field(1)
-    hints: "Hints" = betterproto.message_field(2)
+    hints: "SparkStreamingHints" = betterproto.message_field(2)
 
 
 @dataclass(eq=False, repr=False)
