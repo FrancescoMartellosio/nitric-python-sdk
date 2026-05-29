@@ -14,16 +14,11 @@ from nitric.proto.analyticsservice.v1 import (
     ExecuteRequest,
     PlanResponse,
     Subgraph,
-    Node,
+    ResourceNode,
+    ResourceType as NodeResourceType,
     Edge,
     Schedule,
     PipelineMode,
-    Source,
-    Sink,
-    StreamSource,
-    KvSource,
-    StreamSink,
-    KvSink,
     Step,
     Filter,
     Derive,
@@ -107,9 +102,9 @@ _AGG_FUNCS: Dict[str, AggFunc] = {
 }
 
 _MAP_TO_DATA_STRATEGIES: Dict[str, MapToDataStrategy] = {
-    "SNAPSHOT": MapToDataStrategy.SNAPSHOT,
-    "CDC": MapToDataStrategy.CDC,
-    "PERIODIC": MapToDataStrategy.PERIODIC,
+    "ISTREAM": MapToDataStrategy.ISTREAM,
+    "DSTREAM": MapToDataStrategy.DSTREAM,
+    "RSTREAM": MapToDataStrategy.RSTREAM,
 }
 
 
@@ -532,7 +527,8 @@ class SubgraphBuilder:
     def __init__(self, name: str, stub: AnalyticsServiceStub):
         self._name = name
         self._stub = stub
-        self._nodes: List[Node] = []
+        self._resource_nodes: List[ResourceNode] = []
+        self._step_nodes: List[Step] = []
         self._edges: List[Edge] = []
         self._counters: Dict[str, int] = {}
         self._hints: Hints = Hints()
@@ -544,11 +540,17 @@ class SubgraphBuilder:
         self._counters[prefix] = n + 1
         return f"{prefix}-{n}"
 
-    def _add_node(self, node: Node) -> None:
-        self._nodes.append(node)
+    def _add_resource_node(self, rn: ResourceNode) -> None:
+        self._resource_nodes.append(rn)
 
-    def _add_edge(self, from_id: str, to_id: str, mode: PipelineMode) -> None:
-        self._edges.append(Edge(from_node=from_id, to_node=to_id, mode=mode))
+    def _add_step_node(self, step: Step) -> None:
+        self._step_nodes.append(step)
+
+    def _add_edge(self, from_id: str, to_id: str, schedule: str = "") -> None:
+        if schedule:
+            self._edges.append(Edge(from_node=from_id, to_node=to_id, schedule=_parse_schedule(schedule)))
+        else:
+            self._edges.append(Edge(from_node=from_id, to_node=to_id))
 
     # ── Source entry points ───────────────────────────────────────────────────
 
@@ -566,10 +568,12 @@ class SubgraphBuilder:
             ])
         """
         node_id = self._new_id("source")
-        self._add_node(
-            Node(
+        self._add_resource_node(
+            ResourceNode(
                 id=node_id,
-                source=Source(stream=StreamSource(topic=topic), mode=PipelineMode.DATA, schema=schema),
+                resource_type=NodeResourceType.KAFKA_SOURCE,
+                resource_name=topic,
+                schema=schema,
             )
         )
         return NodeBuilder(self, node_id, PipelineMode.DATA)
@@ -588,10 +592,12 @@ class SubgraphBuilder:
             ])
         """
         node_id = self._new_id("source")
-        self._add_node(
-            Node(
+        self._add_resource_node(
+            ResourceNode(
                 id=node_id,
-                source=Source(kv=KvSource(store=store), mode=PipelineMode.STATE, schema=schema),
+                resource_type=NodeResourceType.KV_STORE_SOURCE,
+                resource_name=store,
+                schema=schema,
             )
         )
         return NodeBuilder(self, node_id, PipelineMode.STATE)
@@ -653,7 +659,12 @@ class SubgraphBuilder:
     # ── Terminal operations ───────────────────────────────────────────────────
 
     def _build(self) -> Subgraph:
-        return Subgraph(name=self._name, nodes=self._nodes, edges=self._edges)
+        return Subgraph(
+            name=self._name,
+            resource_nodes=self._resource_nodes,
+            step_nodes=self._step_nodes,
+            edges=self._edges,
+        )
 
     async def execute(self) -> str:
         """
@@ -717,6 +728,26 @@ class NodeBuilder:
         self._node_id = node_id
         self._mode = mode
         self._state_key = state_key
+        self._pending_schedule: str = ""
+
+    def set_schedule(self, s: str) -> NodeBuilder:
+        """
+        Annotate the edge leading from this node to the next step with a
+        refresh schedule. Consumed once by the immediately following step or
+        sink call; does not affect subsequent edges.
+
+        Applies to the Materialized View engine only — schedule-based and
+        trigger-based refresh are mutually exclusive per pipeline.
+
+        s: cron expression ("0 6 * * *") or plain-English interval ("1 hour",
+           "30 minutes", "5 seconds").
+
+        Examples:
+            .filter(col("temperature") > 25.0).set_schedule("1 hour").aggregate(...)
+            .aggregate([...], [...]).set_schedule("0 6 * * *").to_stream("daily-summary")
+        """
+        self._pending_schedule = s
+        return self
 
     def _step_node(
         self,
@@ -724,12 +755,15 @@ class NodeBuilder:
         step: Step,
         out_mode: Optional[PipelineMode] = None,
         out_state_key: Any = _UNSET,
+        schedule: str = "",
     ) -> NodeBuilder:
         """Create a single-parent step node downstream of this node."""
         node_id = self._graph._new_id(prefix)
         step.id = node_id
-        self._graph._add_node(Node(id=node_id, step=step))
-        self._graph._add_edge(self._node_id, node_id, self._mode)
+        self._graph._add_step_node(step)
+        effective_schedule = schedule or self._pending_schedule
+        self._pending_schedule = ""
+        self._graph._add_edge(self._node_id, node_id, schedule=effective_schedule)
         return NodeBuilder(
             self._graph,
             node_id,
@@ -903,9 +937,9 @@ class NodeBuilder:
                 right_source_mode=right._mode,
             ),
         )
-        self._graph._add_node(Node(id=node_id, step=step))
-        self._graph._add_edge(self._node_id, node_id, self._mode)
-        self._graph._add_edge(right._node_id, node_id, right._mode)
+        self._graph._add_step_node(step)
+        self._graph._add_edge(self._node_id, node_id)
+        self._graph._add_edge(right._node_id, node_id)
         return NodeBuilder(self._graph, node_id, self._mode)
 
     def map_to_state(
@@ -952,18 +986,18 @@ class NodeBuilder:
         Boundary crossing: STATE → DATA.
 
         strategy:
-          SNAPSHOT — emit full state once as a bounded dataset
-          CDC      — emit each state change as an event (insert or delete)
-          PERIODIC — emit full state on a recurring schedule
+          ISTREAM — emit rows present now but absent in previous snapshot (inserts + updated new versions)
+          DSTREAM — emit rows absent now but present in previous snapshot (deletes + updated old versions)
+          RSTREAM — emit full current snapshot
 
-        schedule: cron expression or interval string, required for PERIODIC.
+        schedule: cron expression or interval string for scheduled refresh.
           Examples: "0 6 * * *" (cron), "1 hour" (interval)
 
         Examples:
-            .map_to_data(MapToDataStrategy.CDC)
-            .map_to_data(MapToDataStrategy.SNAPSHOT)
-            .map_to_data(MapToDataStrategy.PERIODIC, "0 * * * *")
-            .map_to_data("PERIODIC", "1 hour")   # string shorthand
+            .map_to_data(MapToDataStrategy.ISTREAM)
+            .map_to_data(MapToDataStrategy.DSTREAM)
+            .map_to_data(MapToDataStrategy.RSTREAM, "0 * * * *")
+            .map_to_data("RSTREAM", "1 hour")   # string shorthand
         """
         if self._mode == PipelineMode.DATA:
             raise ValueError("map_to_data() is invalid — already in DATA mode.")
@@ -971,26 +1005,16 @@ class NodeBuilder:
         if isinstance(strategy, str):
             strat = _MAP_TO_DATA_STRATEGIES.get(strategy.upper())
             if strat is None:
-                raise ValueError(f"Unknown strategy: '{strategy}'. Valid: SNAPSHOT, CDC, PERIODIC")
+                raise ValueError(f"Unknown strategy: '{strategy}'. Valid: ISTREAM, DSTREAM, RSTREAM")
         else:
             strat = strategy
 
-        if strat == MapToDataStrategy.PERIODIC and not schedule:
-            import warnings
-
-            warnings.warn(
-                "map_to_data(PERIODIC) without a schedule will emit on every "
-                "micro-batch. Pass a cron or interval schedule. "
-                "Example: .map_to_data(MapToDataStrategy.PERIODIC, '0 * * * *')",
-                stacklevel=2,
-            )
-
-        sched = _parse_schedule(schedule) if schedule else Schedule()
         return self._step_node(
             "map-to-data",
-            Step(map_to_data=MapToData(strategy=strat, schedule=sched)),
+            Step(map_to_data=MapToData(strategy=strat)),
             out_mode=PipelineMode.DATA,
             out_state_key=None,
+            schedule=schedule,
         )
 
     # ── Sinks ─────────────────────────────────────────────────────────────────
@@ -1006,13 +1030,16 @@ class NodeBuilder:
             .to_stream("hot-rooms-output").execute()
         """
         node_id = self._graph._new_id("sink")
-        self._graph._add_node(
-            Node(
+        self._graph._add_resource_node(
+            ResourceNode(
                 id=node_id,
-                sink=Sink(stream=StreamSink(topic=topic), mode=self._mode),
+                resource_type=NodeResourceType.KAFKA_SINK,
+                resource_name=topic,
             )
         )
-        self._graph._add_edge(self._node_id, node_id, self._mode)
+        sched = self._pending_schedule
+        self._pending_schedule = ""
+        self._graph._add_edge(self._node_id, node_id, schedule=sched)
         return self._graph
 
     def to_kv(self, store: str) -> SubgraphBuilder:
@@ -1026,13 +1053,16 @@ class NodeBuilder:
             .to_kv("room-state").execute()
         """
         node_id = self._graph._new_id("sink")
-        self._graph._add_node(
-            Node(
+        self._graph._add_resource_node(
+            ResourceNode(
                 id=node_id,
-                sink=Sink(kv=KvSink(store=store), mode=self._mode),
+                resource_type=NodeResourceType.KV_STORE_SINK,
+                resource_name=store,
             )
         )
-        self._graph._add_edge(self._node_id, node_id, self._mode)
+        sched = self._pending_schedule
+        self._pending_schedule = ""
+        self._graph._add_edge(self._node_id, node_id, schedule=sched)
         return self._graph
 
 

@@ -554,7 +554,11 @@ class TestNodeBuilderStepContents(TestCase):
 
     def test_map_to_state_node_contents(self):
         graph = _graph()
-        (graph.source_stream("t", _SCHEMA).map_to_state("room_id", "temperature", StateOperation.INCREMENT).to_kv("state"))
+        (
+            graph.source_stream("t", _SCHEMA)
+            .map_to_state("room_id", "temperature", StateOperation.INCREMENT)
+            .to_kv("state")
+        )
         node = self._get_node(graph._build(), "map-to-state-0")
         self.assertEqual(node.step.map_to_state.key_column, "room_id")
         self.assertEqual(node.step.map_to_state.value_column, "temperature")

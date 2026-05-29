@@ -80,9 +80,9 @@ class StateOperation(betterproto.Enum):
 
 class MapToDataStrategy(betterproto.Enum):
     MAP_TO_DATA_STRATEGY_UNSPECIFIED = 0
-    ISTREAM = 1
-    DSTREAM = 2
-    RSTREAM = 3
+    SNAPSHOT = 1
+    CDC = 2
+    PERIODIC = 3
 
 
 class FieldType(betterproto.Enum):
@@ -387,6 +387,7 @@ class MapToState(betterproto.Message):
 @dataclass(eq=False, repr=False)
 class MapToData(betterproto.Message):
     strategy: "MapToDataStrategy" = betterproto.enum_field(1)
+    schedule: "Schedule" = betterproto.message_field(2)
 
 
 @dataclass(eq=False, repr=False)
